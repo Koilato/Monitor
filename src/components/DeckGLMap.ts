@@ -6353,7 +6353,7 @@ export class DeckGLMap {
     };
 
     map.on('mousemove', (e) => {
-      if (!this.onCountryClick) return;
+      if (!this._onCountryHoverCallback && !this.onCountryClick) return;
       try {
         if (!map.getLayer('country-interactive')) return;
         const features = map.queryRenderedFeatures(e.point, { layers: ['country-interactive'] });

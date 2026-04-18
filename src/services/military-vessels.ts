@@ -6,14 +6,14 @@ import {
   getNearbyHotspot,
   MILITARY_HOTSPOTS,
 } from '@/config/military';
-import {
-  registerAisCallback,
-  unregisterAisCallback,
-  isAisConfigured,
-  initAisStream,
-  type AisPositionData,
-} from './maritime';
-import { fetchUSNIFleetReport, mergeUSNIWithAIS } from './usni-fleet';
+// Stubs for deleted maritime/usni-fleet modules
+const registerAisCallback = (_cb: (data: any) => void) => {};
+const unregisterAisCallback = (_cb: (data: any) => void) => {};
+const isAisConfigured = () => false;
+const initAisStream = () => {};
+type AisPositionData = any;
+const fetchUSNIFleetReport = async () => ({ vessels: [], lastUpdated: null });
+const mergeUSNIWithAIS = (_ais: any[], _usni: any, _clusters?: any) => ({ vessels: _ais, clusters: _clusters || [] });
 
 // Cache for API responses
 let vesselCache: { data: MilitaryVessel[]; timestamp: number } | null = null;

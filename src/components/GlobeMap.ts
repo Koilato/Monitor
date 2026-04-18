@@ -26,7 +26,7 @@ import { getLayersForVariant, resolveLayerLabel, bindLayerSearch, type MapVarian
 import { resolveTradeRouteSegments, type TradeRouteSegment } from '@/config/trade-routes';
 import { GAMMA_IRRADIATORS } from '@/config/irradiators';
 import { AI_DATA_CENTERS } from '@/config/ai-datacenters';
-import { getCountryBbox, getCountriesGeoJson, getCountryAtCoordinates, getCountryNameByCode } from '@/services/country-geometry';
+import { getCountryBbox, getCountriesGeoJson, getCountryAtCoordinates, getCountryNameByCode, getCountryCentroid } from '@/services/country-geometry';
 import { escapeHtml } from '@/utils/sanitize';
 import { showLayerWarning } from '@/utils/layer-warning';
 import type { FeatureCollection, Geometry } from 'geojson';
@@ -487,6 +487,11 @@ export class GlobeMap {
   private displacementMarkers: DisplacementMarker[] = [];
   private climateMarkers: ClimateMarker[] = [];
   private gpsJamMarkers: GpsJamMarker[] = [];
+  // Country hover support
+  private _onCountryHoverCallback: ((country: { code: string; name: string } | null) => void) | null = null;
+  private _hoverFlows: Array<{srcCountry: string; destCountry: string; volume: number; label?: string}> = [];
+  private _lastHoveredCountry: { code: string; name: string } | null = null;
+  private _hoverThrottleTimer: ReturnType<typeof setTimeout> | null = null;
   private techMarkers: TechMarker[] = [];
   private conflictZoneMarkers: ConflictZoneMarker[] = [];
   private milBaseMarkers: MilBaseMarker[] = [];
@@ -704,6 +709,33 @@ export class GlobeMap {
         const now = performance.now();
         if (now - lastMoveWake > 500) { lastMoveWake = now; wakeOnInteraction(); }
       }, { passive: true });
+      // Country hover detection
+      canvas.addEventListener('mousemove', (e: MouseEvent) => {
+        if (!this._onCountryHoverCallback || !this.globe) return;
+        if (this._hoverThrottleTimer) return;
+        this._hoverThrottleTimer = setTimeout(() => { this._hoverThrottleTimer = null; }, 150);
+        const rect = this.container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const coords = this.globe.toGlobeCoords(x, y);
+        if (!coords) {
+          if (this._lastHoveredCountry) {
+            this._lastHoveredCountry = null;
+            this._onCountryHoverCallback(null);
+          }
+          return;
+        }
+        const hit = getCountryAtCoordinates(coords.lat, coords.lng);
+        if (hit) {
+          if (!this._lastHoveredCountry || this._lastHoveredCountry.code !== hit.code) {
+            this._lastHoveredCountry = hit;
+            this._onCountryHoverCallback(hit);
+          }
+        } else if (this._lastHoveredCountry) {
+          this._lastHoveredCountry = null;
+          this._onCountryHoverCallback(null);
+        }
+      });
       canvas.addEventListener('mouseup', scheduleResumeAutoRotate);
       canvas.addEventListener('touchend', scheduleResumeAutoRotate);
       canvas.addEventListener('webglcontextlost', (e) => {
@@ -742,7 +774,8 @@ export class GlobeMap {
       .arcStartLng((d: TradeRouteSegment) => d.sourcePosition[0])
       .arcEndLat((d: TradeRouteSegment) => d.targetPosition[1])
       .arcEndLng((d: TradeRouteSegment) => d.targetPosition[0])
-      .arcColor((d: TradeRouteSegment) => {
+      .arcColor((d: TradeRouteSegment & { _isHover?: boolean }) => {
+        if (d._isHover) return ['rgba(255,220,50,0.2)', 'rgba(255,220,50,0.9)', 'rgba(255,220,50,0.2)'];
         if (d.status === 'disrupted') return ['rgba(255,32,32,0.1)', 'rgba(255,32,32,0.8)', 'rgba(255,32,32,0.1)'];
         if (d.status === 'high_risk') return ['rgba(255,180,0,0.1)', 'rgba(255,180,0,0.7)', 'rgba(255,180,0,0.1)'];
         if (d.category === 'energy')    return ['rgba(255,140,0,0.05)', 'rgba(255,140,0,0.6)', 'rgba(255,140,0,0.05)'];
@@ -1994,7 +2027,53 @@ export class GlobeMap {
     if (!this.globe || !this.initialized || this.destroyed || this.webglLost) return;
     this.wakeGlobe();
     const segments = this.layers.tradeRoutes ? this.tradeRouteSegments : [];
-    (this.globe as any).arcsData(segments);
+    // Merge hover arcs if any
+    if (this._hoverFlows.length > 0) {
+      const hoverArcs = this._hoverFlows.map(flow => {
+        const src = getCountryCentroid(flow.srcCountry);
+        const dest = getCountryCentroid(flow.destCountry);
+        if (!src || !dest) return null;
+        return {
+          sourcePosition: [src.lon, src.lat] as [number, number],
+          targetPosition: [dest.lon, dest.lat] as [number, number],
+          routeName: flow.label || `${flow.srcCountry} → ${flow.destCountry}`,
+          volumeDesc: String(flow.volume),
+          status: 'active' as const,
+          category: 'container' as const,
+          _isHover: true,
+        };
+      }).filter(Boolean);
+      (this.globe as any).arcsData([...segments, ...hoverArcs]);
+    } else {
+      (this.globe as any).arcsData(segments);
+    }
+  }
+
+  private flushHoverArcs(): void {
+    if (!this.globe || !this.initialized || this.destroyed || this.webglLost) return;
+    this.wakeGlobe();
+    // Convert hover flows to arc format using country centroids
+    const arcs = this._hoverFlows.map(flow => {
+      const src = getCountryCentroid(flow.srcCountry);
+      const dest = getCountryCentroid(flow.destCountry);
+      if (!src || !dest) return null;
+      return {
+        sourcePosition: [src.lon, src.lat] as [number, number],
+        targetPosition: [dest.lon, dest.lat] as [number, number],
+        routeName: flow.label || `${flow.srcCountry} → ${flow.destCountry}`,
+        volumeDesc: String(flow.volume),
+        status: 'active' as const,
+        category: 'container' as const,
+      };
+    }).filter(Boolean);
+    // Use a separate arcs layer for hover flows by merging with trade arcs
+    // Since globe.gl only has one arcs layer, we append hover arcs with distinct styling
+    const tradeSegments = this.layers.tradeRoutes ? this.tradeRouteSegments : [];
+    const hoverSegments = arcs.map(a => ({
+      ...a!,
+      _isHover: true,
+    }));
+    (this.globe as any).arcsData([...tradeSegments, ...hoverSegments]);
   }
 
   private flushPaths(): void {
@@ -2664,6 +2743,15 @@ export class GlobeMap {
 
   public setOnCountryClick(_cb: (c: CountryClickPayload) => void): void {
     // Globe country click not yet implemented — no-op
+  }
+
+  public setOnCountryHover(callback: (country: { code: string; name: string } | null) => void): void {
+    this._onCountryHoverCallback = callback;
+  }
+
+  public setHoverFlows(flows: Array<{srcCountry: string; destCountry: string; volume: number; label?: string}>): void {
+    this._hoverFlows = flows;
+    this.flushHoverArcs();
   }
 
   public setOnMapContextMenu(cb: (payload: { lat: number; lon: number; screenX: number; screenY: number }) => void): void {

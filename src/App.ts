@@ -13,7 +13,7 @@ import {
 } from '@/config';
 import { sanitizeLayersForVariant } from '@/config/map-layer-definitions';
 import type { MapVariant } from '@/config/map-layer-definitions';
-import { initDB, cleanOldSnapshots, isAisConfigured, initAisStream, disconnectAisStream } from '@/services';
+import { initDB, cleanOldSnapshots } from '@/services';
 import { loadFromStorage, parseMapUrlState, saveToStorage, isMobileDevice, normalizeExclusiveChoropleths } from '@/utils';
 import type { ParsedMapUrlState } from '@/utils';
 import { isDesktopRuntime, waitForSidecarReady } from '@/services/runtime';
@@ -357,12 +357,7 @@ export class App {
     await initDB();
     await initI18n();
 
-    // Check AIS configuration before init
-    if (!isAisConfigured()) {
-      this.state.mapLayers.ais = false;
-    } else if (this.state.mapLayers.ais) {
-      initAisStream();
-    }
+    // AIS configuration is no longer available (module deleted)
 
     // Wait for sidecar readiness on desktop
     if (isDesktopRuntime()) {
@@ -426,9 +421,6 @@ export class App {
     this.updateConnectivityUi();
 
     // Hide unconfigured layers after first data load
-    if (!isAisConfigured()) {
-      this.state.map?.hideLayerToggle('ais');
-    }
     if (!CYBER_LAYER_ENABLED) {
       this.state.map?.hideLayerToggle('cyberThreats');
     }
@@ -457,13 +449,12 @@ export class App {
       this.modules[i]!.destroy();
     }
 
-    // Clean up subscriptions, map, AIS
+    // Clean up subscriptions, map
     this.unsubAiFlow?.();
     this.unsubFreeTier?.();
     this.cachedModeBannerEl?.remove();
     this.cachedModeBannerEl = null;
     this.state.map?.destroy();
-    disconnectAisStream();
   }
 
   private setupRefreshIntervals(): void {

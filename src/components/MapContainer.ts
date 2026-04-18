@@ -1024,17 +1024,20 @@ export class MapContainer {
   public setOnCountryHover(callback: (country: { code: string; name: string } | null) => void): void {
     // 代理到当前活跃的地图
     if (this.deckGLMap) {
-      (this.deckGLMap as any)._onCountryHover = callback;
+      this.deckGLMap.onCountryHover = callback;
+    }
+    if (this.globeMap) {
+      this.globeMap.setOnCountryHover(callback);
     }
   }
 
   public setHoverFlows(flows: CountryFlow[]): void {
     // 代理到当前活跃的地图
     if (this.deckGLMap) {
-      (this.deckGLMap as any).setHoverFlows(flows);
+      this.deckGLMap.setHoverFlows(flows);
     }
     if (this.globeMap) {
-      (this.globeMap as any).setHoverFlows(flows);
+      this.globeMap.setHoverFlows(flows);
     }
   }
 

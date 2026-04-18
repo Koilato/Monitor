@@ -1,7 +1,11 @@
-import type { Feed, NewsItem } from '@/types';
+import type { EventCategory, Feed, NewsItem } from '@/types';
 import { SITE_VARIANT } from '@/config';
 import { chunkArray, fetchWithProxy } from '@/utils';
-import { classifyByKeyword, classifyWithAI } from './threat-classifier';
+// Stub for deleted threat-classifier module
+type _ThreatLevel = 'low' | 'medium' | 'high' | 'critical';
+type _ThreatSource = 'keyword' | 'ml' | 'llm';
+const classifyByKeyword = (_text: string, _opts?: any): { level: _ThreatLevel; category: EventCategory; confidence: number; source: _ThreatSource } => ({ level: 'low', category: 'general', confidence: 0, source: 'keyword' });
+const classifyWithAI = async (_text: string, _opts?: any): Promise<{ level: _ThreatLevel; category: EventCategory; confidence: number; source: _ThreatSource }> => ({ level: 'low', category: 'general', confidence: 0, source: 'llm' });
 import { inferGeoHubsFromTitle } from './geo-hub-index';
 import { getPersistentCache, setPersistentCache } from './persistent-cache';
 import { dataFreshness } from './data-freshness';
@@ -300,7 +304,7 @@ export async function fetchFeed(feed: Feed): Promise<NewsItem[]> {
 
     for (const item of aiCandidates) {
       if (!canQueueAiClassification(item.title)) continue;
-      classifyWithAI(item.title, SITE_VARIANT).then((aiResult) => {
+      classifyWithAI(item.title, SITE_VARIANT).then((aiResult: any) => {
         if (aiResult && aiResult.confidence > item.threat.confidence) {
           item.threat = aiResult;
           item.isAlert = aiResult.level === 'critical' || aiResult.level === 'high';

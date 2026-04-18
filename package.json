@@ -149,5 +149,8 @@
     "serialize-javascript": "^7.0.4",
     "node-forge": "^1.4.0",
     "srvx": "^0.11.13"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-arm64-gnu": "^4.60.1"
   }
 }

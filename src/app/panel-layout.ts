@@ -421,6 +421,17 @@ export class PanelLayoutManager implements AppModule {
     this.ctx.panels['country-info'] = infoPanel;
     this.ctx.panels['risk-indicators'] = riskPanel;
 
+    // 挂载面板到 DOM（通用挂载循环在面板实例化之前执行，需手动挂载）
+    const panelsGridEl = document.getElementById('panelsGrid');
+    if (panelsGridEl) {
+      if (!infoPanel.getElement().parentElement) {
+        panelsGridEl.appendChild(infoPanel.getElement());
+      }
+      if (!riskPanel.getElement().parentElement) {
+        panelsGridEl.appendChild(riskPanel.getElement());
+      }
+    }
+
     if (this.ctx.map) {
       new HoverHandler(this.ctx.map, infoPanel, riskPanel);
     }
