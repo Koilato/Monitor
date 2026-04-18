@@ -20,11 +20,11 @@ const localeModules = import.meta.glob<TranslationDictionary>(
 const RTL_LANGUAGES = new Set(['ar']);
 
 function normalizeLanguage(lng: string): SupportedLanguage {
-  const base = (lng || 'en').split('-')[0]?.toLowerCase() || 'en';
+  const base = (lng || 'zh').split('-')[0]?.toLowerCase() || 'zh';
   if (SUPPORTED_LANGUAGE_SET.has(base as SupportedLanguage)) {
     return base as SupportedLanguage;
   }
-  return 'en';
+  return 'zh';
 }
 
 function applyDocumentDirection(lang: string): void {
@@ -80,7 +80,7 @@ export async function initI18n(): Promise<void> {
       },
       supportedLngs: [...SUPPORTED_LANGUAGES],
       nonExplicitSupportedLngs: true,
-      fallbackLng: 'en',
+      fallbackLng: 'zh',
       debug: import.meta.env.DEV,
       interpolation: {
         escapeValue: false, // not needed for these simple strings

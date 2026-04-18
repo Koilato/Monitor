@@ -121,8 +121,8 @@ import type { ResilienceRankingItem } from '@/services/resilience';
 import {
   RESILIENCE_CHOROPLETH_COLORS,
   buildResilienceChoroplethMap,
-  normalizeExclusiveChoropleths,
 } from './resilience-choropleth-utils';
+import { normalizeExclusiveChoropleths } from '@/utils';
 
 import { isAllowedPreviewUrl } from '@/utils/imagery-preview';
 import { pinWebcam, isPinned } from '@/services/webcams/pinned-store';
@@ -481,6 +481,8 @@ export class DeckGLMap {
   private highlightedCountryCode: string | null = null;
   private hoveredCountryIso2: string | null = null;
   private hoveredCountryName: string | null = null;
+  private _hoverFlows: Array<{srcCountry: string; destCountry: string; volume: number; label?: string}> = [];
+  private _onCountryHoverCallback: ((country: { code: string; name: string } | null) => void) | null = null;
 
   // Callbacks
   private onHotspotClick?: (hotspot: Hotspot) => void;
@@ -1838,6 +1840,31 @@ export class DeckGLMap {
     // News geo-locations (always shown if data exists)
     if (this.newsLocations.length > 0) {
       layers.push(...this.createNewsLocationsLayer());
+    }
+
+    // Hover flow arcs (shown when hovering over a country)
+    if (this._hoverFlows.length > 0) {
+      const arcs = this._hoverFlows
+        .map(f => {
+          const src = getCountryCentroid(f.srcCountry);
+          const tgt = getCountryCentroid(f.destCountry);
+          if (!src || !tgt) return null;
+          return { source: [src.lon, src.lat] as [number, number], target: [tgt.lon, tgt.lat] as [number, number], flow: f };
+        })
+        .filter((a): a is NonNullable<typeof a> => a !== null);
+
+      if (arcs.length > 0) {
+        layers.push(new ArcLayer({
+          id: 'hover-flows',
+          data: arcs,
+          getSourcePosition: (d: any) => d.source,
+          getTargetPosition: (d: any) => d.target,
+          getSourceColor: [100, 180, 255, 160],
+          getTargetColor: [255, 80, 80, 200],
+          getWidth: 2,
+          pickable: false,
+        }));
+      }
     }
 
     const result = layers.filter(Boolean) as LayersList;
@@ -3562,7 +3589,7 @@ export class DeckGLMap {
       getFillColor: (feature: { properties?: Record<string, unknown> }) => {
         const code = feature.properties?.['ISO3166-1-Alpha-2'] as string | undefined;
         const entry = code ? scores.get(code) : undefined;
-        return entry ? RESILIENCE_CHOROPLETH_COLORS[entry.level] : [0, 0, 0, 0];
+        return entry ? (RESILIENCE_CHOROPLETH_COLORS[entry.level] ?? [0, 0, 0, 0]) : [0, 0, 0, 0];
       },
       getLineColor: [80, 80, 80, 80] as [number, number, number, number],
       getLineWidth: 1,
@@ -3901,7 +3928,8 @@ export class DeckGLMap {
         if (resilienceEntry.level === 'insufficient_data') {
           return { html: `<div class="deckgl-tooltip"><strong>${text(resilienceName)}</strong><br/><span style="opacity:.7">Insufficient data</span></div>` };
         }
-        const [red, green, blue] = RESILIENCE_CHOROPLETH_COLORS[resilienceEntry.level];
+        const colorTuple = RESILIENCE_CHOROPLETH_COLORS[resilienceEntry.level] ?? [128, 128, 128, 180];
+        const [red, green, blue] = colorTuple;
         const levelColor = `rgb(${red}, ${green}, ${blue})`;
         return {
           html: `<div class="deckgl-tooltip"><strong>${text(resilienceName)}</strong><br/>Resilience: <span style="color:${levelColor};font-weight:600">${resilienceEntry.overallScore.toFixed(1)}/100</span><br/><span style="text-transform:capitalize;opacity:.7">${text(resilienceEntry.serverLevel)}</span>${resilienceEntry.lowConfidence ? '<br/><span style="opacity:.7">Low confidence</span>' : ''}</div>`,
@@ -6299,6 +6327,15 @@ export class DeckGLMap {
       .catch((err) => console.warn('[DeckGLMap] Failed to load country boundaries:', err));
   }
 
+  public setHoverFlows(flows: Array<{srcCountry: string; destCountry: string; volume: number; label?: string}>): void {
+    this._hoverFlows = flows;
+    this.render();
+  }
+
+  public set onCountryHover(cb: ((country: { code: string; name: string } | null) => void) | null) {
+    this._onCountryHoverCallback = cb;
+  }
+
   private setupCountryHover(): void {
     if (!this.maplibreMap || this.countryHoverSetup) return;
     this.countryHoverSetup = true;
@@ -6332,9 +6369,15 @@ export class DeckGLMap {
           map.setFilter('country-hover-fill', filter);
           map.setFilter('country-hover-border', filter);
           map.getCanvas().style.cursor = 'pointer';
+          if (this._onCountryHoverCallback) {
+            this._onCountryHoverCallback({ code: iso2, name: name ?? iso2 });
+          }
         } else if (!iso2 && hoveredIso2) {
           hoveredIso2 = null;
           clearHover();
+          if (this._onCountryHoverCallback) {
+            this._onCountryHoverCallback(null);
+          }
         }
       } catch { /* style not done loading during theme switch */ }
     });

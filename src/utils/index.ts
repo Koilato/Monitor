@@ -189,3 +189,16 @@ export { toFlagEmoji } from './country-flag';
 import { getCurrentLanguage } from '../services/i18n';
 import { isStorageQuotaExceeded, isQuotaError, markStorageQuotaExceeded } from './storage-quota';
 export { isStorageQuotaExceeded, isQuotaError, markStorageQuotaExceeded };
+
+import type { MapLayers } from '@/types';
+
+/** Ensure mutually-exclusive choropleth layers are not both enabled. */
+export function normalizeExclusiveChoropleths(
+  layers: MapLayers,
+  _previous: MapLayers | null,
+): MapLayers {
+  if (layers.resilienceScore && layers.ciiChoropleth) {
+    layers = { ...layers, ciiChoropleth: false };
+  }
+  return layers;
+}

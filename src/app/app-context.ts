@@ -1,28 +1,20 @@
-import type { InternetOutage, SocialUnrestEvent, MilitaryFlight, MilitaryFlightCluster, MilitaryVessel, MilitaryVesselCluster, USNIFleetReport, PanelConfig, MapLayers, NewsItem, MarketData, ClusteredEvent, CyberThreat, Monitor } from '@/types';
-import type { AirportDelayAlert, PositionSample } from '@/services/aviation';
-import type { IranEvent } from '@/generated/client/worldmonitor/conflict/v1/service_client';
-import type { SanctionsPressureResult } from '@/services/sanctions-pressure';
-import type { RadiationWatchResult } from '@/services/radiation';
-import type { SecurityAdvisory } from '@/services/security-advisories';
-import type { Earthquake } from '@/services/earthquakes';
+import type { PanelConfig, MapLayers, Monitor, MarketData, ClusteredEvent } from '@/types';
 
 export type { CountryBriefSignals } from '@/types';
 
+/** Loose type for the intelligence data cache used by correlation adapters. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IntelligenceCache {
-  flightDelays?: AirportDelayAlert[];
-  thermalEscalation?: import('@/services/thermal-escalation').ThermalEscalationWatch;
-  aircraftPositions?: PositionSample[];
-  outages?: InternetOutage[];
-  protests?: { events: SocialUnrestEvent[]; sources: { acled: number; gdelt: number } };
-  military?: { flights: MilitaryFlight[]; flightClusters: MilitaryFlightCluster[]; vessels: MilitaryVessel[]; vesselClusters: MilitaryVesselCluster[] };
-  earthquakes?: Earthquake[];
-  usniFleet?: USNIFleetReport;
-  iranEvents?: IranEvent[];
-  orefAlerts?: { alertCount: number; historyCount24h: number };
-  advisories?: SecurityAdvisory[];
-  sanctions?: SanctionsPressureResult;
-  radiation?: RadiationWatchResult;
-  imageryScenes?: Array<{ id: string; satellite: string; datetime: string; resolutionM: number; mode: string; geometryGeojson: string; previewUrl: string; assetUrl: string }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  earthquakes?: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protests?: { events?: any[] };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  outages?: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  military?: { flights?: any[]; vessels?: any[] };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 }
 
 export interface AppContext {
@@ -32,18 +24,18 @@ export interface AppContext {
   readonly container: HTMLElement;
 
   panels: Record<string, import('@/components').Panel>;
-  newsPanels: Record<string, import('@/components').NewsPanel>;
+  newsPanels: Record<string, unknown>;
   panelSettings: Record<string, PanelConfig>;
 
   mapLayers: MapLayers;
 
-  allNews: NewsItem[];
-  newsByCategory: Record<string, NewsItem[]>;
+  allNews: unknown[];
+  newsByCategory: Record<string, unknown[]>;
   latestMarkets: MarketData[];
-  latestPredictions: import('@/services/prediction').PredictionMarket[];
+  latestPredictions: unknown[];
   latestClusters: ClusteredEvent[];
   intelligenceCache: IntelligenceCache;
-  cyberThreatsCache: CyberThreat[] | null;
+  cyberThreatsCache: unknown[] | null;
 
   disabledSources: Set<string>;
   currentTimeRange: import('@/components').TimeRange;
@@ -52,32 +44,31 @@ export interface AppContext {
   seenGeoAlerts: Set<string>;
   monitors: Monitor[];
 
-  signalModal: import('@/components').SignalModal | null;
-  statusPanel: import('@/components').StatusPanel | null;
-  searchModal: import('@/components').SearchModal | null;
-  findingsBadge: import('@/components').IntelligenceGapBadge | null;
-  breakingBanner: import('@/components/BreakingNewsBanner').BreakingNewsBanner | null;
-  playbackControl: import('@/components').PlaybackControl | null;
-  exportPanel: import('@/utils').ExportPanel | null;
-  unifiedSettings: import('@/components/UnifiedSettings').UnifiedSettings | null;
-  pizzintIndicator: import('@/components').PizzIntIndicator | null;
-  correlationEngine: import('@/services/correlation-engine').CorrelationEngine | null;
-  llmStatusIndicator: import('@/components').LlmStatusIndicator | null;
-  countryBriefPage: import('@/components/CountryBriefPanel').CountryBriefPanel | null;
-  countryTimeline: import('@/components/CountryTimeline').CountryTimeline | null;
-
-  positivePanel: import('@/components/PositiveNewsFeedPanel').PositiveNewsFeedPanel | null;
-  countersPanel: import('@/components/CountersPanel').CountersPanel | null;
-  progressPanel: import('@/components/ProgressChartsPanel').ProgressChartsPanel | null;
-  breakthroughsPanel: import('@/components/BreakthroughsTickerPanel').BreakthroughsTickerPanel | null;
-  heroPanel: import('@/components/HeroSpotlightPanel').HeroSpotlightPanel | null;
-  digestPanel: import('@/components/GoodThingsDigestPanel').GoodThingsDigestPanel | null;
-  speciesPanel: import('@/components/SpeciesComebackPanel').SpeciesComebackPanel | null;
-  renewablePanel: import('@/components/RenewableEnergyPanel').RenewableEnergyPanel | null;
+  signalModal: unknown | null;
+  statusPanel: unknown | null;
+  searchModal: unknown | null;
+  findingsBadge: unknown | null;
+  breakingBanner: unknown | null;
+  playbackControl: unknown | null;
+  exportPanel: unknown | null;
+  unifiedSettings: unknown | null;
+  pizzintIndicator: unknown | null;
+  correlationEngine: unknown | null;
+  llmStatusIndicator: unknown | null;
+  countryBriefPage: unknown | null;
+  countryTimeline: unknown | null;
+  positivePanel: unknown | null;
+  countersPanel: unknown | null;
+  progressPanel: unknown | null;
+  breakthroughsPanel: unknown | null;
+  heroPanel: unknown | null;
+  digestPanel: unknown | null;
+  speciesPanel: unknown | null;
+  renewablePanel: unknown | null;
   authModal: { open(): void; close(): void; destroy(): void } | null;
-  authHeaderWidget: import('@/components/AuthHeaderWidget').AuthHeaderWidget | null;
-  tvMode: import('@/services/tv-mode').TvModeController | null;
-  happyAllItems: NewsItem[];
+  authHeaderWidget: unknown | null;
+  tvMode: unknown | null;
+  happyAllItems: unknown[];
   isDestroyed: boolean;
   isPlaybackMode: boolean;
   isIdle: boolean;

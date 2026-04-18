@@ -1,5 +1,5 @@
 import { getClerkToken } from '@/services/clerk';
-import { SITE_VARIANT } from '@/config/variant';
+// import { SITE_VARIANT } from '@/config/variant'; // Removed: unused after share feature removal
 
 export type ChannelType = 'telegram' | 'slack' | 'email' | 'discord' | 'webhook';
 export type Sensitivity = 'all' | 'high' | 'critical';
@@ -63,56 +63,12 @@ export async function getChannelsData(): Promise<ChannelsData> {
   return res.json() as Promise<ChannelsData>;
 }
 
-export async function createPairingToken(): Promise<{ token: string; expiresAt: number }> {
-  const res = await authFetch('/api/notification-channels', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'create-pairing-token', variant: SITE_VARIANT }),
-  });
-  if (!res.ok) throw new Error(`create pairing token: ${res.status}`);
-  return res.json();
-}
-
-export async function setEmailChannel(email: string): Promise<void> {
-  const res = await authFetch('/api/notification-channels', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'set-channel', channelType: 'email', email }),
-  });
-  if (!res.ok) throw new Error(`set email channel: ${res.status}`);
-}
-
-export async function setSlackChannel(webhookEnvelope: string): Promise<void> {
-  const res = await authFetch('/api/notification-channels', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'set-channel', channelType: 'slack', webhookEnvelope }),
-  });
-  if (!res.ok) throw new Error(`set slack channel: ${res.status}`);
-}
-
-export async function setWebhookChannel(webhookUrl: string, label?: string): Promise<void> {
-  const res = await authFetch('/api/notification-channels', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'set-channel', channelType: 'webhook', webhookEnvelope: webhookUrl, webhookLabel: label }),
-  });
-  if (!res.ok) throw new Error(`set webhook channel: ${res.status}`);
-}
-
-export async function startSlackOAuth(): Promise<string> {
-  const res = await authFetch('/api/slack/oauth/start', { method: 'POST' });
-  if (!res.ok) throw new Error(`slack oauth start: ${res.status}`);
-  const data = await res.json() as { oauthUrl: string };
-  return data.oauthUrl;
-}
-
-export async function startDiscordOAuth(): Promise<string> {
-  const res = await authFetch('/api/discord/oauth/start', { method: 'POST' });
-  if (!res.ok) throw new Error(`discord oauth start: ${res.status}`);
-  const data = await res.json() as { oauthUrl: string };
-  return data.oauthUrl;
-}
+// Removed: share/subscription feature — createPairingToken (Telegram Bot pairing) removed
+// Removed: share/subscription feature — setEmailChannel (Email notification) removed
+// Removed: share/subscription feature — setSlackChannel (Slack notification) removed
+// Removed: share/subscription feature — setWebhookChannel (Webhook notification) removed
+// Removed: share/subscription feature — startSlackOAuth (Slack OAuth) removed
+// Removed: share/subscription feature — startDiscordOAuth (Discord OAuth) removed
 
 export async function deleteChannel(channelType: ChannelType): Promise<void> {
   const res = await authFetch('/api/notification-channels', {

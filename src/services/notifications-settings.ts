@@ -1,12 +1,12 @@
 import { escapeHtml } from '@/utils/sanitize';
-import { renderSVG } from 'uqr';
+// Removed: share/subscription feature — renderSVG (QR code) import removed
 import {
   getChannelsData,
-  createPairingToken,
-  setEmailChannel,
-  setWebhookChannel,
-  startSlackOAuth,
-  startDiscordOAuth,
+  // Removed: share/subscription feature — createPairingToken removed
+  // Removed: share/subscription feature — setEmailChannel removed
+  // Removed: share/subscription feature — setWebhookChannel removed
+  // Removed: share/subscription feature — startSlackOAuth removed
+  // Removed: share/subscription feature — startDiscordOAuth removed
   deleteChannel,
   saveAlertRules,
   setQuietHours,
@@ -16,7 +16,7 @@ import {
   type QuietHoursOverride,
   type DigestMode,
 } from '@/services/notification-channels';
-import { getCurrentClerkUser } from '@/services/clerk';
+// Removed: share/subscription feature — getCurrentClerkUser import removed (was used for email channel)
 import { SITE_VARIANT } from '@/config/variant';
 
 const QUIET_HOURS_BATCH_ENABLED = import.meta.env.VITE_QUIET_HOURS_BATCH_ENABLED !== '0';
@@ -103,76 +103,7 @@ export function renderNotificationsSettings(_host: NotificationsSettingsHost): N
           </div>`;
         }
 
-        if (type === 'telegram') {
-          return `<div class="us-notif-ch-row" data-channel-type="telegram">
-            <div class="us-notif-ch-icon">${icon}</div>
-            <div class="us-notif-ch-body">
-              <div class="us-notif-ch-name">${name}</div>
-              <div class="us-notif-ch-sub">Not connected</div>
-            </div>
-            <div class="us-notif-ch-actions">
-              <button type="button" class="us-notif-ch-btn us-notif-ch-btn-primary us-notif-telegram-connect" id="usConnectTelegram">Connect</button>
-            </div>
-          </div>`;
-        }
-
-        if (type === 'email') {
-          return `<div class="us-notif-ch-row" data-channel-type="email">
-            <div class="us-notif-ch-icon">${icon}</div>
-            <div class="us-notif-ch-body">
-              <div class="us-notif-ch-name">${name}</div>
-              <div class="us-notif-ch-sub">Use your account email</div>
-            </div>
-            <div class="us-notif-ch-actions">
-              <button type="button" class="us-notif-ch-btn us-notif-ch-btn-primary us-notif-email-connect" id="usConnectEmail">Link</button>
-            </div>
-          </div>`;
-        }
-
-        if (type === 'slack') {
-          return `<div class="us-notif-ch-row" data-channel-type="slack">
-            <div class="us-notif-ch-icon">${icon}</div>
-            <div class="us-notif-ch-body">
-              <div class="us-notif-ch-name">${name}</div>
-              <div class="us-notif-ch-sub">Not connected</div>
-            </div>
-            <div class="us-notif-ch-actions">
-              <button type="button" class="us-notif-slack-oauth" id="usConnectSlack">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="margin-right:5px;vertical-align:-1px"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
-                Add to Slack
-              </button>
-            </div>
-          </div>`;
-        }
-
-        if (type === 'discord') {
-          return `<div class="us-notif-ch-row" data-channel-type="discord">
-            <div class="us-notif-ch-icon">${icon}</div>
-            <div class="us-notif-ch-body">
-              <div class="us-notif-ch-name">${name}</div>
-              <div class="us-notif-ch-sub">Not connected</div>
-            </div>
-            <div class="us-notif-ch-actions">
-              <button type="button" class="us-notif-discord-oauth" id="usConnectDiscord">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="margin-right:5px;vertical-align:-1px"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-                Connect Discord
-              </button>
-            </div>
-          </div>`;
-        }
-
-        if (type === 'webhook') {
-          return `<div class="us-notif-ch-row" data-channel-type="webhook">
-            <div class="us-notif-ch-icon">${icon}</div>
-            <div class="us-notif-ch-body">
-              <div class="us-notif-ch-name">${name}</div>
-              <div class="us-notif-ch-sub">Send structured JSON to any HTTPS endpoint</div>
-            </div>
-            <div class="us-notif-ch-actions">
-              <button type="button" class="us-notif-ch-btn us-notif-ch-btn-primary" id="usConnectWebhook">Add URL</button>
-            </div>
-          </div>`;
-        }
+        // Removed: share/subscription feature — telegram, email, slack, discord, webhook connect UI removed
 
         return '';
       }
@@ -343,22 +274,9 @@ export function renderNotificationsSettings(_host: NotificationsSettingsHost): N
 
       reloadNotifSection();
 
-      function saveRuleWithNewChannel(newChannel: ChannelType): void {
-        const enabledEl = container.querySelector<HTMLInputElement>('#usNotifEnabled');
-        const sensitivityEl = container.querySelector<HTMLSelectElement>('#usNotifSensitivity');
-        if (!enabledEl) return;
-        const enabled = enabledEl.checked;
-        const sensitivity = (sensitivityEl?.value ?? 'all') as 'all' | 'high' | 'critical';
-        const existing = Array.from(container.querySelectorAll<HTMLElement>('[data-channel-type]'))
-          .filter(el => el.classList.contains('us-notif-ch-on'))
-          .map(el => el.dataset.channelType as ChannelType);
-        const channels = [...new Set([...existing, newChannel])];
-        const aiEl = container.querySelector<HTMLInputElement>('#usAiDigestEnabled');
-        void saveAlertRules({ variant: SITE_VARIANT, enabled, eventTypes: [], sensitivity, channels, aiDigestEnabled: aiEl?.checked ?? true });
-      }
+      // Removed: saveRuleWithNewChannel (share/subscription feature removed)
 
-      let slackOAuthPopup: Window | null = null;
-      let discordOAuthPopup: Window | null = null;
+      // Removed: Slack/Discord OAuth popup variables (share/subscription feature removed)
       let alertRuleDebounceTimer: ReturnType<typeof setTimeout> | null = null;
       let qhDebounceTimer: ReturnType<typeof setTimeout> | null = null;
       let digestDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -530,178 +448,34 @@ export function renderNotificationsSettings(_host: NotificationsSettingsHost): N
           return;
         }
 
-        const startTelegramPairing = (rowEl: HTMLElement) => {
-          rowEl.innerHTML = `<div class="us-notif-ch-icon">${channelIcon('telegram')}</div><div class="us-notif-ch-body"><div class="us-notif-ch-name">Telegram</div><div class="us-notif-ch-sub">Generating code…</div></div>`;
-          createPairingToken().then(({ token, expiresAt }) => {
-            if (signal.aborted) return;
-            const botUsername = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_TELEGRAM_BOT_USERNAME as string | undefined) ?? 'WorldMonitorBot';
-            const deepLink = `https://t.me/${String(botUsername)}?start=${token}`;
-            const startCmd = `/start ${token}`;
-            const secsLeft = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-            const qrSvg = renderSVG(deepLink, { ecc: 'M', border: 1 });
-            rowEl.innerHTML = `
-              <div class="us-notif-ch-icon">${channelIcon('telegram')}</div>
-              <div class="us-notif-ch-body">
-                <div class="us-notif-ch-name">Connect Telegram</div>
-                <div class="us-notif-ch-sub">Open the bot. If Telegram doesn't send the code automatically, paste this command.</div>
-                <div class="us-notif-tg-pair-layout">
-                  <div class="us-notif-tg-cmd-col">
-                    <a href="${escapeHtml(deepLink)}" target="_blank" rel="noopener noreferrer" class="us-notif-tg-link">Open Telegram</a>
-                    <div class="us-notif-tg-cmd-row">
-                      <code class="us-notif-tg-cmd">${escapeHtml(startCmd)}</code>
-                      <button type="button" class="us-notif-tg-copy-btn" data-cmd="${escapeHtml(startCmd)}">Copy</button>
-                    </div>
-                  </div>
-                  <div class="us-notif-tg-qr" title="Scan with mobile Telegram">${qrSvg}</div>
-                </div>
-              </div>
-              <div class="us-notif-ch-actions">
-                <span class="us-notif-tg-countdown" id="usTgCountdown">Waiting… ${secsLeft}s</span>
-              </div>
-            `;
-            let remaining = secsLeft;
-            clearNotifPoll();
-            notifPollInterval = setInterval(() => {
-              if (signal.aborted) { clearNotifPoll(); return; }
-              remaining -= 3;
-              const countdownEl = container.querySelector<HTMLElement>('#usTgCountdown');
-              if (countdownEl) countdownEl.textContent = `Waiting… ${Math.max(0, remaining)}s`;
-              const expired = remaining <= 0;
-              if (expired) {
-                clearNotifPoll();
-                rowEl.innerHTML = `
-                  <div class="us-notif-ch-icon">${channelIcon('telegram')}</div>
-                  <div class="us-notif-ch-body">
-                    <div class="us-notif-ch-name">Telegram</div>
-                    <div class="us-notif-ch-sub us-notif-tg-expired">Code expired</div>
-                  </div>
-                  <div class="us-notif-ch-actions">
-                    <button type="button" class="us-notif-ch-btn us-notif-ch-btn-primary us-notif-tg-regen">Generate new code</button>
-                  </div>
-                `;
-                return;
-              }
-              getChannelsData().then((data) => {
-                const tg = data.channels.find(c => c.channelType === 'telegram');
-                if (tg?.verified) {
-                  clearNotifPoll();
-                  saveRuleWithNewChannel('telegram');
-                  reloadNotifSection();
-                }
-              }).catch(() => {});
-            }, 3000);
-          }).catch(() => {
-            rowEl.innerHTML = `<div class="us-notif-ch-icon">${channelIcon('telegram')}</div><div class="us-notif-ch-body"><div class="us-notif-ch-name">Telegram</div><div class="us-notif-ch-sub us-notif-tg-expired">Failed to generate code</div></div><div class="us-notif-ch-actions"><button type="button" class="us-notif-ch-btn us-notif-ch-btn-primary us-notif-tg-regen">Try again</button></div>`;
-          });
-        };
+        // Removed: startTelegramPairing function (Telegram notification feature removed)
 
         if (target.closest('#usConnectTelegram') || target.closest('.us-notif-tg-regen')) {
-          const rowEl = target.closest('.us-notif-ch-row') as HTMLElement | null;
-          if (!rowEl) return;
-          startTelegramPairing(rowEl);
+          // Removed: Telegram pairing feature
           return;
         }
 
         if (target.closest('#usConnectEmail')) {
-          const user = getCurrentClerkUser();
-          const email = user?.email;
-          if (!email) {
-            const rowEl = target.closest('.us-notif-ch-row') as HTMLElement | null;
-            if (rowEl) {
-              rowEl.querySelector('.us-notif-error')?.remove();
-              rowEl.insertAdjacentHTML('beforeend', '<span class="us-notif-error">No email found on your account</span>');
-            }
-            return;
-          }
-          setEmailChannel(email).then(() => {
-            if (!signal.aborted) { saveRuleWithNewChannel('email'); reloadNotifSection(); }
-          }).catch(() => {});
+          // Removed: Email notification feature
           return;
         }
 
         if (target.closest('#usConnectSlack')) {
-          const btn = target.closest<HTMLButtonElement>('#usConnectSlack');
-          if (slackOAuthPopup && !slackOAuthPopup.closed) {
-            slackOAuthPopup.focus();
-            return;
-          }
-          if (btn) btn.textContent = 'Connecting…';
-          startSlackOAuth().then((oauthUrl) => {
-            if (signal.aborted) return;
-            const popup = window.open(oauthUrl, 'slack-oauth', 'width=600,height=700,menubar=no,toolbar=no');
-            if (!popup) {
-              if (btn) btn.textContent = 'Add to Slack';
-              const rowEl = btn?.closest<HTMLElement>('[data-channel-type="slack"]');
-              if (rowEl) {
-                rowEl.querySelector('.us-notif-error')?.remove();
-                rowEl.insertAdjacentHTML('beforeend', '<span class="us-notif-error">Popup blocked — please allow popups for this site, then try again.</span>');
-              }
-            } else {
-              slackOAuthPopup = popup;
-            }
-          }).catch(() => {
-            if (btn && !signal.aborted) btn.textContent = 'Add to Slack';
-          });
+          // Removed: Slack OAuth feature
           return;
         }
 
         if (target.closest('#usConnectDiscord')) {
-          const btn = target.closest<HTMLButtonElement>('#usConnectDiscord');
-          if (discordOAuthPopup && !discordOAuthPopup.closed) {
-            discordOAuthPopup.focus();
-            return;
-          }
-          if (btn) btn.textContent = 'Connecting…';
-          startDiscordOAuth().then((oauthUrl) => {
-            if (signal.aborted) return;
-            const popup = window.open(oauthUrl, 'discord-oauth', 'width=600,height=700,menubar=no,toolbar=no');
-            if (!popup) {
-              if (btn) btn.textContent = 'Connect Discord';
-              const rowEl = btn?.closest<HTMLElement>('[data-channel-type="discord"]');
-              if (rowEl) {
-                rowEl.querySelector('.us-notif-error')?.remove();
-                rowEl.insertAdjacentHTML('beforeend', '<span class="us-notif-error">Popup blocked — please allow popups for this site, then try again.</span>');
-              }
-            } else {
-              discordOAuthPopup = popup;
-            }
-          }).catch(() => {
-            if (btn && !signal.aborted) btn.textContent = 'Connect Discord';
-          });
+          // Removed: Discord OAuth feature
           return;
         }
 
         if (target.closest('#usConnectWebhook')) {
-          const rowEl = target.closest<HTMLElement>('[data-channel-type="webhook"]');
-          if (!rowEl) return;
-          rowEl.querySelector('.us-notif-ch-actions')!.innerHTML = `
-            <div style="display:flex;flex-direction:column;gap:6px;width:100%">
-              <input type="url" id="usWebhookUrl" placeholder="https://hooks.example.com/..." class="unified-settings-input" style="font-size:12px;width:100%">
-              <input type="text" id="usWebhookLabel" placeholder="Label (optional)" class="unified-settings-input" style="font-size:12px;width:100%">
-              <div style="display:flex;gap:6px">
-                <button type="button" class="us-notif-ch-btn us-notif-ch-btn-primary" id="usWebhookSave">Save</button>
-                <button type="button" class="us-notif-ch-btn" id="usWebhookCancel">Cancel</button>
-              </div>
-            </div>`;
-          const urlInput = rowEl.querySelector<HTMLInputElement>('#usWebhookUrl');
-          urlInput?.focus();
+          // Removed: Webhook notification feature
           return;
         }
         if (target.closest('#usWebhookSave')) {
-          const urlInput = container.querySelector<HTMLInputElement>('#usWebhookUrl');
-          const labelInput = container.querySelector<HTMLInputElement>('#usWebhookLabel');
-          const url = urlInput?.value?.trim() ?? '';
-          if (!url || !url.startsWith('https://')) {
-            urlInput?.classList.add('us-notif-input-error');
-            return;
-          }
-          const saveBtn = target.closest<HTMLButtonElement>('#usWebhookSave');
-          if (saveBtn) saveBtn.textContent = 'Saving...';
-          setWebhookChannel(url, labelInput?.value?.trim() || undefined).then(() => {
-            if (!signal.aborted) { saveRuleWithNewChannel('webhook'); reloadNotifSection(); }
-          }).catch(() => {
-            if (saveBtn && !signal.aborted) saveBtn.textContent = 'Save';
-          });
+          // Removed: Webhook save feature
           return;
         }
         if (target.closest('#usWebhookCancel')) {
@@ -719,37 +493,7 @@ export function renderNotificationsSettings(_host: NotificationsSettingsHost): N
         }
       }, { signal });
 
-      const onMessage = (e: MessageEvent): void => {
-        const trustedOrigin = e.origin === window.location.origin ||
-          e.origin === 'https://worldmonitor.app' ||
-          e.origin === 'https://www.worldmonitor.app' ||
-          e.origin.endsWith('.worldmonitor.app');
-        const fromSlack = slackOAuthPopup !== null && e.source === slackOAuthPopup;
-        const fromDiscord = discordOAuthPopup !== null && e.source === discordOAuthPopup;
-        if (!trustedOrigin || (!fromSlack && !fromDiscord)) return;
-        if (e.data?.type === 'wm:slack_connected') {
-          if (!signal.aborted) { saveRuleWithNewChannel('slack'); reloadNotifSection(); }
-        } else if (e.data?.type === 'wm:slack_error') {
-          const rowEl = container.querySelector<HTMLElement>('[data-channel-type="slack"]');
-          if (rowEl) {
-            rowEl.querySelector('.us-notif-error')?.remove();
-            rowEl.insertAdjacentHTML('beforeend', `<span class="us-notif-error">Slack connection failed: ${escapeHtml(String(e.data.error ?? 'unknown'))}</span>`);
-            const btn = rowEl.querySelector<HTMLButtonElement>('#usConnectSlack');
-            if (btn) btn.textContent = 'Add to Slack';
-          }
-        } else if (e.data?.type === 'wm:discord_connected') {
-          if (!signal.aborted) { saveRuleWithNewChannel('discord'); reloadNotifSection(); }
-        } else if (e.data?.type === 'wm:discord_error') {
-          const rowEl = container.querySelector<HTMLElement>('[data-channel-type="discord"]');
-          if (rowEl) {
-            rowEl.querySelector('.us-notif-error')?.remove();
-            rowEl.insertAdjacentHTML('beforeend', `<span class="us-notif-error">Discord connection failed: ${escapeHtml(String(e.data.error ?? 'unknown'))}</span>`);
-            const btn = rowEl.querySelector<HTMLButtonElement>('#usConnectDiscord');
-            if (btn) btn.textContent = 'Connect Discord';
-          }
-        }
-      };
-      window.addEventListener('message', onMessage, { signal });
+      // Removed: share/subscription feature — OAuth message handler removed
 
       return () => ac.abort();
     },

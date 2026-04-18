@@ -49,6 +49,7 @@ import type { TrafficAnomaly as ProtoTrafficAnomaly, DdosLocationHit } from '@/g
 import type { DiseaseOutbreakItem } from '@/services/disease-outbreaks';
 import type { GetChokepointStatusResponse } from '@/services/supply-chain';
 import type { ScenarioVisualState, ScenarioResult } from '@/config/scenario-templates';
+import type { CountryFlow } from '@/services/country-flows';
 
 export type { ScenarioVisualState, ScenarioResult };
 
@@ -90,7 +91,6 @@ export class MapContainer {
   private deckGLMap: DeckGLMap | null = null;
   private svgMap: MapComponent | null = null;
   private globeMap: GlobeMap | null = null;
-  private supplyChainPanel: import('@/components/SupplyChainPanel').SupplyChainPanel | null = null;
   private initialState: MapContainerState;
   private useDeckGL: boolean;
   private useGlobe: boolean;
@@ -993,10 +993,6 @@ export class MapContainer {
 
   // ─── Scenario Engine ─────────────────────────────────────────────────────────
 
-  public setSupplyChainPanel(panel: import('@/components/SupplyChainPanel').SupplyChainPanel): void {
-    this.supplyChainPanel = panel;
-  }
-
   /**
    * Activate a scenario across all active renderers.
    *
@@ -1012,7 +1008,6 @@ export class MapContainer {
     this.deckGLMap?.setScenarioState(state);
     this.svgMap?.setScenarioState(state);
     this.globeMap?.setScenarioState(state);
-    this.supplyChainPanel?.showScenarioSummary(scenarioId, result);
   }
 
   /**
@@ -1022,7 +1017,25 @@ export class MapContainer {
     this.deckGLMap?.setScenarioState(null);
     this.svgMap?.setScenarioState(null);
     this.globeMap?.setScenarioState(null);
-    this.supplyChainPanel?.hideScenarioSummary();
+  }
+
+  // ─── Country Hover ───────────────────────────────────────────────────────────
+
+  public setOnCountryHover(callback: (country: { code: string; name: string } | null) => void): void {
+    // 代理到当前活跃的地图
+    if (this.deckGLMap) {
+      (this.deckGLMap as any)._onCountryHover = callback;
+    }
+  }
+
+  public setHoverFlows(flows: CountryFlow[]): void {
+    // 代理到当前活跃的地图
+    if (this.deckGLMap) {
+      (this.deckGLMap as any).setHoverFlows(flows);
+    }
+    if (this.globeMap) {
+      (this.globeMap as any).setHoverFlows(flows);
+    }
   }
 
   // Utility methods

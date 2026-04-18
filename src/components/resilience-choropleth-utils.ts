@@ -1,94 +1,55 @@
 import type { ResilienceRankingItem } from '@/services/resilience';
-import type { MapLayers } from '@/types';
 
-export type ResilienceChoroplethLevel = 'very_low' | 'low' | 'moderate' | 'high' | 'very_high' | 'insufficient_data';
+/**
+ * RGBA color tuples indexed by resilience level string.
+ * Levels: "very low", "low", "medium", "high", "very high"
+ */
+export const RESILIENCE_CHOROPLETH_COLORS: Record<string, [number, number, number, number]> = {
+  'very low':  [200, 50, 50, 180],
+  'low':       [230, 140, 50, 180],
+  'medium':    [230, 200, 50, 180],
+  'high':      [100, 200, 80, 180],
+  'very high': [50, 150, 220, 180],
+};
 
-export interface ResilienceChoroplethEntry {
+export interface ChoroplethEntry {
+  countryCode: string;
   overallScore: number;
-  level: ResilienceChoroplethLevel;
+  level: string;
   serverLevel: string;
   lowConfidence: boolean;
 }
 
-export const RESILIENCE_CHOROPLETH_COLORS: Record<ResilienceChoroplethLevel, [number, number, number, number]> = {
-  very_low: [239, 68, 68, 160],
-  low: [249, 115, 22, 160],
-  moderate: [234, 179, 8, 160],
-  high: [132, 204, 22, 160],
-  very_high: [34, 197, 94, 160],
-  insufficient_data: [120, 120, 120, 60],
-};
-
-function clampScore(score: number): number {
-  return Math.max(0, Math.min(100, Number(score.toFixed(1))));
-}
-
-export function getResilienceChoroplethLevel(score: number): ResilienceChoroplethLevel {
-  if (score >= 80) return 'very_high';
-  if (score >= 60) return 'high';
-  if (score >= 40) return 'moderate';
-  if (score >= 20) return 'low';
-  return 'very_low';
-}
-
-export function formatResilienceChoroplethLevel(level: ResilienceChoroplethLevel): string {
-  return level.replace(/_/g, ' ');
-}
-
+/**
+ * Build a Map of countryCode -> ChoroplethEntry from resilience ranking items.
+ */
 export function buildResilienceChoroplethMap(
   items: ResilienceRankingItem[],
-  greyedOut: ResilienceRankingItem[] = [],
-): Map<string, ResilienceChoroplethEntry> {
-  const scores = new Map<string, ResilienceChoroplethEntry>();
+  greyedOut: ResilienceRankingItem[],
+): Map<string, ChoroplethEntry> {
+  const map = new Map<string, ChoroplethEntry>();
 
   for (const item of items) {
-    const countryCode = String(item.countryCode || '').trim().toUpperCase();
-    const overallScore = Number(item.overallScore);
-    if (!/^[A-Z]{2}$/.test(countryCode) || !Number.isFinite(overallScore) || overallScore < 0) continue;
-
-    const normalizedScore = clampScore(overallScore);
-    scores.set(countryCode, {
-      overallScore: normalizedScore,
-      level: getResilienceChoroplethLevel(normalizedScore),
-      serverLevel: String(item.level || 'unknown'),
-      lowConfidence: Boolean(item.lowConfidence),
+    map.set(item.countryCode, {
+      countryCode: item.countryCode,
+      overallScore: item.overallScore,
+      level: item.level,
+      serverLevel: item.level,
+      lowConfidence: item.lowConfidence,
     });
   }
 
   for (const item of greyedOut) {
-    const countryCode = String(item.countryCode || '').trim().toUpperCase();
-    if (!/^[A-Z]{2}$/.test(countryCode)) continue;
-    scores.set(countryCode, {
-      overallScore: 0,
-      level: 'insufficient_data',
-      serverLevel: 'insufficient_data',
-      lowConfidence: true,
-    });
+    if (!map.has(item.countryCode)) {
+      map.set(item.countryCode, {
+        countryCode: item.countryCode,
+        overallScore: item.overallScore,
+        level: item.level,
+        serverLevel: item.level,
+        lowConfidence: true,
+      });
+    }
   }
 
-  return scores;
-}
-
-type ChoroplethToggleState = Pick<MapLayers, 'ciiChoropleth' | 'resilienceScore'>;
-
-export function normalizeExclusiveChoropleths(
-  layers: MapLayers,
-  previousLayers?: ChoroplethToggleState | null,
-): MapLayers {
-  if (!layers.resilienceScore || !layers.ciiChoropleth) {
-    return { ...layers };
-  }
-
-  const resilienceJustEnabled = layers.resilienceScore && !(previousLayers?.resilienceScore ?? false);
-  const ciiJustEnabled = layers.ciiChoropleth && !(previousLayers?.ciiChoropleth ?? false);
-
-  if (resilienceJustEnabled && !ciiJustEnabled) {
-    return { ...layers, ciiChoropleth: false };
-  }
-  if (ciiJustEnabled && !resilienceJustEnabled) {
-    return { ...layers, resilienceScore: false };
-  }
-
-  // Both newly enabled (e.g. bookmark restore): CII is the established layer, keep it
-  return { ...layers, resilienceScore: false };
+  return map;
 }

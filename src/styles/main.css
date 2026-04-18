@@ -67,6 +67,11 @@
   --font-body-base: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+[data-font="system"]:lang(zh-CN),
+[data-font="system"]:lang(zh) {
+  --font-body: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+}
+
 [dir="rtl"] {
   --font-body: 'Tajawal', 'Geeza Pro', 'SF Arabic', 'Tahoma', var(--font-body-base);
 }
@@ -74,6 +79,9 @@
 :lang(zh-CN),
 :lang(zh) {
   --font-body: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', var(--font-body-base);
+  --font-body-size: 13px;
+  --font-body-line-height: 1.6;
+  --font-body-letter-spacing: 0.02em;
 }
 
 /* ============================================================
@@ -213,8 +221,9 @@ html {
 
 body {
   font-family: var(--font-body);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: var(--font-body-size, 13px);
+  line-height: var(--font-body-line-height, 1.5);
+  letter-spacing: var(--font-body-letter-spacing, normal);
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
