@@ -129,6 +129,7 @@ export function TwoDMap(props: MapViewProps) {
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       minZoom: 1.02,
+      renderWorldCopies: false,
       attributionControl: false,
     });
 
