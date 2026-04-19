@@ -1,6 +1,6 @@
 .map-debug-panel {
   position: absolute;
-  top: 10px;
+  top: 52px;
   right: 10px;
   z-index: 650;
   pointer-events: auto;
@@ -25,6 +25,10 @@
 .map-debug-reset:hover {
   border-color: var(--green);
   color: var(--green);
+}
+
+.map-debug-panel--closed .map-debug-toggle {
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
 }
 
 .map-debug-sheet {

@@ -5,9 +5,17 @@ import { fetchCountryHover, fetchThreatMap } from '../lib/api';
 import { getCountryCentroid } from '../lib/country-geometry';
 import type { CountryHoverEvent, HoverCountryState, PopupAnchor } from '../lib/types';
 
+function getTodayDateString(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}
+
 const DEFAULT_DATE_RANGE: DateRange = {
-  startDate: null,
-  endDate: null,
+  startDate: getTodayDateString(),
+  endDate: getTodayDateString(),
 };
 
 export interface TwoDArcDatum {

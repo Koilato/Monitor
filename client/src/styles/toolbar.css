@@ -3,6 +3,8 @@
   align-items: center;
   gap: 6px;
   margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .map-dimension-toggle {
@@ -90,6 +92,98 @@
   color: var(--bg);
 }
 
+.map-brand-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 260px;
+  padding: 5px 10px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(10, 10, 10, 0.72);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  user-select: none;
+}
+
+.map-brand-panel-top,
+.map-brand-panel-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.map-brand-panel-bottom {
+  justify-content: space-between;
+}
+
+.map-brand-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.map-brand-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: var(--text-secondary);
+}
+
+.map-brand-status-label,
+.map-brand-banner,
+.map-brand-meta {
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.map-brand-banner {
+  color: var(--text-secondary);
+}
+
+.map-brand-meta {
+  color: var(--text-dim);
+}
+
+.map-brand-status .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: status-pulse 1.8s ease-in-out infinite;
+}
+
+.map-brand-status.live {
+  color: var(--green);
+}
+
+.map-brand-status.warning {
+  color: var(--yellow);
+}
+
+.map-brand-status.error {
+  color: var(--red);
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+}
+
 @media (max-width: 960px) {
   .map-header-actions {
     width: 100%;
@@ -99,6 +193,10 @@
 
   .map-filter-field input {
     min-width: 104px;
+  }
+
+  .map-brand-panel {
+    min-width: 220px;
   }
 }
 
@@ -118,5 +216,13 @@
   .map-filter-field input {
     min-width: 0;
     width: 100%;
+  }
+
+  .map-brand-panel {
+    width: 100%;
+  }
+
+  .map-brand-panel-bottom {
+    flex-wrap: wrap;
   }
 }

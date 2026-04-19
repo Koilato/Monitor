@@ -211,3 +211,128 @@ Visit https://react.dev/link/error-boundaries to learn more about error boundari
 %s
  An error occurred in the <App> component. Consider adding an error boundary to your tree to customize error handling behavior.
 Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:6965
+[28214663ms] [ERROR] Error: layers.countries-threat-fill.paint.fill-color: Expected at least 4 arguments, but found only 2.
+    at Object.hs [as C] (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:3408:84)
+    at Di (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18478:34)
+    at Li._validate (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:19114:69)
+    at Li.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18857:152)
+    at cs.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23018:59)
+    at cs.<anonymous> (http://localhost:4174/src/components/TwoDMap.tsx?t=1776603062249:155:11)
+    at cs.fire (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:496:39)
+    at cs._render (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23185:1570)
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23204:22
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:12998:19 @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:500
+[28389240ms] [ERROR] Error: layers.countries-threat-fill.paint.fill-color: Expected at least 4 arguments, but found only 2.
+    at Object.hs [as C] (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:3408:84)
+    at Di (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18478:34)
+    at Li._validate (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:19114:69)
+    at Li.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18857:152)
+    at cs.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23018:59)
+    at cs.<anonymous> (http://localhost:4174/src/components/TwoDMap.tsx?t=1776603236949:172:11)
+    at cs.fire (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:496:39)
+    at cs._render (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23185:1570)
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23204:22
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:12998:19 @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:500
+[28389241ms] [ERROR] Error: layers.countries-threat-line.paint.line-color: Expected at least 4 arguments, but found only 2.
+    at Object.hs [as C] (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:3408:84)
+    at Di (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18478:34)
+    at Li._validate (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:19114:69)
+    at Li.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18857:152)
+    at cs.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23018:59)
+    at cs.<anonymous> (http://localhost:4174/src/components/TwoDMap.tsx?t=1776603236949:181:11)
+    at cs.fire (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:496:39)
+    at cs._render (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23185:1570)
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23204:22
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:12998:19 @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:500
+[28545607ms] [ERROR] Error: layers.countries-threat-fill.paint.fill-color: Expected at least 4 arguments, but found only 2.
+    at Object.hs [as C] (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:3408:84)
+    at Di (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18478:34)
+    at Li._validate (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:19114:69)
+    at Li.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18857:152)
+    at cs.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23018:59)
+    at cs.<anonymous> (http://localhost:4174/src/components/TwoDMap.tsx?t=1776603393295:176:11)
+    at cs.fire (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:496:39)
+    at cs._render (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23185:1570)
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23204:22
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:12998:19 @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:500
+[28545607ms] [ERROR] Error: layers.countries-threat-line.paint.line-color: Expected at least 4 arguments, but found only 2.
+    at Object.hs [as C] (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:3408:84)
+    at Di (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18478:34)
+    at Li._validate (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:19114:69)
+    at Li.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18857:152)
+    at cs.addLayer (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23018:59)
+    at cs.<anonymous> (http://localhost:4174/src/components/TwoDMap.tsx?t=1776603393295:205:11)
+    at cs.fire (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:496:39)
+    at cs._render (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23185:1570)
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23204:22
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:12998:19 @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:500
+[28545609ms] [ERROR] Error: Cannot style non-existing layer "countries-threat-fill".
+    at Li.setPaintProperty (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18923:117)
+    at cs.setPaintProperty (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23042:31)
+    at cs.<anonymous> (http://localhost:4174/src/components/TwoDMap.tsx?t=1776603393295:307:11)
+    at cs.fire (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:496:39)
+    at cs._render (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23185:1570)
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23204:22
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:12998:19 @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:500
+[28545609ms] [ERROR] Error: Cannot style non-existing layer "countries-threat-line".
+    at Li.setPaintProperty (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:18923:117)
+    at cs.setPaintProperty (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23042:31)
+    at cs.<anonymous> (http://localhost:4174/src/components/TwoDMap.tsx?t=1776603393295:308:11)
+    at cs.fire (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:496:39)
+    at cs._render (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23185:1570)
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:23204:22
+    at http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:12998:19 @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=38705482:500
+[31013630ms] ReferenceError: Cannot access 'updateLatestSectionHeight' before initialization
+    at App (http://localhost:4174/src/App.tsx?t=1776605861417:45:47)
+    at Object.react_stack_bottom_frame (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:18509:20)
+    at renderWithHooks (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:5654:24)
+    at updateFunctionComponent (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:7475:21)
+    at beginWork (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:8525:20)
+    at runWithFiberInDEV (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:997:72)
+    at performUnitOfWork (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:12561:98)
+    at workLoopSync (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:12424:43)
+    at renderRootSync (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:12408:13)
+    at performWorkOnRoot (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:11827:37)
+[31013628ms] [WARNING] %s
+
+%s
+ An error occurred in the <App> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:6965
+[31030052ms] ReferenceError: Cannot access 'updateLatestSectionHeight' before initialization
+    at App (http://localhost:4174/src/App.tsx?t=1776605877845:45:47)
+    at Object.react_stack_bottom_frame (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:18509:20)
+    at renderWithHooks (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:5654:24)
+    at updateFunctionComponent (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:7475:21)
+    at beginWork (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:8525:20)
+    at runWithFiberInDEV (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:997:72)
+    at performUnitOfWork (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:12561:98)
+    at workLoopSync (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:12424:43)
+    at renderRootSync (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:12408:13)
+    at performWorkOnRoot (http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:11827:37)
+[31030052ms] [WARNING] %s
+
+%s
+ An error occurred in the <App> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:6965
+[37388231ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:4174/@vite/client:963
+[37388239ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37389243ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37390246ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37391247ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37392251ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37393256ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37394268ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37395282ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37396308ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37397388ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37398457ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37399657ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37401024ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37403176ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37406444ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37408591ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37413481ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37417998ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37422715ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37425205ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034
+[37430380ms] [ERROR] WebSocket connection to 'ws://localhost:4174/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://localhost:4174/@vite/client:1034

@@ -34,10 +34,12 @@ export function Globe3DMap(props: MapViewProps) {
   const boundaryPathsRef = useRef<GlobeBoundaryPath[]>([]);
   const polygonFeaturesRef = useRef<Feature<Geometry>[]>([]);
   const threatLookupRef = useRef<Map<string, ThreatMapResponse['countries'][number]>>(new Map());
+  const threatDataRef = useRef<ThreatMapResponse | null>(threatData);
   const hoveredCodeRef = useRef<string | null>(null);
   const hoverHandlerRef = useRef(onCountryHover);
 
   hoverHandlerRef.current = onCountryHover;
+  threatDataRef.current = threatData;
 
   useEffect(() => {
     if (!containerRef.current || globeRef.current) {
@@ -112,6 +114,11 @@ export function Globe3DMap(props: MapViewProps) {
         lng: debugSettings.threeD.povLng,
         altitude: debugSettings.threeD.povAltitude,
       }, 0);
+
+      threatLookupRef.current = new Map(
+        threatDataRef.current?.countries.map((country) => [country.country, country]) ?? [],
+      );
+      globe.polygonsData(polygonFeaturesRef.current);
 
       resizeObserver = new ResizeObserver(() => {
         if (!containerRef.current || !globeRef.current) {

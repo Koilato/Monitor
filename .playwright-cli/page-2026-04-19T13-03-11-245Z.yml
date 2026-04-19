@@ -1,0 +1,94 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: WORLD MONITOR
+      - generic [ref=e9]: LIVE MOCK FEED
+    - generic [ref=e11]: GLOBAL INCIDENT FLOW MAP
+    - generic [ref=e13]: API / MOCK / ISO2
+  - main [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: Attack Flow Map
+          - generic [ref=e19]: "0"
+        - generic: 19-04-2026 13:03:11 UTC
+        - generic [ref=e20]:
+          - tablist "Map mode" [ref=e21]:
+            - button "2D" [ref=e22] [cursor=pointer]
+            - button "3D" [ref=e23] [cursor=pointer]
+          - generic [ref=e24]:
+            - generic [ref=e25]: START
+            - textbox "START" [ref=e26]: 2026-04-19
+          - generic [ref=e27]:
+            - generic [ref=e28]: END
+            - textbox "END" [ref=e29]: 2026-04-19
+          - button "Debug Mode" [ref=e30] [cursor=pointer]
+      - generic [ref=e31]:
+        - generic [ref=e33]:
+          - region "Map" [ref=e36]
+          - generic [ref=e38]:
+            - button "Zoom in" [ref=e39] [cursor=pointer]: +
+            - button "Zoom out" [ref=e40] [cursor=pointer]: "-"
+            - button "Reset view" [ref=e41] [cursor=pointer]: o
+          - generic [ref=e42]: HOVER A COUNTRY TO QUERY ATTACK FLOWS
+          - generic [ref=e43]:
+            - generic [ref=e44]: FLOW LEGEND
+            - generic [ref=e45]:
+              - img [ref=e46]
+              - generic [ref=e48]: ATTACK ARC
+            - generic [ref=e49]:
+              - img [ref=e50]
+              - generic [ref=e52]: HOVERED TARGET
+        - generic "Threat level legend":
+          - generic: THREAT
+          - generic:
+            - generic: LOW
+          - generic:
+            - generic: MED
+          - generic:
+            - generic: HIGH
+          - generic:
+            - generic: CRIT
+    - separator "Resize map and feed panels" [ref=e53]
+    - generic [ref=e55]:
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]: Latest SQL Feed
+          - generic [ref=e59]: category / newest rows
+        - generic [ref=e60]: 5 rows
+      - generic [ref=e61]:
+        - article [ref=e62]:
+          - generic [ref=e63]:
+            - generic [ref=e64]: "#1"
+            - generic [ref=e65]: sql
+            - generic [ref=e66]: 19/04/2026, 08:05 UTC
+          - heading "SQL inventory sync completed" [level=3] [ref=e67]
+          - paragraph [ref=e68]: Latest row batch imported from the reporting database and marked ready for review.
+        - article [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]: "#2"
+            - generic [ref=e72]: sql
+            - generic [ref=e73]: 19/04/2026, 07:42 UTC
+          - heading "SQL anomaly alert raised" [level=3] [ref=e74]
+          - paragraph [ref=e75]: A new record matched the anomaly rules and was pushed to the top of the feed.
+        - article [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]: "#3"
+            - generic [ref=e79]: sql
+            - generic [ref=e80]: 19/04/2026, 07:15 UTC
+          - heading "SQL export for category audit" [level=3] [ref=e81]
+          - paragraph [ref=e82]: Audit export finished for the SQL category and the latest changes were persisted.
+        - article [ref=e83]:
+          - generic [ref=e84]:
+            - generic [ref=e85]: "#4"
+            - generic [ref=e86]: sql
+            - generic [ref=e87]: 19/04/2026, 06:58 UTC
+          - heading "SQL ingestion job finished" [level=3] [ref=e88]
+          - paragraph [ref=e89]: Fresh content from the upstream service was inserted into the latest-content table.
+        - article [ref=e90]:
+          - generic [ref=e91]:
+            - generic [ref=e92]: "#5"
+            - generic [ref=e93]: sql
+            - generic [ref=e94]: 19/04/2026, 06:31 UTC
+          - heading "SQL row backfill succeeded" [level=3] [ref=e95]
+          - paragraph [ref=e96]: Missing records were recovered and merged into the current latest feed.

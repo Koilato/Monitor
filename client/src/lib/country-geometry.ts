@@ -211,6 +211,7 @@ async function ensureLoaded(): Promise<void> {
     }
 
     countryList = indexedCountries;
+    countriesGeoJson = geojson;
   })();
 
   await loadPromise;

@@ -211,6 +211,39 @@ export const MOCK_INCIDENTS: HoverIncident[] = [
     },
   },
   {
+    uuid: 'mock-019a',
+    date: '2026-04-19',
+    attackerCountry: 'RU',
+    victimCountry: 'CN',
+    details: {
+      title: 'RU intrusion burst against China portal',
+      summary: 'A critical intrusion attempt was simulated against a Chinese public portal.',
+      severity: 'high',
+    },
+  },
+  {
+    uuid: 'mock-019b',
+    date: '2026-04-19',
+    attackerCountry: 'US',
+    victimCountry: 'CN',
+    details: {
+      title: 'US credential theft attempt against China cloud node',
+      summary: 'A medium severity credential theft attempt targeted a China-hosted cloud node.',
+      severity: 'medium',
+    },
+  },
+  {
+    uuid: 'mock-019c',
+    date: '2026-04-19',
+    attackerCountry: 'JP',
+    victimCountry: 'CN',
+    details: {
+      title: 'JP scanner sweep against China platform',
+      summary: 'Low severity reconnaissance traffic was directed at a Chinese platform endpoint.',
+      severity: 'low',
+    },
+  },
+  {
     uuid: 'mock-020',
     date: '2026-04-20',
     attackerCountry: 'TR',

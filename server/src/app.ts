@@ -1,6 +1,7 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { MOCK_INCIDENTS } from './mock-incidents.js';
 import { MOCK_LATEST_CONTENT } from './mock-feed.js';
+import { validateMockFeed, validateMockIncidents } from './mock-validation.js';
 import {
   buildCountryHoverResponse,
   buildLatestContentResponse,
@@ -14,6 +15,9 @@ import {
   normalizeDate,
   normalizeQueryText,
 } from './validation.js';
+
+validateMockIncidents(MOCK_INCIDENTS);
+validateMockFeed(MOCK_LATEST_CONTENT);
 
 export function createApp() {
   const app = express();

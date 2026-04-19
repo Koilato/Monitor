@@ -7,20 +7,26 @@ import { buildLatestContentResponse } from '../src/service.js';
 import { buildThreatMapResponse } from '../src/service.js';
 import { MOCK_INCIDENTS } from '../src/mock-incidents.js';
 import { MOCK_LATEST_CONTENT } from '../src/mock-feed.js';
+import { validateMockFeed, validateMockIncidents } from '../src/mock-validation.js';
 import { createApp } from '../src/app.js';
 
-test('CN hover response returns 8 incidents with JP and US flows', () => {
+test('CN hover response includes the added China-targeted incidents', () => {
   const result = buildCountryHoverResponse(MOCK_INCIDENTS, {
     victimCountry: 'CN',
     startDate: null,
     endDate: null,
   });
 
-  assert.equal(result.total, 8);
+  assert.equal(result.total, 11);
   assert.deepEqual(
     result.flows.map((flow) => `${flow.attackerCountry}:${flow.count}`),
-    ['JP:4', 'US:4'],
+    ['JP:5', 'US:5', 'RU:1'],
   );
+});
+
+test('mock datasets pass runtime validation', () => {
+  assert.doesNotThrow(() => validateMockIncidents(MOCK_INCIDENTS));
+  assert.doesNotThrow(() => validateMockFeed(MOCK_LATEST_CONTENT));
 });
 
 test('US hover response returns 2 incidents with CN flow', () => {
@@ -48,6 +54,33 @@ test('date range filter applies as a closed interval', () => {
   assert.deepEqual(
     result.incidents.map((incident) => incident.uuid),
     ['mock-003', 'mock-004', 'mock-005', 'mock-006'],
+  );
+});
+
+test('today range returns the mock China incidents', () => {
+  const threatMap = buildThreatMapResponse(MOCK_INCIDENTS, {
+    startDate: '2026-04-19',
+    endDate: '2026-04-19',
+  });
+
+  assert.equal(threatMap.total, 4);
+  assert.deepEqual(
+    threatMap.countries.map((country) => `${country.country}:${country.threatLevel}:${country.incidentCount}`),
+    ['CN:high:3', 'DK:medium:1'],
+  );
+});
+
+test('today hover range returns the China mock incidents', () => {
+  const result = buildCountryHoverResponse(MOCK_INCIDENTS, {
+    victimCountry: 'CN',
+    startDate: '2026-04-19',
+    endDate: '2026-04-19',
+  });
+
+  assert.equal(result.total, 3);
+  assert.deepEqual(
+    result.incidents.map((incident) => incident.uuid),
+    ['mock-019a', 'mock-019b', 'mock-019c'],
   );
 });
 

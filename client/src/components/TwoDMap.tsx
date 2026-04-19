@@ -3,9 +3,17 @@ import maplibregl from 'maplibre-gl';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { ArcLayer, IconLayer } from '@deck.gl/layers';
 import type { IconLayerProps } from '@deck.gl/layers';
+import type { FeatureCollection, Geometry } from 'geojson';
+import type { ThreatMapResponse } from '@shared/types';
+import { getCountriesGeoJson } from '../lib/country-geometry';
 import type { CountryHoverEvent, MapViewProps } from '../lib/types';
 import { DEFAULT_MAP_DEBUG_SETTINGS } from '../lib/types';
-import { buildTwoDArcData, createHoverAnchor, type TwoDArcDatum } from '../hooks/useMapDataSync';
+import {
+  buildTwoDArcData,
+  createHoverAnchor,
+  getThreatColor,
+  type TwoDArcDatum,
+} from '../hooks/useMapDataSync';
 import '../styles/map-2d.css';
 
 const WORLD_BOUNDS = [
@@ -20,6 +28,8 @@ const WORLD_FIT_PADDING = {
   left: 36,
 } as const;
 
+const TWO_D_HIDDEN_COUNTRY_CODES = new Set(['AQ']);
+
 const MAP_STYLE = {
   version: 8 as const,
   sources: {},
@@ -33,6 +43,39 @@ const MAP_STYLE = {
     },
   ],
 };
+
+function buildThreatColorExpression(
+  threatData: ThreatMapResponse | null,
+): maplibregl.ExpressionSpecification | string {
+  const countries = threatData?.countries ?? [];
+  if (countries.length === 0) {
+    return 'rgba(0,0,0,0)';
+  }
+
+  const expression: Array<string | number | boolean | null | Array<string | number | boolean | null>> = [
+    'match',
+    ['get', 'ISO3166-1-Alpha-2'],
+  ];
+
+  for (const country of countries) {
+    expression.push(country.country, getThreatColor(country.threatLevel));
+  }
+
+  expression.push('rgba(0,0,0,0)');
+  return expression as unknown as maplibregl.ExpressionSpecification;
+}
+
+function getThreatLevelForCountry(
+  threatData: ThreatMapResponse | null,
+  countryCode: string | null,
+): ThreatMapResponse['countries'][number] | null {
+  if (!threatData || !countryCode) {
+    return null;
+  }
+
+  return threatData.countries.find((country) => country.country === countryCode) ?? null;
+}
+
 const ARROW_ICON_ATLAS = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
   <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
     <path
@@ -79,16 +122,30 @@ function fitWorld(map: maplibregl.Map) {
   });
 }
 
+function filterTwoDGeoJson(geojson: FeatureCollection<Geometry>): FeatureCollection<Geometry> {
+  return {
+    ...geojson,
+    features: geojson.features.filter((feature) => {
+      const code = feature.properties?.['ISO3166-1-Alpha-2'];
+      return typeof code !== 'string' || !TWO_D_HIDDEN_COUNTRY_CODES.has(code);
+    }),
+  };
+}
+
 export function TwoDMap(props: MapViewProps) {
-  const { hoveredCountryCode, data, onCountryHover, debugSettings } = props;
+  const { hoveredCountryCode, data, threatData, onCountryHover, debugSettings } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
+  const threatDataRef = useRef<ThreatMapResponse | null>(threatData);
+  const hoveredCountryRef = useRef<string | null>(hoveredCountryCode);
   const currentHoverRef = useRef<string | null>(null);
   const hoverHandlerRef = useRef(onCountryHover);
   const autoFitRef = useRef(isDefaultTwoDView(debugSettings.twoD));
 
   hoverHandlerRef.current = onCountryHover;
+  threatDataRef.current = threatData;
+  hoveredCountryRef.current = hoveredCountryCode;
 
   const iconLayerProps = useMemo<IconLayerProps<TwoDArcDatum>>(() => ({
     id: 'attack-arrowheads-base',
@@ -126,148 +183,198 @@ export function TwoDMap(props: MapViewProps) {
     autoFitRef.current = isDefaultTwoDView(debugSettings.twoD);
 
     map.on('load', () => {
-      if (autoFitRef.current) {
-        fitWorld(map);
-      }
-
-      map.addSource('countries', {
-        type: 'geojson',
-        data: '/data/countries.geojson',
-      });
-
-      map.addLayer({
-        id: 'countries-base-fill',
-        type: 'fill',
-        source: 'countries',
-        paint: {
-          'fill-color': '#071310',
-          'fill-opacity': 0.3,
-        },
-      });
-
-      map.addLayer({
-        id: 'countries-base-line',
-        type: 'line',
-        source: 'countries',
-        paint: {
-          'line-color': '#1f6f5d',
-          'line-width': 1.05,
-          'line-opacity': 0.9,
-        },
-      });
-
-      map.addLayer({
-        id: 'countries-base-glow',
-        type: 'line',
-        source: 'countries',
-        paint: {
-          'line-color': '#0dd6a0',
-          'line-width': 2.6,
-          'line-opacity': 0.16,
-        },
-      });
-
-      map.addLayer({
-        id: 'countries-interactive',
-        type: 'fill',
-        source: 'countries',
-        paint: {
-          'fill-color': '#0f172a',
-          'fill-opacity': 0,
-        },
-      });
-
-      map.addLayer({
-        id: 'countries-hover-fill',
-        type: 'fill',
-        source: 'countries',
-        paint: {
-          'fill-color': '#00ffaa',
-          'fill-opacity': 0.3,
-        },
-        filter: ['==', ['get', 'ISO3166-1-Alpha-2'], ''],
-      });
-
-      map.addLayer({
-        id: 'countries-hover-glow',
-        type: 'line',
-        source: 'countries',
-        paint: {
-          'line-color': '#7dffbf',
-          'line-width': 5.5,
-          'line-opacity': 0.32,
-        },
-        filter: ['==', ['get', 'ISO3166-1-Alpha-2'], ''],
-      });
-
-      map.addLayer({
-        id: 'countries-hover-border',
-        type: 'line',
-        source: 'countries',
-        paint: {
-          'line-color': '#44ff88',
-          'line-width': 2.2,
-          'line-opacity': 1,
-        },
-        filter: ['==', ['get', 'ISO3166-1-Alpha-2'], ''],
-      });
-
-      const overlay = new MapboxOverlay({
-        interleaved: true,
-        layers: [],
-      });
-      overlayRef.current = overlay;
-      map.addControl(overlay);
-
-      map.on('mousemove', (event) => {
-        const features = map.queryRenderedFeatures(event.point, {
-          layers: ['countries-interactive'],
-        });
-        const canvasRect = map.getCanvas().getBoundingClientRect();
-        const clientX = canvasRect.left + event.point.x;
-        const clientY = canvasRect.top + event.point.y;
-
-        const feature = features[0];
-        const code = feature?.properties?.['ISO3166-1-Alpha-2'] as string | undefined;
-        const name = feature?.properties?.name as string | undefined;
-
-        if (code) {
-          if (currentHoverRef.current !== code) {
-            currentHoverRef.current = code;
-            const filter = ['==', ['get', 'ISO3166-1-Alpha-2'], code] as maplibregl.FilterSpecification;
-            map.setFilter('countries-hover-fill', filter);
-            map.setFilter('countries-hover-glow', filter);
-            map.setFilter('countries-hover-border', filter);
+      void (async () => {
+        try {
+          if (autoFitRef.current) {
+            fitWorld(map);
           }
 
-          map.getCanvas().style.cursor = 'pointer';
-          emitHoverEvent(hoverHandlerRef.current, {
-            code,
-            name: name ?? code,
-          }, clientX, clientY);
-          return;
-        }
+          const countriesGeoJson = await getCountriesGeoJson();
+          const twoDGeoJson = filterTwoDGeoJson(countriesGeoJson);
+          map.addSource('countries', {
+            type: 'geojson',
+            data: twoDGeoJson,
+          });
 
-        if (currentHoverRef.current) {
-          currentHoverRef.current = null;
-          map.setFilter('countries-hover-fill', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
-          map.setFilter('countries-hover-glow', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
-          map.setFilter('countries-hover-border', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
-          map.getCanvas().style.cursor = '';
-          emitHoverEvent(hoverHandlerRef.current, null, null, null);
-        }
-      });
+          map.addLayer({
+            id: 'countries-base-fill',
+            type: 'fill',
+            source: 'countries',
+            paint: {
+              'fill-color': '#071310',
+              'fill-opacity': 0.3,
+            },
+          });
 
-      map.on('mouseout', () => {
-        currentHoverRef.current = null;
-        if (map.getLayer('countries-hover-fill')) {
-          map.setFilter('countries-hover-fill', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
-          map.setFilter('countries-hover-glow', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
-          map.setFilter('countries-hover-border', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
+          map.addLayer({
+            id: 'countries-threat-fill',
+            type: 'fill',
+            source: 'countries',
+            paint: {
+              'fill-color': 'rgba(0,0,0,0)',
+              'fill-opacity': 0.82,
+            },
+          });
+
+          map.addLayer({
+            id: 'countries-base-line',
+            type: 'line',
+            source: 'countries',
+            paint: {
+              'line-color': '#1f6f5d',
+              'line-width': 1.05,
+              'line-opacity': 0.9,
+            },
+          });
+
+          map.addLayer({
+            id: 'countries-base-glow',
+            type: 'line',
+            source: 'countries',
+            paint: {
+              'line-color': '#0dd6a0',
+              'line-width': 2.6,
+              'line-opacity': 0.16,
+            },
+          });
+
+          map.addLayer({
+            id: 'countries-threat-line',
+            type: 'line',
+            source: 'countries',
+            paint: {
+              'line-color': 'rgba(0,0,0,0)',
+              'line-width': 1.8,
+              'line-opacity': 0.9,
+            },
+          });
+
+          map.addLayer({
+            id: 'countries-interactive',
+            type: 'fill',
+            source: 'countries',
+            paint: {
+              'fill-color': '#0f172a',
+              'fill-opacity': 0,
+            },
+          });
+
+          map.addLayer({
+            id: 'countries-hover-fill',
+            type: 'fill',
+            source: 'countries',
+            paint: {
+              'fill-color': '#00ffaa',
+              'fill-opacity': 0.3,
+            },
+            filter: ['==', ['get', 'ISO3166-1-Alpha-2'], ''],
+          });
+
+          map.addLayer({
+            id: 'countries-hover-glow',
+            type: 'line',
+            source: 'countries',
+            paint: {
+              'line-color': '#7dffbf',
+              'line-width': 5.5,
+              'line-opacity': 0.32,
+            },
+            filter: ['==', ['get', 'ISO3166-1-Alpha-2'], ''],
+          });
+
+          map.addLayer({
+            id: 'countries-hover-border',
+            type: 'line',
+            source: 'countries',
+            paint: {
+              'line-color': '#44ff88',
+              'line-width': 2.2,
+              'line-opacity': 1,
+            },
+            filter: ['==', ['get', 'ISO3166-1-Alpha-2'], ''],
+          });
+
+          const overlay = new MapboxOverlay({
+            interleaved: true,
+            layers: [],
+          });
+          overlayRef.current = overlay;
+          map.addControl(overlay);
+
+          map.on('mousemove', (event) => {
+            const features = map.queryRenderedFeatures(event.point, {
+              layers: ['countries-interactive'],
+            });
+            const canvasRect = map.getCanvas().getBoundingClientRect();
+            const clientX = canvasRect.left + event.point.x;
+            const clientY = canvasRect.top + event.point.y;
+
+            const feature = features[0];
+            const code = feature?.properties?.['ISO3166-1-Alpha-2'] as string | undefined;
+            const name = feature?.properties?.name as string | undefined;
+
+            if (code) {
+              if (currentHoverRef.current !== code) {
+                currentHoverRef.current = code;
+                const filter = ['==', ['get', 'ISO3166-1-Alpha-2'], code] as maplibregl.FilterSpecification;
+                map.setFilter('countries-hover-fill', filter);
+                map.setFilter('countries-hover-glow', filter);
+                map.setFilter('countries-hover-border', filter);
+              }
+
+              map.getCanvas().style.cursor = 'pointer';
+              emitHoverEvent(hoverHandlerRef.current, {
+                code,
+                name: name ?? code,
+              }, clientX, clientY);
+              return;
+            }
+
+            if (currentHoverRef.current) {
+              currentHoverRef.current = null;
+              map.setFilter('countries-hover-fill', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
+              map.setFilter('countries-hover-glow', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
+              map.setFilter('countries-hover-border', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
+              map.getCanvas().style.cursor = '';
+              emitHoverEvent(hoverHandlerRef.current, null, null, null);
+            }
+          });
+
+          map.on('mouseout', () => {
+            currentHoverRef.current = null;
+            if (map.getLayer('countries-hover-fill')) {
+              map.setFilter('countries-hover-fill', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
+              map.setFilter('countries-hover-glow', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
+              map.setFilter('countries-hover-border', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
+            }
+            map.getCanvas().style.cursor = '';
+            emitHoverEvent(hoverHandlerRef.current, null, null, null);
+          });
+
+          const latestThreatData = threatDataRef.current;
+          map.setPaintProperty('countries-threat-fill', 'fill-color', buildThreatColorExpression(latestThreatData));
+          map.setPaintProperty('countries-threat-line', 'line-color', buildThreatColorExpression(latestThreatData));
+
+          const latestHoveredThreat = getThreatLevelForCountry(latestThreatData, hoveredCountryRef.current);
+          map.setPaintProperty(
+            'countries-hover-fill',
+            'fill-color',
+            latestHoveredThreat ? getThreatColor(latestHoveredThreat.threatLevel) : 'rgba(96, 255, 182, 0.9)',
+          );
+          map.setPaintProperty(
+            'countries-hover-glow',
+            'line-color',
+            latestHoveredThreat ? getThreatColor(latestHoveredThreat.threatLevel) : 'rgba(125, 255, 191, 0.95)',
+          );
+          map.setPaintProperty(
+            'countries-hover-border',
+            'line-color',
+            latestHoveredThreat ? 'rgba(255, 255, 255, 0.95)' : 'rgba(68, 255, 136, 1)',
+          );
+        } catch (error) {
+          console.error('Failed to initialize 2D map', error);
         }
-        map.getCanvas().style.cursor = '';
-        emitHoverEvent(hoverHandlerRef.current, null, null, null);
-      });
+      })();
     });
 
     const resizeObserver = new ResizeObserver(() => {
@@ -331,6 +438,41 @@ export function TwoDMap(props: MapViewProps) {
     map.setFilter('countries-hover-glow', filter);
     map.setFilter('countries-hover-border', filter);
   }, [hoveredCountryCode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded() || !map.getLayer('countries-threat-fill')) {
+      return;
+    }
+
+    const threatColor = buildThreatColorExpression(threatData);
+    map.setPaintProperty('countries-threat-fill', 'fill-color', threatColor);
+    map.setPaintProperty('countries-threat-line', 'line-color', threatColor);
+  }, [threatData]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded() || !map.getLayer('countries-hover-fill')) {
+      return;
+    }
+
+    const hoveredThreat = getThreatLevelForCountry(threatData, hoveredCountryCode);
+    const hoverColor = hoveredThreat
+      ? getThreatColor(hoveredThreat.threatLevel)
+      : 'rgba(96, 255, 182, 0.9)';
+    const hoverGlowColor = hoveredThreat
+      ? getThreatColor(hoveredThreat.threatLevel)
+      : 'rgba(125, 255, 191, 0.95)';
+    const hoverBorderColor = hoveredThreat
+      ? 'rgba(255, 255, 255, 0.95)'
+      : 'rgba(68, 255, 136, 1)';
+
+    map.setPaintProperty('countries-hover-fill', 'fill-color', hoverColor);
+    map.setPaintProperty('countries-hover-fill', 'fill-opacity', hoveredThreat ? 0.22 : 0.28);
+    map.setPaintProperty('countries-hover-glow', 'line-color', hoverGlowColor);
+    map.setPaintProperty('countries-hover-glow', 'line-opacity', hoveredThreat ? 0.42 : 0.32);
+    map.setPaintProperty('countries-hover-border', 'line-color', hoverBorderColor);
+  }, [hoveredCountryCode, threatData]);
 
   useEffect(() => {
     let cancelled = false;

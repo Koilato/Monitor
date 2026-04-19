@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { MapDebugPanel } from './components/MapDebugPanel';
 import { MapViewport } from './components/MapViewport';
@@ -26,10 +26,11 @@ export default function App() {
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [clock, setClock] = useState(() => formatUtcClock(new Date()));
   const mainContentRef = useRef<HTMLElement | null>(null);
+  const mapSectionRef = useRef<HTMLElement | null>(null);
+  const latestSectionRef = useRef<HTMLElement | null>(null);
   const dragStateRef = useRef<{
     startY: number;
     startHeight: number;
-    pointerId: number;
   } | null>(null);
   const {
     debugModeEnabled,
@@ -58,11 +59,21 @@ export default function App() {
     statusLabel,
     handleCountryHover,
   } = useMapDataSync();
+  const latestSectionHeightRef = useRef(220);
+  const updateLatestSectionHeightRef = useRef(updateLatestSectionHeight);
   const {
     data: latestContent,
     loading: latestLoading,
     error: latestError,
   } = useLatestContent('sql', 5);
+
+  useEffect(() => {
+    latestSectionHeightRef.current = debugSettings.latestSectionHeight;
+  }, [debugSettings.latestSectionHeight]);
+
+  useEffect(() => {
+    updateLatestSectionHeightRef.current = updateLatestSectionHeight;
+  }, [updateLatestSectionHeight]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -72,7 +83,7 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const handleResizeStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const beginResizeDrag = (clientY: number) => {
     const mainContent = mainContentRef.current;
     if (!mainContent) {
       return;
@@ -82,21 +93,19 @@ export default function App() {
     const minLatestHeight = 140;
     const maxLatestHeight = Math.max(minLatestHeight, bounds.height - 180);
     const currentHeight = Math.min(
-      Math.max(debugSettings.latestSectionHeight, minLatestHeight),
+      Math.max(latestSectionHeightRef.current, minLatestHeight),
       maxLatestHeight,
     );
 
     dragStateRef.current = {
-      startY: event.clientY,
+      startY: clientY,
       startHeight: currentHeight,
-      pointerId: event.pointerId,
     };
 
     document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
-    event.currentTarget.setPointerCapture(event.pointerId);
 
-    const handlePointerMove = (moveEvent: PointerEvent) => {
+    const handlePointerMove = (moveEvent: MouseEvent) => {
       const dragState = dragStateRef.current;
       const content = mainContentRef.current;
 
@@ -111,52 +120,69 @@ export default function App() {
       const maxHeight = Math.max(minHeight, rect.height - 180);
       const deltaY = moveEvent.clientY - dragState.startY;
       const nextHeight = Math.min(
-        Math.max(dragState.startHeight + deltaY, minHeight),
+        Math.max(dragState.startHeight - deltaY, minHeight),
         maxHeight,
       );
 
-      updateLatestSectionHeight(nextHeight);
+      updateLatestSectionHeightRef.current(nextHeight);
     };
 
-    const handlePointerUp = (upEvent: PointerEvent) => {
+    const handlePointerUp = () => {
       const dragState = dragStateRef.current;
-      if (!dragState || dragState.pointerId !== upEvent.pointerId) {
+      if (!dragState) {
         return;
       }
 
       dragStateRef.current = null;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
     };
 
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointercancel', handlePointerUp);
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
   };
+
+  useEffect(() => {
+    const handleGlobalMouseDown = (event: MouseEvent) => {
+      const mainContent = mainContentRef.current;
+      const mapSection = mapSectionRef.current;
+      const latestSection = latestSectionRef.current;
+
+      if (!mainContent || !mapSection || !latestSection) {
+        return;
+      }
+
+      if (event.button !== 0) {
+        return;
+      }
+
+      const threshold = 16;
+      const mapRect = mapSection.getBoundingClientRect();
+      const latestRect = latestSection.getBoundingClientRect();
+      const boundaryY = (mapRect.bottom + latestRect.top) / 2;
+      const isBoundaryHit = Math.abs(event.clientY - boundaryY) <= threshold;
+
+      if (!isBoundaryHit) {
+        return;
+      }
+
+      event.preventDefault();
+      beginResizeDrag(event.clientY);
+    };
+
+    window.addEventListener('mousedown', handleGlobalMouseDown, true);
+
+    return () => {
+      window.removeEventListener('mousedown', handleGlobalMouseDown, true);
+    };
+  }, []);
 
   return (
     <div id="app">
-      <header className="header">
-        <div className="header-left">
-          <span className="logo">WORLD MONITOR</span>
-          <div className="header-status">
-            <span className={`status-dot ${statusTone}`} />
-            <span className="status-label">{statusLabel}</span>
-          </div>
-        </div>
-        <div className="header-center">
-          <span className="header-banner">GLOBAL INCIDENT FLOW MAP</span>
-        </div>
-        <div className="header-right">
-          <span className="header-meta">API / MOCK / ISO2</span>
-        </div>
-      </header>
-
       <main className="main-content" ref={mainContentRef}>
-        <section className="map-section">
+        <section className="map-section" ref={mapSectionRef}>
           <div className="panel-header">
             <div className="panel-header-left">
               <span className="panel-title">Attack Flow Map</span>
@@ -167,6 +193,8 @@ export default function App() {
               viewMode={viewMode}
               dateRange={dateRange}
               debugModeEnabled={debugModeEnabled}
+              statusTone={statusTone}
+              statusLabel={statusLabel}
               onViewModeChange={setViewMode}
               onDateRangeChange={setDateRange}
               onDebugModeToggle={() => setDebugModeEnabled(!debugModeEnabled)}
@@ -200,19 +228,9 @@ export default function App() {
           ) : null}
         </section>
 
-        <div
-          className="main-resize-handle"
-          role="separator"
-          aria-orientation="horizontal"
-          aria-label="Resize map and feed panels"
-          tabIndex={0}
-          onPointerDown={handleResizeStart}
-        >
-          <span className="main-resize-handle-bar" />
-        </div>
-
         <section
           className="latest-section"
+          ref={latestSectionRef}
           style={{ flexBasis: `${debugSettings.latestSectionHeight}px` }}
         >
           <div className="latest-header">

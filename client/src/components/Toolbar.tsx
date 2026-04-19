@@ -5,6 +5,8 @@ interface ToolbarProps {
   viewMode: '2d' | '3d';
   dateRange: DateRange;
   debugModeEnabled: boolean;
+  statusTone: 'live' | 'warning' | 'error';
+  statusLabel: string;
   onViewModeChange: (mode: '2d' | '3d') => void;
   onDateRangeChange: (range: DateRange) => void;
   onDebugModeToggle: () => void;
@@ -15,6 +17,8 @@ export function Toolbar(props: ToolbarProps) {
     viewMode,
     dateRange,
     debugModeEnabled,
+    statusTone,
+    statusLabel,
     onViewModeChange,
     onDateRangeChange,
     onDebugModeToggle,
@@ -66,10 +70,29 @@ export function Toolbar(props: ToolbarProps) {
       <button
         type="button"
         className={`map-debug-mode-btn ${debugModeEnabled ? 'active' : ''}`}
+        aria-pressed={debugModeEnabled}
         onClick={onDebugModeToggle}
       >
         {debugModeEnabled ? 'Debug On' : 'Debug Mode'}
       </button>
+
+      <div
+        className="map-brand-panel"
+        role="status"
+        aria-label={`WORLD MONITOR ${statusLabel} GLOBAL INCIDENT FLOW MAP API MOCK ISO2`}
+      >
+        <div className="map-brand-panel-top">
+          <span className="map-brand-title">WORLD MONITOR</span>
+          <span className={`map-brand-status ${statusTone}`}>
+            <span className={`status-dot ${statusTone}`} />
+            <span className="map-brand-status-label">{statusLabel}</span>
+          </span>
+        </div>
+        <div className="map-brand-panel-bottom">
+          <span className="map-brand-banner">GLOBAL INCIDENT FLOW MAP</span>
+          <span className="map-brand-meta">API / MOCK / ISO2</span>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,39 @@
+[     436ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4177/node_modules/.vite/deps/react-dom_client.js?v=a842c307:20102
+[     625ms] [ERROR] Error: layers.countries-threat-fill.paint.fill-color: Expected at least 4 arguments, but found only 2.
+    at Object.hs [as C] (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:3408:84)
+    at Di (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:18478:34)
+    at Li._validate (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:19114:69)
+    at Li.addLayer (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:18857:152)
+    at cs.addLayer (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23018:59)
+    at cs.<anonymous> (http://localhost:4177/src/components/TwoDMap.tsx:176:11)
+    at cs.fire (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:496:39)
+    at cs._render (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23185:1570)
+    at http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23204:22
+    at http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:12998:19 @ http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:500
+[     625ms] [ERROR] Error: layers.countries-threat-line.paint.line-color: Expected at least 4 arguments, but found only 2.
+    at Object.hs [as C] (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:3408:84)
+    at Di (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:18478:34)
+    at Li._validate (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:19114:69)
+    at Li.addLayer (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:18857:152)
+    at cs.addLayer (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23018:59)
+    at cs.<anonymous> (http://localhost:4177/src/components/TwoDMap.tsx:205:11)
+    at cs.fire (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:496:39)
+    at cs._render (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23185:1570)
+    at http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23204:22
+    at http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:12998:19 @ http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:500
+[     627ms] [ERROR] Error: Cannot style non-existing layer "countries-threat-fill".
+    at Li.setPaintProperty (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:18923:117)
+    at cs.setPaintProperty (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23042:31)
+    at cs.<anonymous> (http://localhost:4177/src/components/TwoDMap.tsx:307:11)
+    at cs.fire (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:496:39)
+    at cs._render (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23185:1570)
+    at http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23204:22
+    at http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:12998:19 @ http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:500
+[     627ms] [ERROR] Error: Cannot style non-existing layer "countries-threat-line".
+    at Li.setPaintProperty (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:18923:117)
+    at cs.setPaintProperty (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23042:31)
+    at cs.<anonymous> (http://localhost:4177/src/components/TwoDMap.tsx:308:11)
+    at cs.fire (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:496:39)
+    at cs._render (http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23185:1570)
+    at http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:23204:22
+    at http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:12998:19 @ http://localhost:4177/node_modules/.vite/deps/maplibre-gl.js?v=a842c307:500
