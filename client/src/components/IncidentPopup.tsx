@@ -13,6 +13,10 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+const POPUP_WIDTH = 360;
+const POPUP_HEIGHT = 480;
+const EDGE_MARGIN = 16;
+
 export function IncidentPopup(props: IncidentPopupProps) {
   const { country, data, anchor, loading, error } = props;
 
@@ -20,8 +24,14 @@ export function IncidentPopup(props: IncidentPopupProps) {
     return null;
   }
 
-  const left = clamp(anchor.x + 20, 16, window.innerWidth - 380);
-  const top = clamp(anchor.y + 20, 16, window.innerHeight - 480);
+  const maxLeft = window.innerWidth - POPUP_WIDTH - EDGE_MARGIN;
+  const maxTop = window.innerHeight - POPUP_HEIGHT - EDGE_MARGIN;
+  const left = anchor.mode === '2d'
+    ? (anchor.placement === 'left' ? EDGE_MARGIN : maxLeft)
+    : (anchor.placement === 'left' ? EDGE_MARGIN : maxLeft);
+  const top = anchor.mode === '2d'
+    ? clamp(anchor.y - 140, 88, maxTop)
+    : clamp(anchor.y - 200, 96, maxTop);
   const flowCount = data?.flows.length ?? 0;
 
   return (

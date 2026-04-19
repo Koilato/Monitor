@@ -12,7 +12,9 @@ interface GlobePolygonDatum {
 }
 
 interface GlobeBoundaryPath {
+  code: string;
   coords: Array<{ lat: number; lng: number }>;
+  highlight?: boolean;
 }
 
 interface GlobeArcDatum {
@@ -36,7 +38,12 @@ function emitHover(
 ) {
   callback({
     country,
-    anchor: mouseEvent ? { x: mouseEvent.clientX, y: mouseEvent.clientY } : null,
+    anchor: mouseEvent ? {
+      x: mouseEvent.clientX,
+      y: mouseEvent.clientY,
+      mode: '3d',
+      placement: mouseEvent.clientX >= window.innerWidth / 2 ? 'left' : 'right',
+    } : null,
   });
 }
 
@@ -84,32 +91,24 @@ export function Globe3DMap(props: MapViewProps) {
         .filter((feature): feature is GlobePolygonDatum => feature !== null);
 
       polygonsRef.current = polygons;
-      boundaryPathsRef.current = polygons.flatMap((polygon) => geometryToBoundaryPaths(polygon.feature.geometry));
+      boundaryPathsRef.current = polygons.flatMap((polygon) => geometryToBoundaryPaths(polygon.code, polygon.feature.geometry));
 
       globe
         .globeImageUrl('/textures/earth-topo-bathy.jpg')
         .bumpImageUrl('/textures/earth-water.png')
         .backgroundImageUrl('/textures/night-sky.png')
-        .pathsData(boundaryPathsRef.current)
+        .pathsData(getBoundaryPathsForHover(boundaryPathsRef.current, null))
         .pathPoints((datum: object) => (datum as GlobeBoundaryPath).coords)
         .pathPointLat((datum: { lat: number }) => datum.lat)
         .pathPointLng((datum: { lng: number }) => datum.lng)
-        .pathColor(() => 'rgba(226,232,240,0.55)')
-        .pathStroke(() => 0.35)
-        .polygonsData([])
-        .polygonCapColor((datum: object) => {
-          const feature = datum as Feature<Geometry>;
-          const code = feature.properties?.['ISO3166-1-Alpha-2'];
-          return code === hoveredCodeRef.current ? 'rgba(37,99,235,0.42)' : 'rgba(148,163,184,0.0)';
+        .pathColor((datum: object) => {
+          const row = datum as GlobeBoundaryPath;
+          return row.highlight ? 'rgba(96,255,182,0.98)' : 'rgba(226,232,240,0.45)';
         })
-        .polygonSideColor(() => 'rgba(0,0,0,0)')
-        .polygonStrokeColor(() => 'rgba(226,232,240,0.45)')
-        .polygonAltitude((datum: object) => {
-          const feature = datum as Feature<Geometry>;
-          const code = feature.properties?.['ISO3166-1-Alpha-2'];
-          return code === hoveredCodeRef.current ? 0.006 : 0;
+        .pathStroke((datum: object) => {
+          const row = datum as GlobeBoundaryPath;
+          return row.highlight ? 1.15 : 0.35;
         })
-        .polygonsTransitionDuration(150)
         .arcColor('color')
         .arcStroke(0.75)
         .arcAltitude(0.25)
@@ -143,7 +142,7 @@ export function Globe3DMap(props: MapViewProps) {
 
         if (!coordinates) {
           hoveredCodeRef.current = null;
-          currentGlobe.polygonsData([]);
+          currentGlobe.pathsData(getBoundaryPathsForHover(boundaryPathsRef.current, null));
           emitHover(hoverHandlerRef.current, null, null);
           return;
         }
@@ -152,24 +151,20 @@ export function Globe3DMap(props: MapViewProps) {
         if (!hit) {
           if (hoveredCodeRef.current) {
             hoveredCodeRef.current = null;
-            currentGlobe.polygonsData([]);
+            currentGlobe.pathsData(getBoundaryPathsForHover(boundaryPathsRef.current, null));
             emitHover(hoverHandlerRef.current, null, null);
           }
           return;
         }
 
         hoveredCodeRef.current = hit.code;
-        currentGlobe.polygonsData(
-          polygonsRef.current
-            .filter((polygon) => polygon.code === hit.code)
-            .map((polygon) => polygon.feature),
-        );
+        currentGlobe.pathsData(getBoundaryPathsForHover(boundaryPathsRef.current, hit.code));
         emitHover(hoverHandlerRef.current, { code: hit.code, name: hit.name }, event);
       });
 
       canvas.addEventListener('mouseleave', () => {
         hoveredCodeRef.current = null;
-        globe.polygonsData([]);
+        globe.pathsData(getBoundaryPathsForHover(boundaryPathsRef.current, null));
         emitHover(hoverHandlerRef.current, null, null);
       });
     }
@@ -191,13 +186,7 @@ export function Globe3DMap(props: MapViewProps) {
     if (!globe) {
       return;
     }
-    globe.polygonsData(
-      hoveredCountryCode
-        ? polygonsRef.current
-          .filter((polygon) => polygon.code === hoveredCountryCode)
-          .map((polygon) => polygon.feature)
-        : [],
-    );
+    globe.pathsData(getBoundaryPathsForHover(boundaryPathsRef.current, hoveredCountryCode));
   }, [hoveredCountryCode]);
 
   useEffect(() => {
@@ -266,17 +255,37 @@ export function Globe3DMap(props: MapViewProps) {
   );
 }
 
-function geometryToBoundaryPaths(geometry: Geometry): GlobeBoundaryPath[] {
+function getBoundaryPathsForHover(
+  paths: GlobeBoundaryPath[],
+  hoveredCode: string | null,
+): GlobeBoundaryPath[] {
+  if (!hoveredCode) {
+    return paths;
+  }
+
+  const highlighted = paths
+    .filter((path) => path.code === hoveredCode)
+    .map((path) => ({
+      ...path,
+      highlight: true,
+    }));
+
+  return [...paths, ...highlighted];
+}
+
+function geometryToBoundaryPaths(code: string, geometry: Geometry): GlobeBoundaryPath[] {
   if (geometry.type === 'Polygon') {
     return geometry.coordinates
       .slice(0, 1)
       .map((ring) => ({
+        code,
         coords: ring.map(([lng, lat]) => ({ lat, lng })),
       }));
   }
 
   if (geometry.type === 'MultiPolygon') {
     return geometry.coordinates.flatMap((polygon) => polygon.slice(0, 1).map((ring) => ({
+      code,
       coords: ring.map(([lng, lat]) => ({ lat, lng })),
     })));
   }

@@ -83,7 +83,12 @@ function emitHoverEvent(
 ) {
   callback({
     country,
-    anchor: point ? { x: point.x, y: point.y } : null,
+    anchor: point ? {
+      x: point.x,
+      y: point.y,
+      mode: '2d',
+      placement: point.x >= window.innerWidth / 2 ? 'left' : 'right',
+    } : null,
   });
 }
 

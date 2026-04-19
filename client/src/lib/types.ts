@@ -8,6 +8,8 @@ export interface HoverCountryState {
 export interface PopupAnchor {
   x: number;
   y: number;
+  mode: '2d' | '3d';
+  placement: 'left' | 'right';
 }
 
 export interface CountryHoverEvent {
