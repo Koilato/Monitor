@@ -5,12 +5,21 @@ export interface HoverCountryState {
   name: string;
 }
 
-export interface PopupAnchor {
+interface PopupAnchorBase {
   x: number;
   y: number;
-  mode: '2d' | '3d';
   placement: 'left' | 'right';
 }
+
+export interface PopupAnchor2D extends PopupAnchorBase {
+  mode: '2d';
+}
+
+export interface PopupAnchor3D extends PopupAnchorBase {
+  mode: '3d';
+}
+
+export type PopupAnchor = PopupAnchor2D | PopupAnchor3D;
 
 export interface CountryHoverEvent {
   country: HoverCountryState | null;

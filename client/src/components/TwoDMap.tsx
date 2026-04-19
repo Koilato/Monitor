@@ -3,18 +3,9 @@ import maplibregl from 'maplibre-gl';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { ArcLayer, IconLayer } from '@deck.gl/layers';
 import type { IconLayerProps } from '@deck.gl/layers';
-import type { CountryHoverResponse } from '@shared/types';
-import { getCountryCentroid } from '../lib/country-geometry';
 import type { CountryHoverEvent, MapViewProps } from '../lib/types';
-
-interface ArcDatum {
-  id: string;
-  source: [number, number];
-  target: [number, number];
-  label: string;
-  count: number;
-  angle: number;
-}
+import { buildTwoDArcData, createHoverAnchor, type TwoDArcDatum } from '../hooks/useMapDataSync';
+import '../styles/map-2d.css';
 
 const DEFAULT_CENTER: [number, number] = [12, 18];
 const DEFAULT_ZOOM = 0.92;
@@ -34,47 +25,22 @@ const MAP_STYLE = {
 };
 const ARROW_ICON_ATLAS = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
   <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-    <polygon points="8,32 56,8 42,32 56,56" fill="#f43f5e" />
+    <path
+      d="M8 32h30.5"
+      stroke="#ffffff"
+      stroke-width="4"
+      stroke-linecap="round"
+    />
+    <path
+      d="M32 22l16 10-16 10"
+      fill="none"
+      stroke="#ffffff"
+      stroke-width="4"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
   </svg>
 `)}`;
-
-function getBearing(source: [number, number], target: [number, number]): number {
-  const dx = target[0] - source[0];
-  const dy = target[1] - source[1];
-  return (Math.atan2(dy, dx) * 180) / Math.PI;
-}
-
-async function buildArcData(data: CountryHoverResponse | null): Promise<ArcDatum[]> {
-  if (!data) {
-    return [];
-  }
-
-  const target = await getCountryCentroid(data.victimCountry);
-  if (!target) {
-    return [];
-  }
-
-  const rows = await Promise.all(data.flows.map(async (flow: CountryHoverResponse['flows'][number]) => {
-    const source = await getCountryCentroid(flow.attackerCountry);
-    if (!source) {
-      return null;
-    }
-
-    const sourcePosition: [number, number] = [source.lon, source.lat];
-    const targetPosition: [number, number] = [target.lon, target.lat];
-
-    return {
-      id: `${flow.attackerCountry}-${flow.victimCountry}`,
-      source: sourcePosition,
-      target: targetPosition,
-      label: `${flow.attackerCountry} → ${flow.victimCountry}`,
-      count: flow.count,
-      angle: getBearing(sourcePosition, targetPosition),
-    };
-  }));
-
-  return rows.filter((row: ArcDatum | null): row is ArcDatum => row !== null);
-}
 
 function emitHoverEvent(
   callback: (event: CountryHoverEvent) => void,
@@ -83,12 +49,7 @@ function emitHoverEvent(
 ) {
   callback({
     country,
-    anchor: point ? {
-      x: point.x,
-      y: point.y,
-      mode: '2d',
-      placement: point.x >= window.innerWidth / 2 ? 'left' : 'right',
-    } : null,
+    anchor: point ? createHoverAnchor('2d', point.x, point.y) : null,
   });
 }
 
@@ -102,18 +63,18 @@ export function TwoDMap(props: MapViewProps) {
 
   hoverHandlerRef.current = onCountryHover;
 
-  const iconLayerProps = useMemo<IconLayerProps<ArcDatum>>(() => ({
-    id: 'attack-arrowheads',
-    data: [],
+  const iconLayerProps = useMemo<IconLayerProps<TwoDArcDatum>>(() => ({
+    id: 'attack-arrowheads-base',
+    data: [] as TwoDArcDatum[],
     iconAtlas: ARROW_ICON_ATLAS,
     iconMapping: {
       arrow: { x: 0, y: 0, width: 64, height: 64, mask: true },
     },
     getIcon: () => 'arrow',
-    getPosition: (datum) => datum.target,
+    getPosition: (datum) => datum.arrowPosition,
     getAngle: (datum) => datum.angle,
-    getColor: [255, 72, 120],
-    getSize: 30,
+    getColor: [255, 72, 120, 220],
+    getSize: (datum) => Math.min(18, 11 + datum.count * 0.55),
     sizeUnits: 'pixels',
     pickable: false,
   }), []);
@@ -315,37 +276,38 @@ export function TwoDMap(props: MapViewProps) {
         return;
       }
 
-      const arcData = await buildArcData(data);
+      const arcData = await buildTwoDArcData(data);
       if (cancelled) {
         return;
       }
 
       overlay.setProps({
         layers: [
-          new ArcLayer<ArcDatum>({
+          new ArcLayer<TwoDArcDatum>({
             id: 'attack-arcs-glow',
             data: arcData,
             getSourcePosition: (datum) => datum.source,
             getTargetPosition: (datum) => datum.target,
             getSourceColor: [56, 189, 248, 60],
-            getTargetColor: [255, 72, 120, 110],
-            getWidth: (datum) => Math.max(5, datum.count * 2.8),
+            getTargetColor: [255, 72, 120, 95],
+            getWidth: (datum) => Math.max(3.2, datum.count * 1.8),
             widthUnits: 'pixels',
             pickable: false,
           }),
-          new ArcLayer<ArcDatum>({
+          new ArcLayer<TwoDArcDatum>({
             id: 'attack-arcs',
             data: arcData,
             getSourcePosition: (datum) => datum.source,
             getTargetPosition: (datum) => datum.target,
             getSourceColor: [56, 189, 248, 225],
             getTargetColor: [255, 72, 120, 245],
-            getWidth: (datum) => Math.max(2.6, datum.count * 1.65),
+            getWidth: (datum) => Math.max(1.6, datum.count * 1.05),
             widthUnits: 'pixels',
             pickable: false,
           }),
-          new IconLayer<ArcDatum>({
+          new IconLayer<TwoDArcDatum>({
             ...iconLayerProps,
+            id: 'attack-arrowheads',
             data: arcData,
           }),
         ],
@@ -398,9 +360,21 @@ export function TwoDMap(props: MapViewProps) {
       <div className="deckgl-legend" aria-hidden="true">
         <span className="legend-label-title">FLOW LEGEND</span>
         <span className="legend-item">
-          <svg width="20" height="8" viewBox="0 0 20 8" fill="none">
-            <path d="M1 4H18" stroke="#38bdf8" strokeWidth="1.5" />
-            <path d="M14 1L18 4L14 7" stroke="#f43f5e" strokeWidth="1.5" fill="none" />
+          <svg width="22" height="10" viewBox="0 0 64 32" fill="none">
+            <path
+              d="M4 16h28"
+              stroke="#38bdf8"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M28 10l12 6-12 6"
+              fill="#38bdf8"
+              stroke="#f43f5e"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           <span className="legend-label">ATTACK ARC</span>
         </span>

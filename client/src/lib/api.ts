@@ -1,4 +1,4 @@
-import type { CountryHoverResponse, DateRange } from '@shared/types';
+import type { CountryHoverResponse, DateRange, LatestContentResponse } from '@shared/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787';
 
@@ -27,4 +27,32 @@ export async function fetchCountryHover(
   }
 
   return response.json() as Promise<CountryHoverResponse>;
+}
+
+export function buildLatestContentUrl(
+  category: string,
+  limit: number,
+  offset = 0,
+): string {
+  const url = new URL('/api/content/latest', API_BASE_URL);
+  url.searchParams.set('category', category);
+  url.searchParams.set('limit', String(limit));
+  url.searchParams.set('offset', String(offset));
+  return url.toString();
+}
+
+export async function fetchLatestContent(
+  category: string,
+  limit: number,
+  offset = 0,
+  signal?: AbortSignal,
+): Promise<LatestContentResponse> {
+  const response = await fetch(buildLatestContentUrl(category, limit, offset), { signal });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(payload.error || 'Request failed');
+  }
+
+  return response.json() as Promise<LatestContentResponse>;
 }

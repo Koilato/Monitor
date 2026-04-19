@@ -1,0 +1,8 @@
+[     133ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:20102
+[  191411ms] [WARNING] WebGL: INVALID_OPERATION: bindTexture: attempt to use a deleted object @ http://localhost:4174/node_modules/.vite/deps/chunk-4G7PAJ5X.js?v=38705482:9363
+[  202618ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:20102
+[  764536ms] [WARNING] WebGL: INVALID_OPERATION: bindTexture: attempt to use a deleted object @ http://localhost:4174/node_modules/.vite/deps/chunk-4G7PAJ5X.js?v=38705482:9363
+[  794554ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:20102
+[ 1027970ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:4174/@vite/client:963
+[ 1028510ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:20102
+[ 1028708ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8787/api/content/latest?category=sql&limit=5&offset=0:0

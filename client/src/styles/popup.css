@@ -1,0 +1,212 @@
+.map-popup {
+  position: fixed;
+  width: 360px;
+  max-height: min(560px, 80vh);
+  background: var(--bg);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  z-index: 1000;
+  overflow-y: auto;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.55),
+    inset 0 1px 20px rgba(255, 255, 255, 0.02),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+  pointer-events: none;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg);
+}
+
+.popup-header.hotspot {
+  background: rgba(68, 255, 136, 0.06);
+}
+
+.popup-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.5px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popup-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  background: none;
+  border-radius: 0;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.popup-badge::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.popup-badge.low {
+  color: var(--text-dim);
+}
+
+.popup-badge.low::before {
+  background: var(--text-dim);
+}
+
+.popup-badge.medium {
+  color: var(--yellow);
+}
+
+.popup-badge.medium::before {
+  background: var(--yellow);
+}
+
+.popup-badge.high {
+  color: var(--red);
+}
+
+.popup-badge.high::before {
+  background: var(--red);
+}
+
+.popup-body {
+  padding: 12px 14px;
+}
+
+.popup-subtitle {
+  font-size: 10px;
+  color: var(--green);
+  margin-bottom: 8px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.popup-description {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+
+.popup-error {
+  color: var(--red);
+}
+
+.popup-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.popup-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.stat-label {
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 11px;
+  color: var(--green);
+}
+
+.popup-section {
+  margin-bottom: 10px;
+}
+
+.section-label {
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  display: block;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.popup-flow-list,
+.popup-incident-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popup-flow-row,
+.popup-incident-card {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.popup-flow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 8px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.popup-flow-count {
+  color: var(--green);
+  font-size: 11px;
+}
+
+.popup-incident-card {
+  padding: 8px;
+}
+
+.popup-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--text);
+}
+
+.popup-incident-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 960px) {
+  .map-popup {
+    width: min(360px, calc(100vw - 24px));
+    max-height: min(520px, calc(100vh - 24px));
+  }
+}

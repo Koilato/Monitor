@@ -1,5 +1,8 @@
 import type { CountryHoverResponse } from '@shared/types';
 import type { HoverCountryState, PopupAnchor } from '../lib/types';
+import { getTwoDPopupPosition } from '../lib/popup-layout-2d';
+import { getThreeDPopupPosition } from '../lib/popup-layout-3d';
+import '../styles/popup.css';
 
 interface IncidentPopupProps {
   country: HoverCountryState | null;
@@ -9,14 +12,6 @@ interface IncidentPopupProps {
   error: string | null;
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-const POPUP_WIDTH = 360;
-const POPUP_HEIGHT = 480;
-const EDGE_MARGIN = 16;
-
 export function IncidentPopup(props: IncidentPopupProps) {
   const { country, data, anchor, loading, error } = props;
 
@@ -24,18 +19,13 @@ export function IncidentPopup(props: IncidentPopupProps) {
     return null;
   }
 
-  const maxLeft = window.innerWidth - POPUP_WIDTH - EDGE_MARGIN;
-  const maxTop = window.innerHeight - POPUP_HEIGHT - EDGE_MARGIN;
-  const left = anchor.mode === '2d'
-    ? (anchor.placement === 'left' ? EDGE_MARGIN : maxLeft)
-    : (anchor.placement === 'left' ? EDGE_MARGIN : maxLeft);
-  const top = anchor.mode === '2d'
-    ? clamp(anchor.y - 140, 88, maxTop)
-    : clamp(anchor.y - 200, 96, maxTop);
+  const position = anchor.mode === '2d'
+    ? getTwoDPopupPosition(anchor)
+    : getThreeDPopupPosition(anchor);
   const flowCount = data?.flows.length ?? 0;
 
   return (
-    <aside className="map-popup" style={{ left, top }}>
+    <aside className="map-popup" style={position}>
       <div className="popup-header hotspot">
         <span className="popup-title">{country.name} / {country.code}</span>
         {loading ? <span className="popup-badge medium">QUERY</span> : null}

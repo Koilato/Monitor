@@ -38,3 +38,25 @@ export interface CountryHoverResponse {
 export interface CountryHoverQuery extends DateRange {
   victimCountry: CountryCode;
 }
+
+export interface LatestContentItem {
+  id: string;
+  category: string;
+  title: string;
+  summary: string;
+  createdAt: string;
+}
+
+export interface LatestContentQuery {
+  category: string;
+  limit: number;
+  offset: number;
+}
+
+export interface LatestContentResponse {
+  category: string;
+  total: number;
+  limit: number;
+  offset: number;
+  items: LatestContentItem[];
+}

@@ -1,0 +1,81 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: WORLD MONITOR
+      - generic [ref=e9]: LIVE MOCK FEED
+    - generic [ref=e11]: GLOBAL INCIDENT FLOW MAP
+    - generic [ref=e13]: API / MOCK / ISO2
+  - main [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: Attack Flow Map
+          - generic [ref=e19]: "0"
+        - generic: 19-04-2026 05:04:10 UTC
+        - generic [ref=e20]:
+          - tablist "Map mode" [ref=e21]:
+            - button "2D" [ref=e22] [cursor=pointer]
+            - button "3D" [ref=e23] [cursor=pointer]
+          - generic [ref=e24]:
+            - generic [ref=e25]: START
+            - textbox "START" [ref=e26]
+          - generic [ref=e27]:
+            - generic [ref=e28]: END
+            - textbox "END" [ref=e29]
+      - generic [ref=e31]:
+        - region "Map" [ref=e33]
+        - generic [ref=e35]:
+          - button "Zoom in" [ref=e36] [cursor=pointer]: +
+          - button "Zoom out" [ref=e37] [cursor=pointer]: "-"
+          - button "Reset view" [ref=e38] [cursor=pointer]: o
+        - generic [ref=e39]: HOVER A COUNTRY TO QUERY ATTACK FLOWS
+        - generic [ref=e40]:
+          - generic [ref=e41]: FLOW LEGEND
+          - generic [ref=e42]:
+            - img [ref=e43]
+            - generic [ref=e45]: ATTACK ARC
+          - generic [ref=e46]:
+            - img [ref=e47]
+            - generic [ref=e49]: HOVERED TARGET
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]: Latest SQL Feed
+          - generic [ref=e54]: category / newest rows
+        - generic [ref=e55]: 5 rows
+      - generic [ref=e56]:
+        - article [ref=e57]:
+          - generic [ref=e58]:
+            - generic [ref=e59]: "#1"
+            - generic [ref=e60]: sql
+            - generic [ref=e61]: 19/04/2026, 08:05 UTC
+          - heading "SQL inventory sync completed" [level=3] [ref=e62]
+          - paragraph [ref=e63]: Latest row batch imported from the reporting database and marked ready for review.
+        - article [ref=e64]:
+          - generic [ref=e65]:
+            - generic [ref=e66]: "#2"
+            - generic [ref=e67]: sql
+            - generic [ref=e68]: 19/04/2026, 07:42 UTC
+          - heading "SQL anomaly alert raised" [level=3] [ref=e69]
+          - paragraph [ref=e70]: A new record matched the anomaly rules and was pushed to the top of the feed.
+        - article [ref=e71]:
+          - generic [ref=e72]:
+            - generic [ref=e73]: "#3"
+            - generic [ref=e74]: sql
+            - generic [ref=e75]: 19/04/2026, 07:15 UTC
+          - heading "SQL export for category audit" [level=3] [ref=e76]
+          - paragraph [ref=e77]: Audit export finished for the SQL category and the latest changes were persisted.
+        - article [ref=e78]:
+          - generic [ref=e79]:
+            - generic [ref=e80]: "#4"
+            - generic [ref=e81]: sql
+            - generic [ref=e82]: 19/04/2026, 06:58 UTC
+          - heading "SQL ingestion job finished" [level=3] [ref=e83]
+          - paragraph [ref=e84]: Fresh content from the upstream service was inserted into the latest-content table.
+        - article [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]: "#5"
+            - generic [ref=e88]: sql
+            - generic [ref=e89]: 19/04/2026, 06:31 UTC
+          - heading "SQL row backfill succeeded" [level=3] [ref=e90]
+          - paragraph [ref=e91]: Missing records were recovered and merged into the current latest feed.

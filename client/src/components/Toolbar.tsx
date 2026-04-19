@@ -1,4 +1,5 @@
 import type { DateRange } from '@shared/types';
+import '../styles/toolbar.css';
 
 interface ToolbarProps {
   viewMode: '2d' | '3d';

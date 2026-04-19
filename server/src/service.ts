@@ -1,4 +1,12 @@
-import type { CountryHoverQuery, CountryHoverResponse, HoverFlow, HoverIncident } from '../../shared/types.js';
+import type {
+  CountryHoverQuery,
+  CountryHoverResponse,
+  HoverFlow,
+  HoverIncident,
+  LatestContentItem,
+  LatestContentQuery,
+  LatestContentResponse,
+} from '../../shared/types.js';
 
 export function filterIncidents(
   incidents: HoverIncident[],
@@ -55,5 +63,24 @@ export function buildCountryHoverResponse(
     total: matched.length,
     incidents: matched,
     flows: buildFlows(matched),
+  };
+}
+
+export function buildLatestContentResponse(
+  items: LatestContentItem[],
+  query: LatestContentQuery,
+): LatestContentResponse {
+  const matched = items
+    .filter((item) => item.category === query.category)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+
+  const sliced = matched.slice(query.offset, query.offset + query.limit);
+
+  return {
+    category: query.category,
+    total: matched.length,
+    limit: query.limit,
+    offset: query.offset,
+    items: sliced,
   };
 }

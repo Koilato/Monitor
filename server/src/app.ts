@@ -1,11 +1,14 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { MOCK_INCIDENTS } from './mock-incidents.js';
-import { buildCountryHoverResponse } from './service.js';
+import { MOCK_LATEST_CONTENT } from './mock-feed.js';
+import { buildCountryHoverResponse, buildLatestContentResponse } from './service.js';
 import {
   ValidationError,
   assertDateRange,
+  normalizePositiveInt,
   normalizeCountryCode,
   normalizeDate,
+  normalizeQueryText,
 } from './validation.js';
 
 export function createApp() {
@@ -32,6 +35,28 @@ export function createApp() {
         victimCountry,
         startDate,
         endDate,
+      }),
+    );
+  });
+
+  app.get('/api/content/latest', (req: Request, res: Response) => {
+    const category = normalizeQueryText(req.query.category, 'category', 'sql').toLowerCase();
+    const limit = normalizePositiveInt(req.query.limit, 'limit', {
+      fallback: 5,
+      min: 1,
+      max: 20,
+    });
+    const offset = normalizePositiveInt(req.query.offset, 'offset', {
+      fallback: 0,
+      min: 0,
+      max: 1000,
+    });
+
+    res.json(
+      buildLatestContentResponse(MOCK_LATEST_CONTENT, {
+        category,
+        limit,
+        offset,
       }),
     );
   });

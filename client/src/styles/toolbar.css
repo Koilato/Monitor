@@ -1,0 +1,97 @@
+.map-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.map-dimension-toggle {
+  display: flex;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.map-dim-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.map-dim-btn:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.map-dim-btn.active {
+  background: var(--green);
+  color: var(--bg);
+}
+
+.map-filter-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 7px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.map-filter-label {
+  font-size: 8px;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+}
+
+.map-filter-field input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 10px;
+  min-width: 118px;
+}
+
+.map-filter-field input::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.75);
+  cursor: pointer;
+}
+
+@media (max-width: 960px) {
+  .map-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .map-filter-field input {
+    min-width: 104px;
+  }
+}
+
+@media (max-width: 640px) {
+  .map-dimension-toggle {
+    width: 100%;
+  }
+
+  .map-dim-btn {
+    flex: 1;
+  }
+
+  .map-filter-field {
+    width: calc(50% - 3px);
+  }
+
+  .map-filter-field input {
+    min-width: 0;
+    width: 100%;
+  }
+}
