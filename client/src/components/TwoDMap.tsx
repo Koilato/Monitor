@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import { MapboxOverlay } from '@deck.gl/mapbox';
-import { ArcLayer, IconLayer } from '@deck.gl/layers';
+import { IconLayer } from '@deck.gl/layers';
+import { GreatCircleLayer } from '@deck.gl/geo-layers';
 import type { IconLayerProps } from '@deck.gl/layers';
+import type { ThreatMapResponse } from '@shared/types';
 import type { CountryHoverEvent, MapViewProps } from '../lib/types';
 import { DEFAULT_MAP_DEBUG_SETTINGS } from '../lib/types';
-import { buildTwoDArcData, createHoverAnchor, type TwoDArcDatum } from '../hooks/useMapDataSync';
+import {
+  buildTwoDArcData,
+  createHoverAnchor,
+  getThreatColor,
+  type TwoDArcDatum,
+} from '../hooks/useMapDataSync';
 import '../styles/map-2d.css';
 
 const WORLD_BOUNDS = [
@@ -28,7 +35,7 @@ const MAP_STYLE = {
       id: 'background',
       type: 'background' as const,
       paint: {
-        'background-color': '#020a08',
+        'background-color': 'rgba(2, 10, 8, 0)',
       },
     },
   ],
@@ -36,18 +43,11 @@ const MAP_STYLE = {
 const ARROW_ICON_ATLAS = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
   <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
     <path
-      d="M8 32h30.5"
+      d="M18 18L46 32L18 46L24 32Z"
+      fill="#ffffff"
       stroke="#ffffff"
       stroke-width="4"
       stroke-linecap="round"
-    />
-    <path
-      d="M32 22l16 10-16 10"
-      fill="none"
-      stroke="#ffffff"
-      stroke-width="4"
-      stroke-linecap="round"
-      stroke-linejoin="round"
     />
   </svg>
 `)}`;
@@ -79,14 +79,26 @@ function fitWorld(map: maplibregl.Map) {
   });
 }
 
+function buildThreatColorExpression(data: ThreatMapResponse | null): maplibregl.ExpressionSpecification {
+  const expression: any[] = ['match', ['get', 'ISO3166-1-Alpha-2']];
+
+  for (const country of data?.countries ?? []) {
+    expression.push(country.country, getThreatColor(country.threatLevel));
+  }
+
+  expression.push('rgba(0,0,0,0)');
+  return expression as maplibregl.ExpressionSpecification;
+}
+
 export function TwoDMap(props: MapViewProps) {
-  const { hoveredCountryCode, data, onCountryHover, debugSettings } = props;
+  const { hoveredCountryCode, data, threatData, onCountryHover, debugSettings } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
   const currentHoverRef = useRef<string | null>(null);
   const hoverHandlerRef = useRef(onCountryHover);
   const autoFitRef = useRef(isDefaultTwoDView(debugSettings.twoD));
+  const mapReadyRef = useRef(false);
 
   hoverHandlerRef.current = onCountryHover;
 
@@ -126,6 +138,7 @@ export function TwoDMap(props: MapViewProps) {
     autoFitRef.current = isDefaultTwoDView(debugSettings.twoD);
 
     map.on('load', () => {
+      mapReadyRef.current = true;
       if (autoFitRef.current) {
         fitWorld(map);
       }
@@ -146,6 +159,16 @@ export function TwoDMap(props: MapViewProps) {
       });
 
       map.addLayer({
+        id: 'countries-threat-fill',
+        type: 'fill',
+        source: 'countries',
+        paint: {
+          'fill-color': 'rgba(0,0,0,0)',
+          'fill-opacity': 0.48,
+        },
+      });
+
+      map.addLayer({
         id: 'countries-base-line',
         type: 'line',
         source: 'countries',
@@ -153,6 +176,17 @@ export function TwoDMap(props: MapViewProps) {
           'line-color': '#1f6f5d',
           'line-width': 1.05,
           'line-opacity': 0.9,
+        },
+      });
+
+      map.addLayer({
+        id: 'countries-threat-border',
+        type: 'line',
+        source: 'countries',
+        paint: {
+          'line-color': 'rgba(0,0,0,0)',
+          'line-width': 1.45,
+          'line-opacity': 0.92,
         },
       });
 
@@ -272,13 +306,16 @@ export function TwoDMap(props: MapViewProps) {
 
     const resizeObserver = new ResizeObserver(() => {
       map.resize();
-      if (autoFitRef.current && map.isStyleLoaded()) {
-        fitWorld(map);
+      if (mapReadyRef.current && map.isStyleLoaded()) {
+        if (autoFitRef.current) {
+          fitWorld(map);
+        }
       }
     });
     resizeObserver.observe(containerRef.current);
 
     return () => {
+      mapReadyRef.current = false;
       resizeObserver.disconnect();
       overlayRef.current?.finalize();
       overlayRef.current = null;
@@ -289,7 +326,7 @@ export function TwoDMap(props: MapViewProps) {
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) {
+    if (!map || !mapReadyRef.current || !map.isStyleLoaded()) {
       return;
     }
 
@@ -305,6 +342,7 @@ export function TwoDMap(props: MapViewProps) {
     map.jumpTo({
       center: [debugSettings.twoD.centerLng, debugSettings.twoD.centerLat],
       zoom: debugSettings.twoD.zoom,
+      padding: WORLD_FIT_PADDING,
     });
   }, [
     debugSettings.twoD.centerLat,
@@ -312,6 +350,22 @@ export function TwoDMap(props: MapViewProps) {
     debugSettings.twoD.maxZoom,
     debugSettings.twoD.zoom,
   ]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (
+      !map
+      || !map.isStyleLoaded()
+      || !map.getLayer('countries-threat-fill')
+      || !map.getLayer('countries-threat-border')
+    ) {
+      return;
+    }
+
+    const fillExpression = buildThreatColorExpression(threatData);
+    map.setPaintProperty('countries-threat-fill', 'fill-color', fillExpression);
+    map.setPaintProperty('countries-threat-border', 'line-color', fillExpression);
+  }, [threatData]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -348,22 +402,22 @@ export function TwoDMap(props: MapViewProps) {
 
       overlay.setProps({
         layers: [
-          new ArcLayer<TwoDArcDatum>({
+          new GreatCircleLayer<TwoDArcDatum>({
             id: 'attack-arcs-glow',
             data: arcData,
-            getSourcePosition: (datum) => datum.source,
-            getTargetPosition: (datum) => datum.target,
+            getSourcePosition: (datum) => datum.sourceAnchor,
+            getTargetPosition: (datum) => datum.targetAnchor,
             getSourceColor: [56, 189, 248, 60],
             getTargetColor: [255, 72, 120, 95],
             getWidth: (datum) => Math.max(3.2, datum.count * 1.8),
             widthUnits: 'pixels',
             pickable: false,
           }),
-          new ArcLayer<TwoDArcDatum>({
+          new GreatCircleLayer<TwoDArcDatum>({
             id: 'attack-arcs',
             data: arcData,
-            getSourcePosition: (datum) => datum.source,
-            getTargetPosition: (datum) => datum.target,
+            getSourcePosition: (datum) => datum.sourceAnchor,
+            getTargetPosition: (datum) => datum.targetAnchor,
             getSourceColor: [56, 189, 248, 225],
             getTargetColor: [255, 72, 120, 245],
             getWidth: (datum) => Math.max(1.6, datum.count * 1.05),
@@ -390,7 +444,17 @@ export function TwoDMap(props: MapViewProps) {
 
   return (
     <div className="deckgl-map-wrapper deckgl-map-wrapper--2d">
-      <div className="map-surface" id="deckgl-basemap" ref={containerRef} />
+      <div className="deckgl-map-background" aria-hidden="true" />
+      <div
+        className="deckgl-map-geometry-shell"
+        style={{
+          '--two-d-extra-pad-x': `${Math.max(0, debugSettings.twoD.contentPaddingX)}px`,
+        } as React.CSSProperties}
+      >
+        <div className="deckgl-map-content-frame">
+          <div className="map-surface" id="deckgl-basemap" ref={containerRef}  style={{ width: '1300px', margin: '0 auto' }}/>
+        </div>
+      </div>
       <div className="deckgl-controls">
         <div className="zoom-controls">
           <button
@@ -413,14 +477,14 @@ export function TwoDMap(props: MapViewProps) {
             type="button"
             className="map-btn"
             aria-label="Reset view"
-            onClick={() => mapRef.current?.flyTo({
-              center: [
-                DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLng,
-                DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLat,
-              ],
-              zoom: DEFAULT_MAP_DEBUG_SETTINGS.twoD.zoom,
-              duration: 450,
-            })}
+            onClick={() => {
+              const map = mapRef.current;
+              if (!map) {
+                return;
+              }
+
+              fitWorld(map);
+            }}
           >
             o
           </button>
@@ -434,18 +498,17 @@ export function TwoDMap(props: MapViewProps) {
         <span className="legend-item">
           <svg width="22" height="10" viewBox="0 0 64 32" fill="none">
             <path
-              d="M4 16h28"
+              d="M4 16h26"
               stroke="#38bdf8"
               strokeWidth="2.5"
               strokeLinecap="round"
             />
             <path
-              d="M28 10l12 6-12 6"
-              fill="#38bdf8"
-              stroke="#f43f5e"
+              d="M30 8L48 16L30 24L34 16Z"
+              fill="#fb7185"
+              stroke="#fb7185"
               strokeWidth="2.5"
               strokeLinecap="round"
-              strokeLinejoin="round"
             />
           </svg>
           <span className="legend-label">ATTACK ARC</span>

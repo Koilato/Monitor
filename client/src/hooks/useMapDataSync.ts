@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CountryHoverResponse, DateRange } from '@shared/types';
+import type {
+  CountryHoverResponse,
+  DateRange,
+  ThreatLevel,
+  ThreatMapResponse,
+} from '@shared/types';
 import type { FeatureCollection, Geometry } from 'geojson';
-import { fetchCountryHover } from '../lib/api';
-import { getCountryCentroid } from '../lib/country-geometry';
+import { fetchCountryHover, fetchThreatMap } from '../lib/api';
+import { getCountryBoundaryAnchor, getCountryCentroid } from '../lib/country-geometry';
 import type { CountryHoverEvent, HoverCountryState, PopupAnchor } from '../lib/types';
 
 const DEFAULT_DATE_RANGE: DateRange = {
@@ -14,6 +19,8 @@ export interface TwoDArcDatum {
   id: string;
   source: [number, number];
   target: [number, number];
+  sourceAnchor: [number, number];
+  targetAnchor: [number, number];
   arrowPosition: [number, number];
   label: string;
   count: number;
@@ -40,14 +47,29 @@ export interface GlobeArrowDatum {
   lng: number;
 }
 
+export const THREAT_LEVEL_COLORS: Record<ThreatLevel, string> = {
+  none: 'rgba(0,0,0,0)',
+  low: 'rgba(34,197,94,0.82)',
+  medium: 'rgba(245,158,11,0.82)',
+  high: 'rgba(239,68,68,0.82)',
+  critical: 'rgba(217,70,239,0.85)',
+};
+
+export function getThreatColor(level: ThreatLevel): string {
+  return THREAT_LEVEL_COLORS[level];
+}
+
 export interface MapDataSyncState {
   dateRange: DateRange;
   setDateRange: (range: DateRange) => void;
   hoveredCountry: HoverCountryState | null;
   popupAnchor: PopupAnchor | null;
   hoverData: CountryHoverResponse | null;
+  threatData: ThreatMapResponse | null;
   loading: boolean;
+  threatLoading: boolean;
   error: string | null;
+  threatError: string | null;
   panelCount: number;
   statusTone: 'error' | 'warning' | 'live';
   statusLabel: string;
@@ -125,17 +147,28 @@ export async function buildTwoDArcData(data: CountryHoverResponse | null): Promi
       return null;
     }
 
+    const sourceAnchor = await getCountryBoundaryAnchor(flow.attackerCountry, target);
+    const targetAnchor = await getCountryBoundaryAnchor(data.victimCountry, source);
+
     const sourcePosition: [number, number] = [source.lon, source.lat];
     const targetPosition: [number, number] = [target.lon, target.lat];
+    const arcSource = sourceAnchor
+      ? [sourceAnchor.lon, sourceAnchor.lat] as [number, number]
+      : sourcePosition;
+    const arcTarget = targetAnchor
+      ? [targetAnchor.lon, targetAnchor.lat] as [number, number]
+      : targetPosition;
 
     return {
       id: `${flow.attackerCountry}-${flow.victimCountry}`,
       source: sourcePosition,
       target: targetPosition,
-      arrowPosition: interpolatePosition(sourcePosition, targetPosition, 0.975),
+      sourceAnchor: arcSource,
+      targetAnchor: arcTarget,
+      arrowPosition: interpolatePosition(arcSource, arcTarget, 0.975),
       label: `${flow.attackerCountry} → ${flow.victimCountry}`,
       count: flow.count,
-      angle: getBearing(sourcePosition, targetPosition),
+      angle: getBearing(arcSource, arcTarget),
     };
   }));
 
@@ -196,18 +229,23 @@ export async function buildGlobeArcData(data: CountryHoverResponse | null): Prom
       return null;
     }
 
+    const sourceAnchor = await getCountryBoundaryAnchor(flow.attackerCountry, target);
+    const targetAnchor = await getCountryBoundaryAnchor(data.victimCountry, source);
+    const arcSource = sourceAnchor ?? source;
+    const arcTarget = targetAnchor ?? target;
+
     return {
       arc: {
-        startLat: source.lat,
-        startLng: source.lon,
-        endLat: target.lat,
-        endLng: target.lon,
+        startLat: arcSource.lat,
+        startLng: arcSource.lon,
+        endLat: arcTarget.lat,
+        endLng: arcTarget.lon,
         color: '#38bdf8',
         label: `${flow.attackerCountry} → ${flow.victimCountry} (${flow.count})`,
       } satisfies GlobeArcDatum,
       arrowhead: {
-        lat: target.lat,
-        lng: target.lon,
+        lat: arcTarget.lat,
+        lng: arcTarget.lon,
       } satisfies GlobeArrowDatum,
     };
   }));
@@ -224,10 +262,15 @@ export function useMapDataSync(): MapDataSyncState {
   const [hoveredCountry, setHoveredCountry] = useState<HoverCountryState | null>(null);
   const [popupAnchor, setPopupAnchor] = useState<PopupAnchor | null>(null);
   const [hoverData, setHoverData] = useState<CountryHoverResponse | null>(null);
+  const [threatData, setThreatData] = useState<ThreatMapResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [threatLoading, setThreatLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [threatError, setThreatError] = useState<string | null>(null);
   const requestRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
+  const threatRequestRef = useRef<AbortController | null>(null);
+  const threatRequestIdRef = useRef(0);
   const activeCountryRef = useRef<string | null>(null);
   const activeRangeRef = useRef(serializeDateRange(DEFAULT_DATE_RANGE));
   const latestRangeRef = useRef<DateRange>(DEFAULT_DATE_RANGE);
@@ -276,6 +319,37 @@ export function useMapDataSync(): MapDataSyncState {
     }
   }, []);
 
+  const startThreatRequest = useCallback(async (range: DateRange) => {
+    threatRequestRef.current?.abort();
+
+    const controller = new AbortController();
+    threatRequestRef.current = controller;
+
+    const requestId = threatRequestIdRef.current + 1;
+    threatRequestIdRef.current = requestId;
+
+    setThreatLoading(true);
+    setThreatError(null);
+
+    try {
+      const response = await fetchThreatMap(range, controller.signal);
+      if (controller.signal.aborted || threatRequestIdRef.current !== requestId) {
+        return;
+      }
+      setThreatData(response);
+    } catch (fetchError) {
+      if (isAbortError(fetchError) || controller.signal.aborted || threatRequestIdRef.current !== requestId) {
+        return;
+      }
+      setThreatData(null);
+      setThreatError((fetchError as Error).message);
+    } finally {
+      if (!controller.signal.aborted && threatRequestIdRef.current === requestId) {
+        setThreatLoading(false);
+      }
+    }
+  }, []);
+
   const handleCountryHover = useCallback((event: CountryHoverEvent) => {
     setPopupAnchor(event.anchor);
 
@@ -297,6 +371,11 @@ export function useMapDataSync(): MapDataSyncState {
 
   useEffect(() => {
     latestRangeRef.current = dateRange;
+    void startThreatRequest(dateRange);
+  }, [dateRange, startThreatRequest]);
+
+  useEffect(() => {
+    latestRangeRef.current = dateRange;
     const nextRange = serializeDateRange(dateRange);
     if (!hoveredCountry || nextRange === activeRangeRef.current) {
       return;
@@ -307,17 +386,22 @@ export function useMapDataSync(): MapDataSyncState {
 
   useEffect(() => () => {
     requestRef.current?.abort();
+    threatRequestRef.current?.abort();
   }, []);
 
   const panelCount = hoveredCountry ? hoverData?.total ?? 0 : 0;
-  const statusTone = error ? 'error' : loading ? 'warning' : 'live';
+  const statusTone = error || threatError ? 'error' : loading || threatLoading ? 'warning' : 'live';
   const statusLabel = error
     ? 'QUERY ERROR'
-    : loading
-      ? 'QUERYING'
-      : hoveredCountry
-        ? `TRACKING ${hoveredCountry.code}`
-        : 'LIVE MOCK FEED';
+    : threatError
+      ? 'MAP ERROR'
+      : loading
+        ? 'QUERYING'
+        : threatLoading
+          ? 'FILTERING MAP'
+          : hoveredCountry
+            ? `TRACKING ${hoveredCountry.code}`
+            : 'LIVE MOCK FEED';
 
   return {
     dateRange,
@@ -325,8 +409,11 @@ export function useMapDataSync(): MapDataSyncState {
     hoveredCountry,
     popupAnchor,
     hoverData,
+    threatData,
     loading,
+    threatLoading,
     error,
+    threatError,
     panelCount,
     statusTone,
     statusLabel,
