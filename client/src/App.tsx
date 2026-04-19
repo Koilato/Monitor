@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Toolbar } from './components/Toolbar';
+import { MapDebugPanel } from './components/MapDebugPanel';
 import { MapViewport } from './components/MapViewport';
+import { useMapDebugSettings } from './hooks/useMapDebugSettings';
 import { useMapDataSync } from './hooks/useMapDataSync';
 import { useLatestContent } from './hooks/useLatestContent';
 
@@ -23,6 +25,17 @@ function formatUtcClock(date: Date): string {
 export default function App() {
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [clock, setClock] = useState(() => formatUtcClock(new Date()));
+  const {
+    panelOpen,
+    setPanelOpen,
+    persistEnabled,
+    setPersistEnabled,
+    settings: debugSettings,
+    resetSettings,
+    updateViewportPadding,
+    updateTwoDSettings,
+    updateThreeDSettings,
+  } = useMapDebugSettings();
   const {
     dateRange,
     setDateRange,
@@ -92,6 +105,19 @@ export default function App() {
             error={error}
             anchor={popupAnchor}
             onCountryHover={handleCountryHover}
+            debugSettings={debugSettings}
+          />
+
+          <MapDebugPanel
+            open={panelOpen}
+            persistEnabled={persistEnabled}
+            settings={debugSettings}
+            onToggleOpen={() => setPanelOpen(!panelOpen)}
+            onPersistChange={setPersistEnabled}
+            onReset={resetSettings}
+            onViewportPaddingChange={updateViewportPadding}
+            onTwoDChange={updateTwoDSettings}
+            onThreeDChange={updateThreeDSettings}
           />
         </section>
 

@@ -25,7 +25,7 @@ function emitHover(
 }
 
 export function Globe3DMap(props: MapViewProps) {
-  const { hoveredCountryCode, data, onCountryHover } = props;
+  const { hoveredCountryCode, data, onCountryHover, debugSettings } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const globeRef = useRef<GlobeInstance | null>(null);
   const boundaryPathsRef = useRef<GlobeBoundaryPath[]>([]);
@@ -80,7 +80,11 @@ export function Globe3DMap(props: MapViewProps) {
         .pointRadius(() => 0.45)
         .pointColor(() => '#fb7185');
 
-      globe.pointOfView({ lat: 24, lng: 105, altitude: 2.45 }, 0);
+      globe.pointOfView({
+        lat: debugSettings.threeD.povLat,
+        lng: debugSettings.threeD.povLng,
+        altitude: debugSettings.threeD.povAltitude,
+      }, 0);
 
       resizeObserver = new ResizeObserver(() => {
         if (!containerRef.current || !globeRef.current) {
@@ -165,6 +169,23 @@ export function Globe3DMap(props: MapViewProps) {
   }, [hoveredCountryCode]);
 
   useEffect(() => {
+    const globe = globeRef.current;
+    if (!globe) {
+      return;
+    }
+
+    globe.pointOfView({
+      lat: debugSettings.threeD.povLat,
+      lng: debugSettings.threeD.povLng,
+      altitude: debugSettings.threeD.povAltitude,
+    }, 0);
+  }, [
+    debugSettings.threeD.povAltitude,
+    debugSettings.threeD.povLat,
+    debugSettings.threeD.povLng,
+  ]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function syncGlobeData() {
@@ -192,7 +213,7 @@ export function Globe3DMap(props: MapViewProps) {
   }, [data]);
 
   return (
-    <div className="globe-map-wrapper">
+    <div className="globe-map-wrapper globe-map-wrapper--3d">
       <div className="map-surface globe-surface" ref={containerRef} />
       <div className="deckgl-timestamp globe-timestamp">
         {data ? `${data.victimCountry} / ${data.total} INCIDENTS / ${data.flows.length} FLOWS` : '3D GLOBE MODE'}

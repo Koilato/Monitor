@@ -1,8 +1,12 @@
-.globe-surface {
+.globe-map-wrapper--3d {
   background:
     radial-gradient(circle at 50% 50%, rgba(0, 140, 110, 0.08), transparent 35%),
     radial-gradient(circle at 20% 20%, rgba(0, 180, 255, 0.06), transparent 28%),
     #020607;
+}
+
+.globe-surface {
+  background: transparent;
 }
 
 .globe-surface canvas {

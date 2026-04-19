@@ -4,11 +4,9 @@ import { MapboxOverlay } from '@deck.gl/mapbox';
 import { ArcLayer, IconLayer } from '@deck.gl/layers';
 import type { IconLayerProps } from '@deck.gl/layers';
 import type { CountryHoverEvent, MapViewProps } from '../lib/types';
+import { DEFAULT_MAP_DEBUG_SETTINGS } from '../lib/types';
 import { buildTwoDArcData, createHoverAnchor, type TwoDArcDatum } from '../hooks/useMapDataSync';
 import '../styles/map-2d.css';
-
-const DEFAULT_CENTER: [number, number] = [12, 18];
-const DEFAULT_ZOOM = 0.92;
 
 const MAP_STYLE = {
   version: 8 as const,
@@ -45,16 +43,17 @@ const ARROW_ICON_ATLAS = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
 function emitHoverEvent(
   callback: (event: CountryHoverEvent) => void,
   country: CountryHoverEvent['country'],
-  point: maplibregl.Point | null,
+  clientX: number | null,
+  clientY: number | null,
 ) {
   callback({
     country,
-    anchor: point ? createHoverAnchor('2d', point.x, point.y) : null,
+    anchor: clientX !== null && clientY !== null ? createHoverAnchor('2d', clientX, clientY) : null,
   });
 }
 
 export function TwoDMap(props: MapViewProps) {
-  const { hoveredCountryCode, data, onCountryHover } = props;
+  const { hoveredCountryCode, data, onCountryHover, debugSettings } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
@@ -87,9 +86,10 @@ export function TwoDMap(props: MapViewProps) {
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: MAP_STYLE,
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
-      minZoom: 1.02,
+      center: [debugSettings.twoD.centerLng, debugSettings.twoD.centerLat],
+      zoom: debugSettings.twoD.zoom,
+      minZoom: debugSettings.twoD.minZoom,
+      maxZoom: debugSettings.twoD.maxZoom,
       renderWorldCopies: false,
       attributionControl: false,
     });
@@ -190,6 +190,9 @@ export function TwoDMap(props: MapViewProps) {
         const features = map.queryRenderedFeatures(event.point, {
           layers: ['countries-interactive'],
         });
+        const canvasRect = map.getCanvas().getBoundingClientRect();
+        const clientX = canvasRect.left + event.point.x;
+        const clientY = canvasRect.top + event.point.y;
 
         const feature = features[0];
         const code = feature?.properties?.['ISO3166-1-Alpha-2'] as string | undefined;
@@ -208,7 +211,7 @@ export function TwoDMap(props: MapViewProps) {
           emitHoverEvent(hoverHandlerRef.current, {
             code,
             name: name ?? code,
-          }, event.point);
+          }, clientX, clientY);
           return;
         }
 
@@ -218,7 +221,7 @@ export function TwoDMap(props: MapViewProps) {
           map.setFilter('countries-hover-glow', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
           map.setFilter('countries-hover-border', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
           map.getCanvas().style.cursor = '';
-          emitHoverEvent(hoverHandlerRef.current, null, null);
+          emitHoverEvent(hoverHandlerRef.current, null, null, null);
         }
       });
 
@@ -230,7 +233,7 @@ export function TwoDMap(props: MapViewProps) {
           map.setFilter('countries-hover-border', ['==', ['get', 'ISO3166-1-Alpha-2'], '']);
         }
         map.getCanvas().style.cursor = '';
-        emitHoverEvent(hoverHandlerRef.current, null, null);
+        emitHoverEvent(hoverHandlerRef.current, null, null, null);
       });
     });
 
@@ -247,6 +250,26 @@ export function TwoDMap(props: MapViewProps) {
       mapRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+
+    map.setMinZoom(debugSettings.twoD.minZoom);
+    map.setMaxZoom(debugSettings.twoD.maxZoom);
+    map.jumpTo({
+      center: [debugSettings.twoD.centerLng, debugSettings.twoD.centerLat],
+      zoom: debugSettings.twoD.zoom,
+    });
+  }, [
+    debugSettings.twoD.centerLat,
+    debugSettings.twoD.centerLng,
+    debugSettings.twoD.maxZoom,
+    debugSettings.twoD.minZoom,
+    debugSettings.twoD.zoom,
+  ]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -324,7 +347,7 @@ export function TwoDMap(props: MapViewProps) {
   }, [data, iconLayerProps]);
 
   return (
-    <div className="deckgl-map-wrapper">
+    <div className="deckgl-map-wrapper deckgl-map-wrapper--2d">
       <div className="map-surface" id="deckgl-basemap" ref={containerRef} />
       <div className="deckgl-controls">
         <div className="zoom-controls">
@@ -348,7 +371,14 @@ export function TwoDMap(props: MapViewProps) {
             type="button"
             className="map-btn"
             aria-label="Reset view"
-            onClick={() => mapRef.current?.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 450 })}
+            onClick={() => mapRef.current?.flyTo({
+              center: [
+                DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLng,
+                DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLat,
+              ],
+              zoom: DEFAULT_MAP_DEBUG_SETTINGS.twoD.zoom,
+              duration: 450,
+            })}
           >
             o
           </button>

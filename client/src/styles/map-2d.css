@@ -1,3 +1,15 @@
+.deckgl-map-wrapper--2d {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(0, 255, 170, 0.05), transparent 30%),
+    var(--map-bg);
+}
+
+.deckgl-map-wrapper--2d .map-surface,
+.deckgl-map-wrapper--2d #deckgl-basemap {
+  min-width: 0;
+  min-height: 0;
+}
+
 .deckgl-controls {
   position: absolute;
   top: 10px;
