@@ -4,12 +4,21 @@ import '../styles/toolbar.css';
 interface ToolbarProps {
   viewMode: '2d' | '3d';
   dateRange: DateRange;
+  debugModeEnabled: boolean;
   onViewModeChange: (mode: '2d' | '3d') => void;
   onDateRangeChange: (range: DateRange) => void;
+  onDebugModeToggle: () => void;
 }
 
 export function Toolbar(props: ToolbarProps) {
-  const { viewMode, dateRange, onViewModeChange, onDateRangeChange } = props;
+  const {
+    viewMode,
+    dateRange,
+    debugModeEnabled,
+    onViewModeChange,
+    onDateRangeChange,
+    onDebugModeToggle,
+  } = props;
 
   return (
     <div className="map-header-actions">
@@ -53,6 +62,14 @@ export function Toolbar(props: ToolbarProps) {
           })}
         />
       </label>
+
+      <button
+        type="button"
+        className={`map-debug-mode-btn ${debugModeEnabled ? 'active' : ''}`}
+        onClick={onDebugModeToggle}
+      >
+        {debugModeEnabled ? 'Debug On' : 'Debug Mode'}
+      </button>
     </div>
   );
 }

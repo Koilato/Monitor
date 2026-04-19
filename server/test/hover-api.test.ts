@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { buildCountryHoverResponse } from '../src/service.js';
 import { buildLatestContentResponse } from '../src/service.js';
+import { buildThreatMapResponse } from '../src/service.js';
 import { MOCK_INCIDENTS } from '../src/mock-incidents.js';
 import { MOCK_LATEST_CONTENT } from '../src/mock-feed.js';
 import { createApp } from '../src/app.js';
@@ -105,6 +106,80 @@ test('HTTP API returns latest SQL feed', async () => {
   assert.equal(body.category, 'sql');
   assert.equal(body.total, 5);
   assert.deepEqual(body.items.map((item: { id: string }) => item.id), ['sql-009', 'sql-008']);
+
+  server.close();
+  await once(server, 'close');
+});
+
+test('threat map response changes with the selected date range', () => {
+  const earlyRange = buildThreatMapResponse(MOCK_INCIDENTS, {
+    startDate: '2026-04-01',
+    endDate: '2026-04-04',
+  });
+
+  assert.equal(earlyRange.total, 4);
+  assert.deepEqual(
+    earlyRange.countries.map((country) => `${country.country}:${country.threatLevel}:${country.incidentCount}`),
+    ['CN:high:4'],
+  );
+
+  const laterRange = buildThreatMapResponse(MOCK_INCIDENTS, {
+    startDate: '2026-04-01',
+    endDate: '2026-04-08',
+  });
+
+  assert.equal(laterRange.total, 8);
+  assert.deepEqual(
+    laterRange.countries.map((country) => `${country.country}:${country.threatLevel}:${country.incidentCount}`),
+    ['CN:critical:8'],
+  );
+});
+
+test('HTTP API returns threat map data for the selected date range', async () => {
+  const server = createServer(createApp());
+  server.listen(0);
+  await once(server, 'listening');
+
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Failed to get dynamic port');
+  }
+
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/map/threat-map?startDate=2026-04-01&endDate=2026-04-08`,
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.total, 8);
+    assert.deepEqual(
+      body.countries.map((country: { country: string; threatLevel: string; incidentCount: number }) => `${country.country}:${country.threatLevel}:${country.incidentCount}`),
+      ['CN:critical:8'],
+    );
+  } finally {
+    server.close();
+    await once(server, 'close');
+  }
+});
+
+test('HTTP API rejects invalid threat map date ranges', async () => {
+  const server = createServer(createApp());
+  server.listen(0);
+  await once(server, 'listening');
+
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Failed to get dynamic port');
+  }
+
+  const response = await fetch(
+    `http://127.0.0.1:${address.port}/api/map/threat-map?startDate=2026-04-10&endDate=2026-04-05`,
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error, 'startDate must be earlier than or equal to endDate');
 
   server.close();
   await once(server, 'close');

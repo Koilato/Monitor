@@ -1,0 +1,185 @@
+[ 2545647ms] [ERROR] React has detected a change in the order of Hooks called by %s. This will lead to bugs and errors if not fixed. For more information, read the Rules of Hooks: https://react.dev/link/rules-of-hooks
+
+   Previous render            Next render
+   ------------------------------------------------------
+%s   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ App 1. useState                   useState
+2. useState                   useState
+3. useState                   useState
+4. useState                   useState
+5. useState                   useState
+6. useEffect                  useState
+ @ http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5593
+[ 2545653ms] Error: Should have a queue. You are likely calling Hooks conditionally, which is not allowed. (https://react.dev/link/invalid-hook-call)
+    at updateReducerImpl (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5892:17)
+    at updateReducer (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5887:16)
+    at Object.useState (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:18996:20)
+    at exports.useState (http://localhost:4175/node_modules/.vite/deps/chunk-VJWSV4RP.js?v=38705482:959:36)
+    at useMapDebugSettings (http://localhost:4175/src/hooks/useMapDebugSettings.ts?t=1776600623238:62:35)
+    at App (http://localhost:4175/src/App.tsx?t=1776600623238:51:7)
+    at Object.react_stack_bottom_frame (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:18509:20)
+    at renderWithHooks (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5654:24)
+    at updateFunctionComponent (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:7475:21)
+    at beginWork (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:8525:20)
+[ 2545649ms] [WARNING] %s
+
+%s
+ An error occurred in the <App> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:6965
+[ 3554398ms] Error: Should have a queue. You are likely calling Hooks conditionally, which is not allowed. (https://react.dev/link/invalid-hook-call)
+    at updateReducerImpl (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5892:17)
+    at updateReducer (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5887:16)
+    at Object.useState (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:18996:20)
+    at exports.useState (http://localhost:4175/node_modules/.vite/deps/chunk-VJWSV4RP.js?v=38705482:959:36)
+    at useMapDataSync (http://localhost:4175/src/hooks/useMapDataSync.ts?t=1776601632010:151:45)
+    at App (http://localhost:4175/src/App.tsx?t=1776601632010:68:7)
+    at Object.react_stack_bottom_frame (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:18509:20)
+    at renderWithHooks (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5654:24)
+    at updateFunctionComponent (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:7475:21)
+    at beginWork (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:8525:20)
+[ 3554398ms] [WARNING] %s
+
+%s
+ An error occurred in the <App> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:6965
+[ 3570854ms] [ERROR] The final argument passed to %s changed size between renders. The order and size of this array must remain constant.
+
+Previous: %s
+Incoming: %s useEffect [[object Object], , async (country, range, force = false) => {
+    const rangeState = serializeDateRange(range);
+    if (!force && activeCountryRef.current === country.code && activeRangeRef.current === rangeState) {
+      return;
+    }
+    activeCountryRef.current = country.code;
+    activeRangeRef.current = rangeState;
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetchCountryHover(country.code, range, controller.signal);
+      if (controller.signal.aborted || requestIdRef.current !== requestId) {
+        return;
+      }
+      setHoverData(response);
+    } catch (fetchError) {
+      if (isAbortError(fetchError) || controller.signal.aborted || requestIdRef.current !== requestId) {
+        return;
+      }
+      setHoverData(null);
+      setError(fetchError.message);
+    } finally {
+      if (!controller.signal.aborted && requestIdRef.current === requestId) {
+        setLoading(false);
+      }
+    }
+  }] [[object Object], , async (country, range, force = false) => {
+    const rangeState = serializeDateRange(range);
+    if (!force && activeCountryRef.current === country.code && activeRangeRef.current === rangeState) {
+      return;
+    }
+    activeCountryRef.current = country.code;
+    activeRangeRef.current = rangeState;
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetchCountryHover(country.code, range, controller.signal);
+      if (controller.signal.aborted || requestIdRef.current !== requestId) {
+        return;
+      }
+      setHoverData(response);
+    } catch (fetchError) {
+      if (isAbortError(fetchError) || controller.signal.aborted || requestIdRef.current !== requestId) {
+        return;
+      }
+      setHoverData(null);
+      setError(fetchError.message);
+    } finally {
+      if (!controller.signal.aborted && requestIdRef.current === requestId) {
+        setLoading(false);
+      }
+    }
+  }, async (range) => {
+    threatRequestRef.current?.abort();
+    const controller = new AbortController();
+    threatRequestRef.current = controller;
+    const requestId = threatRequestIdRef.current + 1;
+    threatRequestIdRef.current = requestId;
+    setThreatLoading(true);
+    setThreatError(null);
+    try {
+      const response = await fetchThreatMap(range, controller.signal);
+      if (controller.signal.aborted || threatRequestIdRef.current !== requestId) {
+        return;
+      }
+      setThreatData(response);
+    } catch (fetchError) {
+      if (isAbortError(fetchError) || controller.signal.aborted || threatRequestIdRef.current !== requestId) {
+        return;
+      }
+      setThreatData(null);
+      setThreatError(fetchError.message);
+    } finally {
+      if (!controller.signal.aborted && threatRequestIdRef.current === requestId) {
+        setThreatLoading(false);
+      }
+    }
+  }] @ http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5627
+[ 3683722ms] Error: Should have a queue. You are likely calling Hooks conditionally, which is not allowed. (https://react.dev/link/invalid-hook-call)
+    at updateReducerImpl (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5892:17)
+    at updateReducer (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5887:16)
+    at Object.useState (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:18996:20)
+    at exports.useState (http://localhost:4175/node_modules/.vite/deps/chunk-VJWSV4RP.js?v=38705482:959:36)
+    at useLatestContent (http://localhost:4175/src/hooks/useLatestContent.ts?t=1776601614473:6:29)
+    at App (http://localhost:4175/src/App.tsx?t=1776601761315:74:7)
+    at Object.react_stack_bottom_frame (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:18509:20)
+    at renderWithHooks (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5654:24)
+    at updateFunctionComponent (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:7475:21)
+    at beginWork (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:8525:20)
+[ 3683721ms] [WARNING] %s
+
+%s
+ An error occurred in the <App> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:6965
+[ 3944278ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:4175/src/components/TwoDMap.tsx?t=1776602021882:0
+[ 3944278ms] [ERROR] [vite] Failed to reload /src/components/TwoDMap.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:4175/@vite/client:881
+[ 3953255ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:4175/src/components/TwoDMap.tsx?t=1776602030857:0
+[ 3953255ms] [ERROR] [vite] Failed to reload /src/components/MapViewport.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:4175/@vite/client:881
+[ 4117058ms] [ERROR] [vite] SyntaxError: The requested module '/src/hooks/useMapDataSync.ts?t=1776602194634' does not provide an export named 'getThreatColor' @ http://localhost:4175/@vite/client:881
+[ 4117058ms] [ERROR] [vite] Failed to reload /src/components/MapViewport.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:4175/@vite/client:881
+[ 4117063ms] [ERROR] [vite] SyntaxError: The requested module '/src/hooks/useMapDataSync.ts?t=1776602194634' does not provide an export named 'getThreatColor' @ http://localhost:4175/@vite/client:881
+[ 4117064ms] [ERROR] [vite] Failed to reload /src/components/MapViewport.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:4175/@vite/client:881
+[ 4117064ms] [ERROR] [vite] SyntaxError: The requested module '/src/hooks/useMapDataSync.ts?t=1776602194634' does not provide an export named 'getThreatColor' @ http://localhost:4175/@vite/client:881
+[ 4117064ms] [ERROR] [vite] Failed to reload /src/App.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:4175/@vite/client:881
+[ 4117064ms] [ERROR] [vite] SyntaxError: The requested module '/src/hooks/useMapDataSync.ts?t=1776602194634' does not provide an export named 'getThreatColor' @ http://localhost:4175/@vite/client:881
+[ 4117064ms] [ERROR] [vite] Failed to reload /src/components/Globe3DMap.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:4175/@vite/client:881
+[ 4117065ms] [ERROR] [vite] SyntaxError: The requested module '/src/hooks/useMapDataSync.ts?t=1776602194634' does not provide an export named 'getThreatColor' @ http://localhost:4175/@vite/client:881
+[ 4117065ms] [ERROR] [vite] Failed to reload /src/components/Globe3DMap.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:4175/@vite/client:881
+[ 4117065ms] [ERROR] [vite] SyntaxError: The requested module '/src/hooks/useMapDataSync.ts?t=1776602194634' does not provide an export named 'getThreatColor' @ http://localhost:4175/@vite/client:881
+[ 4117065ms] [ERROR] [vite] Failed to reload /src/components/MapViewport.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:4175/@vite/client:881
+[ 4117069ms] [ERROR] [vite] SyntaxError: The requested module '/src/hooks/useMapDataSync.ts?t=1776602194634' does not provide an export named 'getThreatColor' @ http://localhost:4175/@vite/client:881
+[ 4117069ms] [ERROR] [vite] Failed to reload /src/App.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:4175/@vite/client:881
+[ 4265845ms] Error: Should have a queue. You are likely calling Hooks conditionally, which is not allowed. (https://react.dev/link/invalid-hook-call)
+    at updateReducerImpl (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5892:17)
+    at updateReducer (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5887:16)
+    at Object.useState (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:18996:20)
+    at exports.useState (http://localhost:4175/node_modules/.vite/deps/chunk-VJWSV4RP.js?v=38705482:959:36)
+    at useLatestContent (http://localhost:4175/src/hooks/useLatestContent.ts?t=1776601614473:4:27)
+    at App (http://localhost:4175/src/App.tsx?t=1776602343437:74:7)
+    at Object.react_stack_bottom_frame (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:18509:20)
+    at renderWithHooks (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:5654:24)
+    at updateFunctionComponent (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:7475:21)
+    at beginWork (http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:8525:20)
+[ 4265838ms] [WARNING] %s
+
+%s
+ An error occurred in the <App> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=38705482:6965

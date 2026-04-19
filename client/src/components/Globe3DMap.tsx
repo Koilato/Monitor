@@ -1,12 +1,15 @@
 import { useEffect, useRef } from 'react';
 import Globe from 'globe.gl';
 import type { GlobeInstance } from 'globe.gl';
+import type { ThreatMapResponse } from '@shared/types';
+import type { Feature, Geometry } from 'geojson';
 import { getCountriesGeoJson, getCountryAtCoordinates } from '../lib/country-geometry';
 import type { CountryHoverEvent, MapViewProps } from '../lib/types';
 import {
   buildGlobeArcData,
   buildGlobeBoundaryPaths,
   createHoverAnchor,
+  getThreatColor,
   getGlobeBoundaryPathsForHover,
   type GlobeArrowDatum,
   type GlobeBoundaryPath,
@@ -25,10 +28,12 @@ function emitHover(
 }
 
 export function Globe3DMap(props: MapViewProps) {
-  const { hoveredCountryCode, data, onCountryHover, debugSettings } = props;
+  const { hoveredCountryCode, data, threatData, onCountryHover, debugSettings } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const globeRef = useRef<GlobeInstance | null>(null);
   const boundaryPathsRef = useRef<GlobeBoundaryPath[]>([]);
+  const polygonFeaturesRef = useRef<Feature<Geometry>[]>([]);
+  const threatLookupRef = useRef<Map<string, ThreatMapResponse['countries'][number]>>(new Map());
   const hoveredCodeRef = useRef<string | null>(null);
   const hoverHandlerRef = useRef(onCountryHover);
 
@@ -51,8 +56,30 @@ export function Globe3DMap(props: MapViewProps) {
       const globe = new Globe(containerRef.current) as GlobeInstance;
       globeRef.current = globe;
       boundaryPathsRef.current = buildGlobeBoundaryPaths(geojson);
+      polygonFeaturesRef.current = geojson.features;
 
       globe
+        .polygonsData(polygonFeaturesRef.current)
+        .polygonAltitude((feature: object) => {
+          const code = (feature as { properties?: { 'ISO3166-1-Alpha-2'?: string } }).properties?.['ISO3166-1-Alpha-2'];
+          const threat = code ? threatLookupRef.current.get(code.toUpperCase()) : null;
+          return threat ? 0.03 : 0.012;
+        })
+        .polygonCapColor((feature: object) => {
+          const code = (feature as { properties?: { 'ISO3166-1-Alpha-2'?: string } }).properties?.['ISO3166-1-Alpha-2'];
+          const threat = code ? threatLookupRef.current.get(code.toUpperCase()) : null;
+          return threat ? getThreatColor(threat.threatLevel) : 'rgba(0,0,0,0)';
+        })
+        .polygonSideColor((feature: object) => {
+          const code = (feature as { properties?: { 'ISO3166-1-Alpha-2'?: string } }).properties?.['ISO3166-1-Alpha-2'];
+          const threat = code ? threatLookupRef.current.get(code.toUpperCase()) : null;
+          return threat ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0)';
+        })
+        .polygonStrokeColor((feature: object) => {
+          const code = (feature as { properties?: { 'ISO3166-1-Alpha-2'?: string } }).properties?.['ISO3166-1-Alpha-2'];
+          const threat = code ? threatLookupRef.current.get(code.toUpperCase()) : null;
+          return threat ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0)';
+        })
         .globeImageUrl('/textures/earth-topo-bathy.jpg')
         .bumpImageUrl('/textures/earth-water.png')
         .backgroundImageUrl('/textures/night-sky.png')
@@ -167,6 +194,19 @@ export function Globe3DMap(props: MapViewProps) {
     }
     globe.pathsData(getGlobeBoundaryPathsForHover(boundaryPathsRef.current, hoveredCountryCode));
   }, [hoveredCountryCode]);
+
+  useEffect(() => {
+    threatLookupRef.current = new Map(
+      threatData?.countries.map((country) => [country.country, country]) ?? [],
+    );
+
+    const globe = globeRef.current;
+    if (!globe || polygonFeaturesRef.current.length === 0) {
+      return;
+    }
+
+    globe.polygonsData(polygonFeaturesRef.current);
+  }, [threatData]);
 
   useEffect(() => {
     const globe = globeRef.current;

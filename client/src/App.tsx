@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { Toolbar } from './components/Toolbar';
 import { MapDebugPanel } from './components/MapDebugPanel';
 import { MapViewport } from './components/MapViewport';
@@ -25,14 +25,21 @@ function formatUtcClock(date: Date): string {
 export default function App() {
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
   const [clock, setClock] = useState(() => formatUtcClock(new Date()));
+  const mainContentRef = useRef<HTMLElement | null>(null);
+  const dragStateRef = useRef<{
+    startY: number;
+    startHeight: number;
+    pointerId: number;
+  } | null>(null);
   const {
+    debugModeEnabled,
+    setDebugModeEnabled,
     panelOpen,
     setPanelOpen,
     persistEnabled,
     setPersistEnabled,
     settings: debugSettings,
     resetSettings,
-    updateViewportPadding,
     updateLatestSectionHeight,
     updateTwoDSettings,
     updateThreeDSettings,
@@ -43,6 +50,7 @@ export default function App() {
     hoveredCountry,
     popupAnchor,
     hoverData,
+    threatData,
     loading,
     error,
     panelCount,
@@ -64,6 +72,71 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, []);
 
+  const handleResizeStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const mainContent = mainContentRef.current;
+    if (!mainContent) {
+      return;
+    }
+
+    const bounds = mainContent.getBoundingClientRect();
+    const minLatestHeight = 140;
+    const maxLatestHeight = Math.max(minLatestHeight, bounds.height - 180);
+    const currentHeight = Math.min(
+      Math.max(debugSettings.latestSectionHeight, minLatestHeight),
+      maxLatestHeight,
+    );
+
+    dragStateRef.current = {
+      startY: event.clientY,
+      startHeight: currentHeight,
+      pointerId: event.pointerId,
+    };
+
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+    event.currentTarget.setPointerCapture(event.pointerId);
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const dragState = dragStateRef.current;
+      const content = mainContentRef.current;
+
+      if (!dragState || !content) {
+        return;
+      }
+
+      moveEvent.preventDefault();
+
+      const rect = content.getBoundingClientRect();
+      const minHeight = 140;
+      const maxHeight = Math.max(minHeight, rect.height - 180);
+      const deltaY = moveEvent.clientY - dragState.startY;
+      const nextHeight = Math.min(
+        Math.max(dragState.startHeight + deltaY, minHeight),
+        maxHeight,
+      );
+
+      updateLatestSectionHeight(nextHeight);
+    };
+
+    const handlePointerUp = (upEvent: PointerEvent) => {
+      const dragState = dragStateRef.current;
+      if (!dragState || dragState.pointerId !== upEvent.pointerId) {
+        return;
+      }
+
+      dragStateRef.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+  };
+
   return (
     <div id="app">
       <header className="header">
@@ -82,7 +155,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="main-content">
+      <main className="main-content" ref={mainContentRef}>
         <section className="map-section">
           <div className="panel-header">
             <div className="panel-header-left">
@@ -93,8 +166,10 @@ export default function App() {
             <Toolbar
               viewMode={viewMode}
               dateRange={dateRange}
+              debugModeEnabled={debugModeEnabled}
               onViewModeChange={setViewMode}
               onDateRangeChange={setDateRange}
+              onDebugModeToggle={() => setDebugModeEnabled(!debugModeEnabled)}
             />
           </div>
 
@@ -102,6 +177,7 @@ export default function App() {
             viewMode={viewMode}
             hoveredCountry={hoveredCountry}
             data={hoverData}
+            threatData={threatData}
             loading={loading}
             error={error}
             anchor={popupAnchor}
@@ -109,19 +185,31 @@ export default function App() {
             debugSettings={debugSettings}
           />
 
-          <MapDebugPanel
-            open={panelOpen}
-            persistEnabled={persistEnabled}
-            settings={debugSettings}
-            onToggleOpen={() => setPanelOpen(!panelOpen)}
-            onPersistChange={setPersistEnabled}
-            onReset={resetSettings}
-            onViewportPaddingChange={updateViewportPadding}
-            onLatestSectionHeightChange={updateLatestSectionHeight}
-            onTwoDChange={updateTwoDSettings}
-            onThreeDChange={updateThreeDSettings}
-          />
+          {debugModeEnabled ? (
+            <MapDebugPanel
+              open={panelOpen}
+              persistEnabled={persistEnabled}
+              settings={debugSettings}
+              onToggleOpen={() => setPanelOpen(!panelOpen)}
+              onPersistChange={setPersistEnabled}
+              onReset={resetSettings}
+              onLatestSectionHeightChange={updateLatestSectionHeight}
+              onTwoDChange={updateTwoDSettings}
+              onThreeDChange={updateThreeDSettings}
+            />
+          ) : null}
         </section>
+
+        <div
+          className="main-resize-handle"
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label="Resize map and feed panels"
+          tabIndex={0}
+          onPointerDown={handleResizeStart}
+        >
+          <span className="main-resize-handle-bar" />
+        </div>
 
         <section
           className="latest-section"

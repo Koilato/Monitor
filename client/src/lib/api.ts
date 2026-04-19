@@ -1,4 +1,9 @@
-import type { CountryHoverResponse, DateRange, LatestContentResponse } from '@shared/types';
+import type {
+  CountryHoverResponse,
+  DateRange,
+  LatestContentResponse,
+  ThreatMapResponse,
+} from '@shared/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787';
 
@@ -55,4 +60,29 @@ export async function fetchLatestContent(
   }
 
   return response.json() as Promise<LatestContentResponse>;
+}
+
+export function buildThreatMapUrl(range: DateRange): string {
+  const url = new URL('/api/map/threat-map', API_BASE_URL);
+  if (range.startDate) {
+    url.searchParams.set('startDate', range.startDate);
+  }
+  if (range.endDate) {
+    url.searchParams.set('endDate', range.endDate);
+  }
+  return url.toString();
+}
+
+export async function fetchThreatMap(
+  range: DateRange,
+  signal?: AbortSignal,
+): Promise<ThreatMapResponse> {
+  const response = await fetch(buildThreatMapUrl(range), { signal });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(payload.error || 'Request failed');
+  }
+
+  return response.json() as Promise<ThreatMapResponse>;
 }

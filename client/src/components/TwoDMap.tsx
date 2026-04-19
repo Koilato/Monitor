@@ -294,7 +294,7 @@ export function TwoDMap(props: MapViewProps) {
     }
 
     autoFitRef.current = isDefaultTwoDView(debugSettings.twoD);
-    map.setMinZoom(DEFAULT_MAP_DEBUG_SETTINGS.twoD.minZoom);
+    map.setMinZoom(Math.max(-2, DEFAULT_MAP_DEBUG_SETTINGS.twoD.minZoom));
     map.setMaxZoom(debugSettings.twoD.maxZoom);
 
     if (autoFitRef.current) {

@@ -8,7 +8,6 @@ interface MapDebugPanelProps {
   onToggleOpen: () => void;
   onPersistChange: (enabled: boolean) => void;
   onReset: () => void;
-  onViewportPaddingChange: (value: number) => void;
   onLatestSectionHeightChange: (value: number) => void;
   onTwoDChange: (patch: Partial<MapDebugSettings['twoD']>) => void;
   onThreeDChange: (patch: Partial<MapDebugSettings['threeD']>) => void;
@@ -54,7 +53,6 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
     onToggleOpen,
     onPersistChange,
     onReset,
-    onViewportPaddingChange,
     onLatestSectionHeightChange,
     onTwoDChange,
     onThreeDChange,
@@ -96,15 +94,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
           </label>
 
           <section className="map-debug-section">
-            <h3>Viewport</h3>
-            <NumberField
-              label="Inset px"
-              value={settings.viewportPadding}
-              min={0}
-              max={48}
-              step={1}
-              onChange={onViewportPaddingChange}
-            />
+            <h3>Layout</h3>
             <NumberField
               label="Feed height"
               value={settings.latestSectionHeight}
@@ -117,6 +107,13 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
 
           <section className="map-debug-section">
             <h3>2D Map</h3>
+            <NumberField
+              label="Extra pad X px"
+              value={settings.twoD.contentPaddingX}
+              min={0}
+              step={1}
+              onChange={(value) => onTwoDChange({ contentPaddingX: value })}
+            />
             <NumberField
               label="Center lng"
               value={settings.twoD.centerLng}
@@ -136,7 +133,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
             <NumberField
               label="Zoom"
               value={settings.twoD.zoom}
-              min={-2}
+              min={-8}
               max={8}
               step={0.05}
               onChange={(value) => onTwoDChange({ zoom: value })}

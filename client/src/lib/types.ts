@@ -1,4 +1,4 @@
-import type { CountryHoverResponse } from '@shared/types';
+import type { CountryHoverResponse, ThreatMapResponse } from '@shared/types';
 
 export interface HoverCountryState {
   code: string;
@@ -32,6 +32,7 @@ export interface MapDebugTwoDSettings {
   zoom: number;
   minZoom: number;
   maxZoom: number;
+  contentPaddingX: number;
 }
 
 export interface MapDebugThreeDSettings {
@@ -41,14 +42,12 @@ export interface MapDebugThreeDSettings {
 }
 
 export interface MapDebugSettings {
-  viewportPadding: number;
   latestSectionHeight: number;
   twoD: MapDebugTwoDSettings;
   threeD: MapDebugThreeDSettings;
 }
 
 export const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
-  viewportPadding: 0,
   latestSectionHeight: 160,
   twoD: {
     centerLng: 0,
@@ -56,6 +55,7 @@ export const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
     zoom: 0,
     minZoom: -2,
     maxZoom: 6,
+    contentPaddingX: 0,
   },
   threeD: {
     povLng: 105,
@@ -67,6 +67,7 @@ export const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
 export interface MapViewProps {
   hoveredCountryCode: string | null;
   data: CountryHoverResponse | null;
+  threatData: ThreatMapResponse | null;
   onCountryHover: (event: CountryHoverEvent) => void;
   debugSettings: MapDebugSettings;
 }

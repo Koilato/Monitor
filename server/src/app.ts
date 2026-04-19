@@ -1,7 +1,11 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { MOCK_INCIDENTS } from './mock-incidents.js';
 import { MOCK_LATEST_CONTENT } from './mock-feed.js';
-import { buildCountryHoverResponse, buildLatestContentResponse } from './service.js';
+import {
+  buildCountryHoverResponse,
+  buildLatestContentResponse,
+  buildThreatMapResponse,
+} from './service.js';
 import {
   ValidationError,
   assertDateRange,
@@ -57,6 +61,19 @@ export function createApp() {
         category,
         limit,
         offset,
+      }),
+    );
+  });
+
+  app.get('/api/map/threat-map', (req: Request, res: Response) => {
+    const startDate = normalizeDate(req.query.startDate, 'startDate');
+    const endDate = normalizeDate(req.query.endDate, 'endDate');
+    assertDateRange(startDate, endDate);
+
+    res.json(
+      buildThreatMapResponse(MOCK_INCIDENTS, {
+        startDate,
+        endDate,
       }),
     );
   });

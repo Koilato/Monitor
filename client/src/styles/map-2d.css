@@ -1,13 +1,29 @@
 .deckgl-map-wrapper--2d {
+  background: var(--map-bg);
+}
+
+.deckgl-map-background {
+  position: absolute;
+  inset: 0;
   background:
     radial-gradient(circle at 50% 45%, rgba(0, 255, 170, 0.05), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(14, 116, 144, 0.08), transparent 40%),
     var(--map-bg);
 }
 
-.deckgl-map-wrapper--2d .map-surface,
-.deckgl-map-wrapper--2d #deckgl-basemap {
+.deckgl-map-geometry-shell {
+  position: absolute;
+  inset: 0;
+}
+
+.deckgl-map-geometry-shell .map-surface,
+.deckgl-map-geometry-shell #deckgl-basemap,
+.deckgl-map-geometry-shell .maplibregl-map,
+.deckgl-map-geometry-shell .maplibregl-canvas-container,
+.deckgl-map-geometry-shell .maplibregl-canvas {
   min-width: 0;
   min-height: 0;
+  background: transparent !important;
 }
 
 .deckgl-controls {

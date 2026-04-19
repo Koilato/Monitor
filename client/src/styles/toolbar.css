@@ -65,6 +65,31 @@
   cursor: pointer;
 }
 
+.map-debug-mode-btn {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(10, 10, 10, 0.92);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-debug-mode-btn:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.map-debug-mode-btn.active {
+  background: var(--green);
+  color: var(--bg);
+}
+
 @media (max-width: 960px) {
   .map-header-actions {
     width: 100%;

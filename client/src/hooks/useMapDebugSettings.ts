@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { DEFAULT_MAP_DEBUG_SETTINGS, type MapDebugSettings } from '../lib/types';
 
-const STORAGE_KEY = 'world-monitor.map-debug-settings.v2';
+const STORAGE_KEY = 'world-monitor.map-debug-settings.v9';
+const DEBUG_MODE_STORAGE_KEY = 'world-monitor.map-debug-mode.v1';
 const TWO_D_MIN_ZOOM_LIMIT = -2;
 
 function isFiniteNumber(value: unknown): value is number {
@@ -23,9 +24,6 @@ function coerceMapDebugSettings(value: unknown): MapDebugSettings {
   };
 
   return {
-    viewportPadding: isFiniteNumber(record.viewportPadding)
-      ? Math.max(0, record.viewportPadding)
-      : DEFAULT_MAP_DEBUG_SETTINGS.viewportPadding,
     latestSectionHeight: isFiniteNumber(record.latestSectionHeight)
       ? clamp(record.latestSectionHeight, 100, 420)
       : DEFAULT_MAP_DEBUG_SETTINGS.latestSectionHeight,
@@ -52,6 +50,14 @@ function coerceMapDebugSettings(value: unknown): MapDebugSettings {
         zoom,
         minZoom,
         maxZoom,
+        contentPaddingX: Math.max(
+          0,
+          isFiniteNumber(record.twoD?.contentPaddingX)
+            ? record.twoD.contentPaddingX
+            : isFiniteNumber((record.twoD as { contentInsetX?: number } | undefined)?.contentInsetX)
+              ? (record.twoD as { contentInsetX?: number }).contentInsetX!
+              : DEFAULT_MAP_DEBUG_SETTINGS.twoD.contentPaddingX,
+        ),
       };
     })(),
     threeD: {
@@ -86,13 +92,14 @@ function readStoredSettings(): MapDebugSettings | null {
 }
 
 export interface UseMapDebugSettingsResult {
+  debugModeEnabled: boolean;
+  setDebugModeEnabled: (enabled: boolean) => void;
   panelOpen: boolean;
   setPanelOpen: (open: boolean) => void;
   persistEnabled: boolean;
   setPersistEnabled: (enabled: boolean) => void;
   settings: MapDebugSettings;
   resetSettings: () => void;
-  updateViewportPadding: (value: number) => void;
   updateLatestSectionHeight: (value: number) => void;
   updateTwoDSettings: (patch: Partial<MapDebugSettings['twoD']>) => void;
   updateThreeDSettings: (patch: Partial<MapDebugSettings['threeD']>) => void;
@@ -100,6 +107,7 @@ export interface UseMapDebugSettingsResult {
 
 export function useMapDebugSettings(): UseMapDebugSettingsResult {
   const [panelOpen, setPanelOpen] = useState(false);
+  const [debugModeEnabled, setDebugModeEnabledState] = useState(false);
   const [persistEnabled, setPersistEnabledState] = useState(false);
   const [settings, setSettings] = useState<MapDebugSettings>(DEFAULT_MAP_DEBUG_SETTINGS);
 
@@ -116,6 +124,18 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
       return;
     }
 
+    const raw = window.localStorage.getItem(DEBUG_MODE_STORAGE_KEY);
+    if (raw === 'true') {
+      setDebugModeEnabledState(true);
+      setPanelOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     if (!persistEnabled) {
       window.localStorage.removeItem(STORAGE_KEY);
       return;
@@ -124,12 +144,18 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
   }, [persistEnabled, settings]);
 
-  const updateViewportPadding = (value: number) => {
-    setSettings((current) => ({
-      ...current,
-      viewportPadding: Math.max(0, value),
-    }));
-  };
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (!debugModeEnabled) {
+      window.localStorage.removeItem(DEBUG_MODE_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(DEBUG_MODE_STORAGE_KEY, 'true');
+  }, [debugModeEnabled]);
 
   const updateLatestSectionHeight = (value: number) => {
     setSettings((current) => ({
@@ -158,6 +184,7 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
           minZoom,
           maxZoom,
           zoom,
+          contentPaddingX: Math.max(0, next.contentPaddingX),
         };
       })(),
     }));
@@ -191,14 +218,25 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     }
   };
 
+  const setDebugModeEnabled = (enabled: boolean) => {
+    setDebugModeEnabledState(enabled);
+    if (enabled) {
+      setPanelOpen(true);
+      return;
+    }
+
+    setPanelOpen(false);
+  };
+
   return {
+    debugModeEnabled,
+    setDebugModeEnabled,
     panelOpen,
     setPanelOpen,
     persistEnabled,
     setPersistEnabled,
     settings,
     resetSettings,
-    updateViewportPadding,
     updateLatestSectionHeight,
     updateTwoDSettings,
     updateThreeDSettings,

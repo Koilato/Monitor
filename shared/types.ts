@@ -11,6 +11,22 @@ export interface IncidentDetails {
   severity: 'low' | 'medium' | 'high';
 }
 
+export type ThreatLevel = 'none' | 'low' | 'medium' | 'high' | 'critical';
+
+export interface ThreatSeverityCounts {
+  low: number;
+  medium: number;
+  high: number;
+}
+
+export interface ThreatCountryStat {
+  country: CountryCode;
+  incidentCount: number;
+  severityCounts: ThreatSeverityCounts;
+  threatScore: number;
+  threatLevel: ThreatLevel;
+}
+
 export interface HoverIncident {
   uuid: string;
   date: string;
@@ -37,6 +53,15 @@ export interface CountryHoverResponse {
 
 export interface CountryHoverQuery extends DateRange {
   victimCountry: CountryCode;
+}
+
+export interface ThreatMapQuery extends DateRange {}
+
+export interface ThreatMapResponse {
+  startDate: string | null;
+  endDate: string | null;
+  total: number;
+  countries: ThreatCountryStat[];
 }
 
 export interface LatestContentItem {
