@@ -64,6 +64,7 @@ export function Globe3DMap(props: MapViewProps) {
     }
 
     let removed = false;
+    let resizeObserver: ResizeObserver | null = null;
 
     async function mountGlobe() {
       const geojson = await getCountriesGeoJson();
@@ -121,7 +122,22 @@ export function Globe3DMap(props: MapViewProps) {
         .pointRadius(() => 0.45)
         .pointColor(() => '#fb7185');
 
-      globe.pointOfView({ lat: 24, lng: 105, altitude: 2.1 }, 0);
+      globe.pointOfView({ lat: 24, lng: 105, altitude: 2.45 }, 0);
+
+      resizeObserver = new ResizeObserver(() => {
+        if (!containerRef.current || !globeRef.current) {
+          return;
+        }
+
+        const rect = containerRef.current.getBoundingClientRect();
+        globeRef.current.width(rect.width);
+        globeRef.current.height(rect.height);
+      });
+      resizeObserver.observe(containerRef.current);
+
+      const rect = containerRef.current.getBoundingClientRect();
+      globe.width(rect.width);
+      globe.height(rect.height);
 
       const canvas = containerRef.current.querySelector('canvas');
       if (!canvas) {
@@ -173,8 +189,9 @@ export function Globe3DMap(props: MapViewProps) {
       console.error('Failed to mount globe', error);
     });
 
-    return () => {
+      return () => {
       removed = true;
+      resizeObserver?.disconnect();
       containerRef.current?.replaceChildren();
       globeRef.current = null;
     };

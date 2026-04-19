@@ -69,10 +69,10 @@ canvas,
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 8px 16px;
+  padding: 6px 14px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  height: 40px;
+  height: 36px;
   flex-shrink: 0;
 }
 
@@ -101,7 +101,7 @@ canvas,
 .header-banner,
 .header-meta,
 .status-label {
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 1.2px;
   text-transform: uppercase;
 }
@@ -188,7 +188,7 @@ canvas,
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: rgba(255, 255, 255, 0.03);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -202,7 +202,7 @@ canvas,
 }
 
 .panel-title {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -210,7 +210,7 @@ canvas,
 }
 
 .panel-count {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-dim);
   background: var(--border);
   padding: 2px 6px;
@@ -221,7 +221,7 @@ canvas,
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 11px;
+  font-size: 10px;
   font-family: var(--font-mono);
   color: var(--text-secondary);
   letter-spacing: 0.5px;
@@ -248,9 +248,9 @@ canvas,
   background: transparent;
   border: none;
   color: var(--text-dim);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 3px 9px;
   cursor: pointer;
   transition: all 0.2s;
   letter-spacing: 0.5px;
@@ -270,14 +270,14 @@ canvas,
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 8px;
+  padding: 3px 7px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 4px;
 }
 
 .map-filter-label {
-  font-size: 9px;
+  font-size: 8px;
   letter-spacing: 0.8px;
   color: var(--text-dim);
 }
@@ -287,7 +287,7 @@ canvas,
   outline: none;
   background: transparent;
   color: var(--text);
-  font-size: 11px;
+  font-size: 10px;
   min-width: 118px;
 }
 
@@ -317,11 +317,21 @@ canvas,
   position: absolute;
   inset: 0;
   overflow: hidden;
+  background: var(--map-bg);
 }
 
 .map-surface {
   width: 100%;
   height: 100%;
+}
+
+.map-surface canvas,
+.globe-surface canvas,
+#deckgl-basemap canvas,
+.maplibregl-canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 #deckgl-basemap {

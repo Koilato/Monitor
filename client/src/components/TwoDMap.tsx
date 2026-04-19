@@ -17,7 +17,7 @@ interface ArcDatum {
 }
 
 const DEFAULT_CENTER: [number, number] = [12, 18];
-const DEFAULT_ZOOM = 1.1;
+const DEFAULT_ZOOM = 0.92;
 
 const MAP_STYLE = {
   version: 8 as const,
@@ -273,7 +273,13 @@ export function TwoDMap(props: MapViewProps) {
       });
     });
 
+    const resizeObserver = new ResizeObserver(() => {
+      map.resize();
+    });
+    resizeObserver.observe(containerRef.current);
+
     return () => {
+      resizeObserver.disconnect();
       overlayRef.current?.finalize();
       overlayRef.current = null;
       map.remove();
