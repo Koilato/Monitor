@@ -13,11 +13,6 @@ interface CountryHit {
   name: string;
 }
 
-interface GeoPoint {
-  lat: number;
-  lon: number;
-}
-
 const COUNTRY_GEOJSON_URL = '/data/countries.geojson';
 
 let loadPromise: Promise<void> | null = null;
@@ -173,40 +168,6 @@ function pointInCountry(country: IndexedCountryGeometry, lat: number, lon: numbe
   return false;
 }
 
-function cross(ax: number, ay: number, bx: number, by: number): number {
-  return (ax * by) - (ay * bx);
-}
-
-function getRayIntersectionT(
-  origin: [number, number],
-  direction: [number, number],
-  segmentStart: [number, number],
-  segmentEnd: [number, number],
-): number | null {
-  const [ox, oy] = origin;
-  const [dx, dy] = direction;
-  const [ax, ay] = segmentStart;
-  const [bx, by] = segmentEnd;
-  const sx = bx - ax;
-  const sy = by - ay;
-  const denominator = cross(dx, dy, sx, sy);
-
-  if (Math.abs(denominator) < 1e-12) {
-    return null;
-  }
-
-  const oxToAx = ax - ox;
-  const oyToAy = ay - oy;
-  const t = cross(oxToAx, oyToAy, sx, sy) / denominator;
-  const u = cross(oxToAx, oyToAy, dx, dy) / denominator;
-
-  if (t <= 0 || u < 0 || u > 1) {
-    return null;
-  }
-
-  return t;
-}
-
 async function ensureLoaded(): Promise<void> {
   if (countriesGeoJson || loadPromise) {
     await loadPromise;
@@ -286,64 +247,6 @@ export async function getCountryCentroid(code: string): Promise<{ lat: number; l
   return {
     lat: (minLat + maxLat) / 2,
     lon: (minLon + maxLon) / 2,
-  };
-}
-
-export async function getCountryBoundaryAnchor(
-  code: string,
-  toward: GeoPoint,
-): Promise<{ lat: number; lon: number } | null> {
-  await ensureLoaded();
-  const country = countriesByCode.get(code.toUpperCase());
-  if (!country) {
-    return null;
-  }
-
-  const centroid = await getCountryCentroid(code);
-  if (!centroid) {
-    return null;
-  }
-
-  const direction: [number, number] = [toward.lon - centroid.lon, toward.lat - centroid.lat];
-  if (Math.abs(direction[0]) < 1e-9 && Math.abs(direction[1]) < 1e-9) {
-    return centroid;
-  }
-
-  let closestT = Infinity;
-
-  for (const polygon of country.polygons) {
-    const outerRing = polygon[0];
-    if (!outerRing || outerRing.length < 2) {
-      continue;
-    }
-
-    for (let index = 0; index < outerRing.length; index += 1) {
-      const start = outerRing[index];
-      const end = outerRing[(index + 1) % outerRing.length];
-      if (!start || !end) {
-        continue;
-      }
-
-      const t = getRayIntersectionT(
-        [centroid.lon, centroid.lat],
-        direction,
-        start,
-        end,
-      );
-
-      if (t !== null && t < closestT) {
-        closestT = t;
-      }
-    }
-  }
-
-  if (!Number.isFinite(closestT)) {
-    return centroid;
-  }
-
-  return {
-    lon: centroid.lon + (direction[0] * closestT),
-    lat: centroid.lat + (direction[1] * closestT),
   };
 }
 
