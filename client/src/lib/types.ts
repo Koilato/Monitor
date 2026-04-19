@@ -42,17 +42,19 @@ export interface MapDebugThreeDSettings {
 
 export interface MapDebugSettings {
   viewportPadding: number;
+  latestSectionHeight: number;
   twoD: MapDebugTwoDSettings;
   threeD: MapDebugThreeDSettings;
 }
 
 export const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
   viewportPadding: 0,
+  latestSectionHeight: 160,
   twoD: {
-    centerLng: 12,
-    centerLat: 18,
-    zoom: 0.92,
-    minZoom: 0.5,
+    centerLng: 0,
+    centerLat: 0,
+    zoom: 0,
+    minZoom: -2,
     maxZoom: 6,
   },
   threeD: {

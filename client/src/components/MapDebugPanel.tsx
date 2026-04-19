@@ -9,6 +9,7 @@ interface MapDebugPanelProps {
   onPersistChange: (enabled: boolean) => void;
   onReset: () => void;
   onViewportPaddingChange: (value: number) => void;
+  onLatestSectionHeightChange: (value: number) => void;
   onTwoDChange: (patch: Partial<MapDebugSettings['twoD']>) => void;
   onThreeDChange: (patch: Partial<MapDebugSettings['threeD']>) => void;
 }
@@ -54,6 +55,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
     onPersistChange,
     onReset,
     onViewportPaddingChange,
+    onLatestSectionHeightChange,
     onTwoDChange,
     onThreeDChange,
   } = props;
@@ -103,6 +105,14 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
               step={1}
               onChange={onViewportPaddingChange}
             />
+            <NumberField
+              label="Feed height"
+              value={settings.latestSectionHeight}
+              min={100}
+              max={420}
+              step={10}
+              onChange={onLatestSectionHeightChange}
+            />
           </section>
 
           <section className="map-debug-section">
@@ -126,18 +136,10 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
             <NumberField
               label="Zoom"
               value={settings.twoD.zoom}
-              min={0.5}
+              min={-2}
               max={8}
               step={0.05}
               onChange={(value) => onTwoDChange({ zoom: value })}
-            />
-            <NumberField
-              label="Min zoom"
-              value={settings.twoD.minZoom}
-              min={0}
-              max={8}
-              step={0.05}
-              onChange={(value) => onTwoDChange({ minZoom: value })}
             />
             <NumberField
               label="Max zoom"

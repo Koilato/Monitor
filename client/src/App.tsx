@@ -33,6 +33,7 @@ export default function App() {
     settings: debugSettings,
     resetSettings,
     updateViewportPadding,
+    updateLatestSectionHeight,
     updateTwoDSettings,
     updateThreeDSettings,
   } = useMapDebugSettings();
@@ -116,12 +117,16 @@ export default function App() {
             onPersistChange={setPersistEnabled}
             onReset={resetSettings}
             onViewportPaddingChange={updateViewportPadding}
+            onLatestSectionHeightChange={updateLatestSectionHeight}
             onTwoDChange={updateTwoDSettings}
             onThreeDChange={updateThreeDSettings}
           />
         </section>
 
-        <section className="latest-section">
+        <section
+          className="latest-section"
+          style={{ flexBasis: `${debugSettings.latestSectionHeight}px` }}
+        >
           <div className="latest-header">
             <div className="latest-header-left">
               <span className="latest-title">Latest SQL Feed</span>

@@ -22,3 +22,7 @@
 %s
  An error occurred in the <MapViewport> component. Consider adding an error boundary to your tree to customize error handling behavior.
 Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:6965
+[ 5817469ms] [ERROR] The final argument passed to %s changed size between renders. The order and size of this array must remain constant.
+
+Previous: %s
+Incoming: %s useEffect [18, 12, 6, 0, 0.45] [18, 12, 6, 0.45] @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=38705482:5627

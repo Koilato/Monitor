@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { DEFAULT_MAP_DEBUG_SETTINGS, type MapDebugSettings } from '../lib/types';
 
-const STORAGE_KEY = 'world-monitor.map-debug-settings';
+const STORAGE_KEY = 'world-monitor.map-debug-settings.v2';
+const TWO_D_MIN_ZOOM_LIMIT = -2;
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
@@ -25,6 +26,9 @@ function coerceMapDebugSettings(value: unknown): MapDebugSettings {
     viewportPadding: isFiniteNumber(record.viewportPadding)
       ? Math.max(0, record.viewportPadding)
       : DEFAULT_MAP_DEBUG_SETTINGS.viewportPadding,
+    latestSectionHeight: isFiniteNumber(record.latestSectionHeight)
+      ? clamp(record.latestSectionHeight, 100, 420)
+      : DEFAULT_MAP_DEBUG_SETTINGS.latestSectionHeight,
     twoD: (() => {
       const centerLng = isFiniteNumber(record.twoD?.centerLng)
         ? record.twoD.centerLng
@@ -32,7 +36,7 @@ function coerceMapDebugSettings(value: unknown): MapDebugSettings {
       const centerLat = isFiniteNumber(record.twoD?.centerLat)
         ? record.twoD.centerLat
         : DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLat;
-      const minZoom = Math.max(0, isFiniteNumber(record.twoD?.minZoom)
+      const minZoom = Math.max(TWO_D_MIN_ZOOM_LIMIT, isFiniteNumber(record.twoD?.minZoom)
         ? record.twoD.minZoom
         : DEFAULT_MAP_DEBUG_SETTINGS.twoD.minZoom);
       const maxZoom = Math.max(minZoom, isFiniteNumber(record.twoD?.maxZoom)
@@ -89,6 +93,7 @@ export interface UseMapDebugSettingsResult {
   settings: MapDebugSettings;
   resetSettings: () => void;
   updateViewportPadding: (value: number) => void;
+  updateLatestSectionHeight: (value: number) => void;
   updateTwoDSettings: (patch: Partial<MapDebugSettings['twoD']>) => void;
   updateThreeDSettings: (patch: Partial<MapDebugSettings['threeD']>) => void;
 }
@@ -126,6 +131,13 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     }));
   };
 
+  const updateLatestSectionHeight = (value: number) => {
+    setSettings((current) => ({
+      ...current,
+      latestSectionHeight: clamp(value, 100, 420),
+    }));
+  };
+
   const updateTwoDSettings = (patch: Partial<MapDebugSettings['twoD']>) => {
     setSettings((current) => ({
       ...current,
@@ -136,7 +148,7 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
         };
         const centerLng = clamp(next.centerLng, -180, 180);
         const centerLat = clamp(next.centerLat, -90, 90);
-        const minZoom = Math.max(0, next.minZoom);
+        const minZoom = Math.max(TWO_D_MIN_ZOOM_LIMIT, next.minZoom);
         const maxZoom = Math.max(minZoom, next.maxZoom);
         const zoom = clamp(next.zoom, minZoom, maxZoom);
 
@@ -187,6 +199,7 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     settings,
     resetSettings,
     updateViewportPadding,
+    updateLatestSectionHeight,
     updateTwoDSettings,
     updateThreeDSettings,
   };

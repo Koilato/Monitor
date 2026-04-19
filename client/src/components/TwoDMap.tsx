@@ -8,6 +8,18 @@ import { DEFAULT_MAP_DEBUG_SETTINGS } from '../lib/types';
 import { buildTwoDArcData, createHoverAnchor, type TwoDArcDatum } from '../hooks/useMapDataSync';
 import '../styles/map-2d.css';
 
+const WORLD_BOUNDS = [
+  [-180, -82],
+  [180, 85],
+] as [[number, number], [number, number]];
+
+const WORLD_FIT_PADDING = {
+  top: 52,
+  right: 36,
+  bottom: 72,
+  left: 36,
+} as const;
+
 const MAP_STYLE = {
   version: 8 as const,
   sources: {},
@@ -52,6 +64,21 @@ function emitHoverEvent(
   });
 }
 
+function isDefaultTwoDView(settings: MapViewProps['debugSettings']['twoD']): boolean {
+  return settings.centerLng === DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLng
+    && settings.centerLat === DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLat
+    && settings.zoom === DEFAULT_MAP_DEBUG_SETTINGS.twoD.zoom
+    && settings.maxZoom === DEFAULT_MAP_DEBUG_SETTINGS.twoD.maxZoom;
+}
+
+function fitWorld(map: maplibregl.Map) {
+  map.fitBounds(WORLD_BOUNDS, {
+    padding: WORLD_FIT_PADDING,
+    duration: 0,
+    linear: true,
+  });
+}
+
 export function TwoDMap(props: MapViewProps) {
   const { hoveredCountryCode, data, onCountryHover, debugSettings } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -59,6 +86,7 @@ export function TwoDMap(props: MapViewProps) {
   const overlayRef = useRef<MapboxOverlay | null>(null);
   const currentHoverRef = useRef<string | null>(null);
   const hoverHandlerRef = useRef(onCountryHover);
+  const autoFitRef = useRef(isDefaultTwoDView(debugSettings.twoD));
 
   hoverHandlerRef.current = onCountryHover;
 
@@ -86,17 +114,22 @@ export function TwoDMap(props: MapViewProps) {
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: MAP_STYLE,
-      center: [debugSettings.twoD.centerLng, debugSettings.twoD.centerLat],
-      zoom: debugSettings.twoD.zoom,
-      minZoom: debugSettings.twoD.minZoom,
+      center: [DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLng, DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLat],
+      zoom: DEFAULT_MAP_DEBUG_SETTINGS.twoD.zoom,
+      minZoom: DEFAULT_MAP_DEBUG_SETTINGS.twoD.minZoom,
       maxZoom: debugSettings.twoD.maxZoom,
       renderWorldCopies: false,
       attributionControl: false,
     });
 
     mapRef.current = map;
+    autoFitRef.current = isDefaultTwoDView(debugSettings.twoD);
 
     map.on('load', () => {
+      if (autoFitRef.current) {
+        fitWorld(map);
+      }
+
       map.addSource('countries', {
         type: 'geojson',
         data: '/data/countries.geojson',
@@ -239,6 +272,9 @@ export function TwoDMap(props: MapViewProps) {
 
     const resizeObserver = new ResizeObserver(() => {
       map.resize();
+      if (autoFitRef.current && map.isStyleLoaded()) {
+        fitWorld(map);
+      }
     });
     resizeObserver.observe(containerRef.current);
 
@@ -257,8 +293,15 @@ export function TwoDMap(props: MapViewProps) {
       return;
     }
 
-    map.setMinZoom(debugSettings.twoD.minZoom);
+    autoFitRef.current = isDefaultTwoDView(debugSettings.twoD);
+    map.setMinZoom(DEFAULT_MAP_DEBUG_SETTINGS.twoD.minZoom);
     map.setMaxZoom(debugSettings.twoD.maxZoom);
+
+    if (autoFitRef.current) {
+      fitWorld(map);
+      return;
+    }
+
     map.jumpTo({
       center: [debugSettings.twoD.centerLng, debugSettings.twoD.centerLat],
       zoom: debugSettings.twoD.zoom,
@@ -267,7 +310,6 @@ export function TwoDMap(props: MapViewProps) {
     debugSettings.twoD.centerLat,
     debugSettings.twoD.centerLng,
     debugSettings.twoD.maxZoom,
-    debugSettings.twoD.minZoom,
     debugSettings.twoD.zoom,
   ]);
 
