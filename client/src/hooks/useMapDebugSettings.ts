@@ -1,9 +1,24 @@
 import { useEffect, useState } from 'react';
-import { DEFAULT_MAP_DEBUG_SETTINGS, type MapDebugSettings } from '../lib/types';
+import type { MapDebugSettings } from '../lib/types';
+import {
+  DEFAULT_TWO_D_MAP_CONFIG,
+  normalizeTwoDMapConfig,
+} from '../lib/map-2d-config';
+import {
+  DEFAULT_THREE_D_MAP_CONFIG,
+  normalizeThreeDMapConfig,
+} from '../lib/map-3d-config';
 
 const STORAGE_KEY = 'world-monitor.map-debug-settings.v9';
 const DEBUG_MODE_STORAGE_KEY = 'world-monitor.map-debug-mode.v1';
-const TWO_D_MIN_ZOOM_LIMIT = -2;
+const LATEST_SECTION_HEIGHT_MIN = 100;
+const LATEST_SECTION_HEIGHT_MAX = 560;
+
+const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
+  latestSectionHeight: 160,
+  twoD: DEFAULT_TWO_D_MAP_CONFIG,
+  threeD: DEFAULT_THREE_D_MAP_CONFIG,
+};
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
@@ -25,52 +40,21 @@ function coerceMapDebugSettings(value: unknown): MapDebugSettings {
 
   return {
     latestSectionHeight: isFiniteNumber(record.latestSectionHeight)
-      ? clamp(record.latestSectionHeight, 100, 420)
+      ? clamp(record.latestSectionHeight, LATEST_SECTION_HEIGHT_MIN, LATEST_SECTION_HEIGHT_MAX)
       : DEFAULT_MAP_DEBUG_SETTINGS.latestSectionHeight,
-    twoD: (() => {
-      const centerLng = isFiniteNumber(record.twoD?.centerLng)
-        ? record.twoD.centerLng
-        : DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLng;
-      const centerLat = isFiniteNumber(record.twoD?.centerLat)
-        ? record.twoD.centerLat
-        : DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLat;
-      const minZoom = Math.max(TWO_D_MIN_ZOOM_LIMIT, isFiniteNumber(record.twoD?.minZoom)
-        ? record.twoD.minZoom
-        : DEFAULT_MAP_DEBUG_SETTINGS.twoD.minZoom);
-      const maxZoom = Math.max(minZoom, isFiniteNumber(record.twoD?.maxZoom)
-        ? record.twoD.maxZoom
-        : DEFAULT_MAP_DEBUG_SETTINGS.twoD.maxZoom);
-      const zoom = clamp(isFiniteNumber(record.twoD?.zoom)
-        ? record.twoD.zoom
-        : DEFAULT_MAP_DEBUG_SETTINGS.twoD.zoom, minZoom, maxZoom);
-
-      return {
-        centerLng: clamp(centerLng, -180, 180),
-        centerLat: clamp(centerLat, -90, 90),
-        zoom,
-        minZoom,
-        maxZoom,
-        contentPaddingX: Math.max(
-          0,
-          isFiniteNumber(record.twoD?.contentPaddingX)
-            ? record.twoD.contentPaddingX
-            : isFiniteNumber((record.twoD as { contentInsetX?: number } | undefined)?.contentInsetX)
-              ? (record.twoD as { contentInsetX?: number }).contentInsetX!
-              : DEFAULT_MAP_DEBUG_SETTINGS.twoD.contentPaddingX,
-        ),
-      };
-    })(),
-    threeD: {
-      povLng: clamp(isFiniteNumber(record.threeD?.povLng)
-        ? record.threeD.povLng
-        : DEFAULT_MAP_DEBUG_SETTINGS.threeD.povLng, -180, 180),
-      povLat: clamp(isFiniteNumber(record.threeD?.povLat)
-        ? record.threeD.povLat
-        : DEFAULT_MAP_DEBUG_SETTINGS.threeD.povLat, -90, 90),
-      povAltitude: Math.max(0.2, isFiniteNumber(record.threeD?.povAltitude)
-        ? record.threeD.povAltitude
-        : DEFAULT_MAP_DEBUG_SETTINGS.threeD.povAltitude),
-    },
+    twoD: normalizeTwoDMapConfig({
+      ...DEFAULT_TWO_D_MAP_CONFIG,
+      ...record.twoD,
+      contentPaddingX: isFiniteNumber(record.twoD?.contentPaddingX)
+        ? record.twoD.contentPaddingX
+        : isFiniteNumber((record.twoD as { contentInsetX?: number } | undefined)?.contentInsetX)
+          ? (record.twoD as { contentInsetX?: number }).contentInsetX!
+          : DEFAULT_TWO_D_MAP_CONFIG.contentPaddingX,
+    }),
+    threeD: normalizeThreeDMapConfig({
+      ...DEFAULT_THREE_D_MAP_CONFIG,
+      ...record.threeD,
+    }),
   };
 }
 
@@ -160,44 +144,27 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
   const updateLatestSectionHeight = (value: number) => {
     setSettings((current) => ({
       ...current,
-      latestSectionHeight: clamp(value, 100, 420),
+      latestSectionHeight: clamp(value, LATEST_SECTION_HEIGHT_MIN, LATEST_SECTION_HEIGHT_MAX),
     }));
   };
 
   const updateTwoDSettings = (patch: Partial<MapDebugSettings['twoD']>) => {
     setSettings((current) => ({
       ...current,
-      twoD: (() => {
-        const next = {
-          ...current.twoD,
-          ...patch,
-        };
-        const centerLng = clamp(next.centerLng, -180, 180);
-        const centerLat = clamp(next.centerLat, -90, 90);
-        const minZoom = Math.max(TWO_D_MIN_ZOOM_LIMIT, next.minZoom);
-        const maxZoom = Math.max(minZoom, next.maxZoom);
-        const zoom = clamp(next.zoom, minZoom, maxZoom);
-
-        return {
-          centerLng,
-          centerLat,
-          minZoom,
-          maxZoom,
-          zoom,
-          contentPaddingX: Math.max(0, next.contentPaddingX),
-        };
-      })(),
+      twoD: normalizeTwoDMapConfig({
+        ...current.twoD,
+        ...patch,
+      }),
     }));
   };
 
   const updateThreeDSettings = (patch: Partial<MapDebugSettings['threeD']>) => {
     setSettings((current) => ({
       ...current,
-      threeD: {
-        povLng: clamp(patch.povLng ?? current.threeD.povLng, -180, 180),
-        povLat: clamp(patch.povLat ?? current.threeD.povLat, -90, 90),
-        povAltitude: Math.max(0.2, patch.povAltitude ?? current.threeD.povAltitude),
-      },
+      threeD: normalizeThreeDMapConfig({
+        ...current.threeD,
+        ...patch,
+      }),
     }));
   };
 

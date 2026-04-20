@@ -6,8 +6,12 @@ import type { IconLayerProps } from '@deck.gl/layers';
 import type { FeatureCollection, Geometry } from 'geojson';
 import type { ThreatMapResponse } from '@shared/types';
 import { getCountriesGeoJson } from '../lib/country-geometry';
+import {
+  DEFAULT_TWO_D_MAP_CONFIG,
+  normalizeTwoDMapConfig,
+  type TwoDMapConfig,
+} from '../lib/map-2d-config';
 import type { CountryHoverEvent, MapViewProps } from '../lib/types';
-import { DEFAULT_MAP_DEBUG_SETTINGS } from '../lib/types';
 import {
   buildTwoDArcData,
   createHoverAnchor,
@@ -107,11 +111,12 @@ function emitHoverEvent(
   });
 }
 
-function isDefaultTwoDView(settings: MapViewProps['debugSettings']['twoD']): boolean {
-  return settings.centerLng === DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLng
-    && settings.centerLat === DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLat
-    && settings.zoom === DEFAULT_MAP_DEBUG_SETTINGS.twoD.zoom
-    && settings.maxZoom === DEFAULT_MAP_DEBUG_SETTINGS.twoD.maxZoom;
+function isDefaultTwoDView(settings: TwoDMapConfig): boolean {
+  return settings.centerLng === DEFAULT_TWO_D_MAP_CONFIG.centerLng
+    && settings.centerLat === DEFAULT_TWO_D_MAP_CONFIG.centerLat
+    && settings.zoom === DEFAULT_TWO_D_MAP_CONFIG.zoom
+    && settings.minZoom === DEFAULT_TWO_D_MAP_CONFIG.minZoom
+    && settings.maxZoom === DEFAULT_TWO_D_MAP_CONFIG.maxZoom;
 }
 
 function fitWorld(map: maplibregl.Map) {
@@ -134,6 +139,7 @@ function filterTwoDGeoJson(geojson: FeatureCollection<Geometry>): FeatureCollect
 
 export function TwoDMap(props: MapViewProps) {
   const { hoveredCountryCode, data, threatData, onCountryHover, debugSettings } = props;
+  const twoDConfig = normalizeTwoDMapConfig(debugSettings.twoD);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
@@ -141,7 +147,7 @@ export function TwoDMap(props: MapViewProps) {
   const hoveredCountryRef = useRef<string | null>(hoveredCountryCode);
   const currentHoverRef = useRef<string | null>(null);
   const hoverHandlerRef = useRef(onCountryHover);
-  const autoFitRef = useRef(isDefaultTwoDView(debugSettings.twoD));
+  const autoFitRef = useRef(isDefaultTwoDView(twoDConfig));
 
   hoverHandlerRef.current = onCountryHover;
   threatDataRef.current = threatData;
@@ -171,16 +177,16 @@ export function TwoDMap(props: MapViewProps) {
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: MAP_STYLE,
-      center: [DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLng, DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLat],
-      zoom: DEFAULT_MAP_DEBUG_SETTINGS.twoD.zoom,
-      minZoom: DEFAULT_MAP_DEBUG_SETTINGS.twoD.minZoom,
-      maxZoom: debugSettings.twoD.maxZoom,
+      center: [twoDConfig.centerLng, twoDConfig.centerLat],
+      zoom: twoDConfig.zoom,
+      minZoom: twoDConfig.minZoom,
+      maxZoom: twoDConfig.maxZoom,
       renderWorldCopies: false,
       attributionControl: false,
     });
 
     mapRef.current = map;
-    autoFitRef.current = isDefaultTwoDView(debugSettings.twoD);
+    autoFitRef.current = isDefaultTwoDView(twoDConfig);
 
     map.on('load', () => {
       void (async () => {
@@ -400,9 +406,9 @@ export function TwoDMap(props: MapViewProps) {
       return;
     }
 
-    autoFitRef.current = isDefaultTwoDView(debugSettings.twoD);
-    map.setMinZoom(Math.max(-2, DEFAULT_MAP_DEBUG_SETTINGS.twoD.minZoom));
-    map.setMaxZoom(debugSettings.twoD.maxZoom);
+    autoFitRef.current = isDefaultTwoDView(twoDConfig);
+    map.setMinZoom(twoDConfig.minZoom);
+    map.setMaxZoom(twoDConfig.maxZoom);
 
     if (autoFitRef.current) {
       fitWorld(map);
@@ -410,14 +416,15 @@ export function TwoDMap(props: MapViewProps) {
     }
 
     map.jumpTo({
-      center: [debugSettings.twoD.centerLng, debugSettings.twoD.centerLat],
-      zoom: debugSettings.twoD.zoom,
+      center: [twoDConfig.centerLng, twoDConfig.centerLat],
+      zoom: twoDConfig.zoom,
     });
   }, [
-    debugSettings.twoD.centerLat,
-    debugSettings.twoD.centerLng,
-    debugSettings.twoD.maxZoom,
-    debugSettings.twoD.zoom,
+    twoDConfig.centerLat,
+    twoDConfig.centerLng,
+    twoDConfig.maxZoom,
+    twoDConfig.minZoom,
+    twoDConfig.zoom,
   ]);
 
   useEffect(() => {
@@ -556,11 +563,8 @@ export function TwoDMap(props: MapViewProps) {
             className="map-btn"
             aria-label="Reset view"
             onClick={() => mapRef.current?.flyTo({
-              center: [
-                DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLng,
-                DEFAULT_MAP_DEBUG_SETTINGS.twoD.centerLat,
-              ],
-              zoom: DEFAULT_MAP_DEBUG_SETTINGS.twoD.zoom,
+              center: [DEFAULT_TWO_D_MAP_CONFIG.centerLng, DEFAULT_TWO_D_MAP_CONFIG.centerLat],
+              zoom: DEFAULT_TWO_D_MAP_CONFIG.zoom,
               duration: 450,
             })}
           >

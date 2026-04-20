@@ -47,23 +47,6 @@ export interface MapDebugSettings {
   threeD: MapDebugThreeDSettings;
 }
 
-export const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
-  latestSectionHeight: 160,
-  twoD: {
-    centerLng: 0,
-    centerLat: 0,
-    zoom: 0,
-    minZoom: -2,
-    maxZoom: 6,
-    contentPaddingX: 0,
-  },
-  threeD: {
-    povLng: 105,
-    povLat: 24,
-    povAltitude: 2.45,
-  },
-};
-
 export interface MapViewProps {
   hoveredCountryCode: string | null;
   data: CountryHoverResponse | null;
