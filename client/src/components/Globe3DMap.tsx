@@ -4,6 +4,7 @@ import type { GlobeInstance } from 'globe.gl';
 import type { ThreatMapResponse } from '@shared/types';
 import type { Feature, Geometry } from 'geojson';
 import { getCountriesGeoJson, getCountryAtCoordinates } from '../lib/country-geometry';
+import { normalizeThreeDMapConfig } from '../lib/map-3d-config';
 import type { CountryHoverEvent, MapViewProps } from '../lib/types';
 import {
   buildGlobeArcData,
@@ -29,6 +30,7 @@ function emitHover(
 
 export function Globe3DMap(props: MapViewProps) {
   const { hoveredCountryCode, data, threatData, onCountryHover, debugSettings } = props;
+  const threeDConfig = normalizeThreeDMapConfig(debugSettings.threeD);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const globeRef = useRef<GlobeInstance | null>(null);
   const boundaryPathsRef = useRef<GlobeBoundaryPath[]>([]);
@@ -110,9 +112,9 @@ export function Globe3DMap(props: MapViewProps) {
         .pointColor(() => '#fb7185');
 
       globe.pointOfView({
-        lat: debugSettings.threeD.povLat,
-        lng: debugSettings.threeD.povLng,
-        altitude: debugSettings.threeD.povAltitude,
+        lat: threeDConfig.povLat,
+        lng: threeDConfig.povLng,
+        altitude: threeDConfig.povAltitude,
       }, 0);
 
       threatLookupRef.current = new Map(
@@ -222,14 +224,14 @@ export function Globe3DMap(props: MapViewProps) {
     }
 
     globe.pointOfView({
-      lat: debugSettings.threeD.povLat,
-      lng: debugSettings.threeD.povLng,
-      altitude: debugSettings.threeD.povAltitude,
+      lat: threeDConfig.povLat,
+      lng: threeDConfig.povLng,
+      altitude: threeDConfig.povAltitude,
     }, 0);
   }, [
-    debugSettings.threeD.povAltitude,
-    debugSettings.threeD.povLat,
-    debugSettings.threeD.povLng,
+    threeDConfig.povAltitude,
+    threeDConfig.povLat,
+    threeDConfig.povLng,
   ]);
 
   useEffect(() => {
