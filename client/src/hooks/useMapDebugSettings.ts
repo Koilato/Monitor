@@ -9,7 +9,7 @@ import {
   normalizeThreeDMapConfig,
 } from '../lib/map-3d-config';
 
-const STORAGE_KEY = 'world-monitor.map-debug-settings.v9';
+const STORAGE_KEY = 'world-monitor.map-debug-settings.v10';
 const DEBUG_MODE_STORAGE_KEY = 'world-monitor.map-debug-mode.v1';
 const LATEST_SECTION_HEIGHT_MIN = 100;
 const LATEST_SECTION_HEIGHT_MAX = 560;

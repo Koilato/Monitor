@@ -21,15 +21,15 @@ import {
 import '../styles/map-2d.css';
 
 const WORLD_BOUNDS = [
-  [-180, -82],
-  [180, 85],
+  [-180, -85.05113],
+  [180, 85.05113],
 ] as [[number, number], [number, number]];
 
 const WORLD_FIT_PADDING = {
-  top: 52,
-  right: 36,
-  bottom: 72,
-  left: 36,
+  top: 32,
+  right: 24,
+  bottom: 40,
+  left: 24,
 } as const;
 
 const TWO_D_HIDDEN_COUNTRY_CODES = new Set(['AQ']);
@@ -42,7 +42,7 @@ const MAP_STYLE = {
       id: 'background',
       type: 'background' as const,
       paint: {
-        'background-color': '#020a08',
+        'background-color': '#505050',
       },
     },
   ],

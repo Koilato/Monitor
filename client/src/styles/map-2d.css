@@ -1,5 +1,9 @@
 .deckgl-map-wrapper--2d {
-  background: var(--map-bg);
+  background: #505050;
+}
+
+.map-container--2d {
+  background: #505050;
 }
 
 .deckgl-map-background {
