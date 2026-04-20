@@ -11,7 +11,7 @@ export const DEFAULT_TWO_D_MAP_CONFIG: TwoDMapConfig = {
   centerLng: 0,
   centerLat: 0,
   zoom: 0,
-  minZoom: -6,
+  minZoom: -2,
   maxZoom: 6,
   contentPaddingX: 0,
 };
@@ -23,7 +23,7 @@ function clamp(value: number, min: number, max: number): number {
 export function normalizeTwoDMapConfig(
   input: Partial<TwoDMapConfig>,
 ): TwoDMapConfig {
-  const minZoom = Math.max(-6, input.minZoom ?? DEFAULT_TWO_D_MAP_CONFIG.minZoom);
+  const minZoom = Math.max(-2, input.minZoom ?? DEFAULT_TWO_D_MAP_CONFIG.minZoom);
   const maxZoom = Math.max(minZoom, input.maxZoom ?? DEFAULT_TWO_D_MAP_CONFIG.maxZoom);
   const zoom = clamp(input.zoom ?? DEFAULT_TWO_D_MAP_CONFIG.zoom, minZoom, maxZoom);
 

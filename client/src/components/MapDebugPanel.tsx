@@ -110,7 +110,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
             <NumberField
               label="Min zoom"
               value={settings.twoD.minZoom}
-              min={-6}
+              min={-2}
               max={settings.twoD.maxZoom}
               step={0.05}
               onChange={(value) => onTwoDChange({ minZoom: value })}

@@ -18,7 +18,7 @@ test('2D config keeps fractional zoom and clamps bounds', () => {
   });
 
   assert.equal(config.zoom, 2.75);
-  assert.equal(config.minZoom, -4);
+  assert.equal(config.minZoom, -2);
   assert.equal(config.maxZoom, 5);
   assert.equal(config.contentPaddingX, 0);
   assert.equal(DEFAULT_TWO_D_MAP_CONFIG.zoom, 0);
