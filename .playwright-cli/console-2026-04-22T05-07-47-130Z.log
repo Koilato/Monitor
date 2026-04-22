@@ -1,0 +1,7 @@
+[     267ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4175/node_modules/.vite/deps/react-dom_client.js?v=07cd61bc:20102
+[    1825ms] [ERROR] [layer-module] countries-base Error: Source "countries" already exists.
+    at Li.addSource (http://localhost:4175/node_modules/.vite/deps/maplibre-gl.js?v=07cd61bc:18825:78)
+    at cs.addSource (http://localhost:4175/node_modules/.vite/deps/maplibre-gl.js?v=07cd61bc:22924:59)
+    at Object.ensureCountrySource [as registerMapSources] (http://localhost:4175/src/map/layers/modules.ts?t=1776832100656:34:15)
+    at async initializeLayerModules (http://localhost:4175/src/map/layers/registry.ts:12:7)
+    at async syncModules (http://localhost:4175/src/map/components/MapRenderer.tsx:190:26) @ http://localhost:4175/src/map/layers/registry.ts:19

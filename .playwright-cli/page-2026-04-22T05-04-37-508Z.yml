@@ -1,0 +1,98 @@
+- main [ref=e4]:
+  - generic [ref=e5]:
+    - separator "Resize left panels" [ref=e8]
+    - separator "Resize left and right panels" [ref=e11]
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]:
+            - generic [ref=e17]: Attack Flow Map
+            - generic [ref=e18]: "0"
+          - generic: 22-04-2026 05:04:37 UTC
+          - generic [ref=e19]:
+            - tablist "Map mode" [ref=e20]:
+              - button "2D" [ref=e21] [cursor=pointer]
+              - button "3D" [ref=e22] [cursor=pointer]
+            - generic [ref=e23]:
+              - generic [ref=e24]: START
+              - textbox "START" [ref=e25]: 2026-04-22
+            - generic [ref=e26]:
+              - generic [ref=e27]: END
+              - textbox "END" [ref=e28]: 2026-04-22
+            - button "Debug Mode" [ref=e29] [cursor=pointer]
+            - status "WORLD MONITOR LIVE MOCK FEED GLOBAL INCIDENT FLOW MAP API MOCK ISO2" [ref=e30]:
+              - generic [ref=e31]:
+                - generic [ref=e32]: WORLD MONITOR
+                - generic [ref=e35]: LIVE MOCK FEED
+              - generic [ref=e36]:
+                - generic [ref=e37]: GLOBAL INCIDENT FLOW MAP
+                - generic [ref=e38]: API / MOCK / ISO2
+        - generic [ref=e39]:
+          - generic [ref=e41]:
+            - region "Map" [ref=e44]
+            - generic [ref=e46]:
+              - button "Zoom in" [ref=e47] [cursor=pointer]: +
+              - button "Zoom out" [ref=e48] [cursor=pointer]: "-"
+              - button "Reset view" [ref=e49] [cursor=pointer]: o
+            - generic [ref=e50]: HOVER A COUNTRY TO QUERY ATTACK FLOWS
+            - generic [ref=e51]:
+              - generic [ref=e52]: FLOW LEGEND
+              - generic [ref=e53]:
+                - img [ref=e54]
+                - generic [ref=e56]: ATTACK ARC
+              - generic [ref=e57]:
+                - img [ref=e58]
+                - generic [ref=e60]: HOVERED TARGET
+          - generic "Threat level legend":
+            - generic: THREAT
+            - generic:
+              - generic: LOW
+            - generic:
+              - generic: MED
+            - generic:
+              - generic: HIGH
+            - generic:
+              - generic: CRIT
+      - separator "Resize map and latest panels" [ref=e61]
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - generic [ref=e66]: Latest SQL Feed
+            - generic [ref=e67]: category / newest rows
+          - generic [ref=e68]: 5 rows
+        - generic [ref=e69]:
+          - article [ref=e70]:
+            - generic [ref=e71]:
+              - generic [ref=e72]: "#1"
+              - generic [ref=e73]: sql
+              - generic [ref=e74]: 19/04/2026, 08:05 UTC
+            - heading "SQL inventory sync completed" [level=3] [ref=e75]
+            - paragraph [ref=e76]: Latest row batch imported from the reporting database and marked ready for review.
+          - article [ref=e77]:
+            - generic [ref=e78]:
+              - generic [ref=e79]: "#2"
+              - generic [ref=e80]: sql
+              - generic [ref=e81]: 19/04/2026, 07:42 UTC
+            - heading "SQL anomaly alert raised" [level=3] [ref=e82]
+            - paragraph [ref=e83]: A new record matched the anomaly rules and was pushed to the top of the feed.
+          - article [ref=e84]:
+            - generic [ref=e85]:
+              - generic [ref=e86]: "#3"
+              - generic [ref=e87]: sql
+              - generic [ref=e88]: 19/04/2026, 07:15 UTC
+            - heading "SQL export for category audit" [level=3] [ref=e89]
+            - paragraph [ref=e90]: Audit export finished for the SQL category and the latest changes were persisted.
+          - article [ref=e91]:
+            - generic [ref=e92]:
+              - generic [ref=e93]: "#4"
+              - generic [ref=e94]: sql
+              - generic [ref=e95]: 19/04/2026, 06:58 UTC
+            - heading "SQL ingestion job finished" [level=3] [ref=e96]
+            - paragraph [ref=e97]: Fresh content from the upstream service was inserted into the latest-content table.
+          - article [ref=e98]:
+            - generic [ref=e99]:
+              - generic [ref=e100]: "#5"
+              - generic [ref=e101]: sql
+              - generic [ref=e102]: 19/04/2026, 06:31 UTC
+            - heading "SQL row backfill succeeded" [level=3] [ref=e103]
+            - paragraph [ref=e104]: Missing records were recovered and merged into the current latest feed.

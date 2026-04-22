@@ -1,0 +1,2 @@
+[     257ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=7a6bd91b:20102
+[     480ms] [WARNING] Map cannot fit within canvas with the given bounds, padding, and/or offset. @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:315

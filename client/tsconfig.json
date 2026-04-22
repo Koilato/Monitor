@@ -15,6 +15,18 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
+      "content/*": [
+        "src/content/*"
+      ],
+      "map/*": [
+        "src/map/*"
+      ],
+      "shared/*": [
+        "src/shared/*"
+      ],
+      "shell/*": [
+        "src/shell/*"
+      ],
       "@shared/*": [
         "../shared/*"
       ]

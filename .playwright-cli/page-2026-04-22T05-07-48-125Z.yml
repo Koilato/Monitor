@@ -1,0 +1,113 @@
+- main [ref=e4]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]: Global Signal Map
+        - generic [ref=e9]: "0"
+      - generic: 22-04-2026 05:07:47 UTC
+      - generic [ref=e10]:
+        - tablist "Map mode" [ref=e11]:
+          - button "2D" [ref=e12] [cursor=pointer]
+          - button "3D" [ref=e13] [cursor=pointer]
+        - group "Time presets" [ref=e14]:
+          - button "1H" [ref=e15] [cursor=pointer]
+          - button "6H" [ref=e16] [cursor=pointer]
+          - button "24H" [ref=e17] [cursor=pointer]
+          - button "48H" [ref=e18] [cursor=pointer]
+          - button "7D" [ref=e19] [cursor=pointer]
+        - generic [ref=e20]:
+          - generic [ref=e21]: START
+          - textbox "START" [ref=e22]: 2026-04-22
+        - generic [ref=e23]:
+          - generic [ref=e24]: END
+          - textbox "END" [ref=e25]: 2026-04-22
+        - button "Debug Mode" [ref=e26] [cursor=pointer]
+        - status "SIGNAL CONSOLE FILTERING MAP GLOBAL MAP LIVE MAPLIBRE URL STATE" [ref=e27]:
+          - generic [ref=e28]:
+            - generic [ref=e29]: SIGNAL CONSOLE
+            - generic [ref=e32]: FILTERING MAP
+          - generic [ref=e33]:
+            - generic [ref=e34]: GLOBAL MAP
+            - generic [ref=e35]: LIVE / MAPLIBRE / URL
+    - generic [ref=e36]:
+      - generic [ref=e38]:
+        - region "Map" [ref=e41]
+        - generic [ref=e43]:
+          - button "Zoom in" [ref=e44] [cursor=pointer]: +
+          - button "Zoom out" [ref=e45] [cursor=pointer]: "-"
+          - button "Reset view" [ref=e46] [cursor=pointer]: o
+        - generic [ref=e47]: HOVER A COUNTRY TO QUERY ATTACK FLOWS
+        - generic [ref=e48]:
+          - generic [ref=e49]: MERCATOR PROJECTION
+          - generic [ref=e51]: URL STATE SYNCED
+      - generic "Threat level legend and layer controls":
+        - generic: LAYERS
+        - generic:
+          - checkbox "Countries" [checked]
+          - generic: Countries
+        - generic:
+          - checkbox "Threat Fill" [checked]
+          - generic: Threat Fill
+        - generic:
+          - checkbox "Threat Outline" [checked]
+          - generic: Threat Outline
+        - generic:
+          - checkbox "Hover Highlight" [checked]
+          - generic: Hover Highlight
+        - generic:
+          - checkbox "Attack Arcs" [checked]
+          - generic: Attack Arcs
+        - generic:
+          - checkbox "Attack Arrowheads" [checked]
+          - generic: Attack Arrowheads
+        - generic: THREAT
+        - generic:
+          - generic: LOW
+        - generic:
+          - generic: MED
+        - generic:
+          - generic: HIGH
+        - generic:
+          - generic: CRIT
+  - generic [ref=e52]:
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - generic [ref=e55]: Latest Feed
+        - generic [ref=e56]: category / newest rows
+      - generic [ref=e57]: 5 rows
+    - generic [ref=e58]:
+      - article [ref=e59]:
+        - generic [ref=e60]:
+          - generic [ref=e61]: "#1"
+          - generic [ref=e62]: sql
+          - generic [ref=e63]: 19/04/2026, 08:05 UTC
+        - heading "SQL inventory sync completed" [level=3] [ref=e64]
+        - paragraph [ref=e65]: Latest row batch imported from the reporting database and marked ready for review.
+      - article [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]: "#2"
+          - generic [ref=e69]: sql
+          - generic [ref=e70]: 19/04/2026, 07:42 UTC
+        - heading "SQL anomaly alert raised" [level=3] [ref=e71]
+        - paragraph [ref=e72]: A new record matched the anomaly rules and was pushed to the top of the feed.
+      - article [ref=e73]:
+        - generic [ref=e74]:
+          - generic [ref=e75]: "#3"
+          - generic [ref=e76]: sql
+          - generic [ref=e77]: 19/04/2026, 07:15 UTC
+        - heading "SQL export for category audit" [level=3] [ref=e78]
+        - paragraph [ref=e79]: Audit export finished for the SQL category and the latest changes were persisted.
+      - article [ref=e80]:
+        - generic [ref=e81]:
+          - generic [ref=e82]: "#4"
+          - generic [ref=e83]: sql
+          - generic [ref=e84]: 19/04/2026, 06:58 UTC
+        - heading "SQL ingestion job finished" [level=3] [ref=e85]
+        - paragraph [ref=e86]: Fresh content from the upstream service was inserted into the latest-content table.
+      - article [ref=e87]:
+        - generic [ref=e88]:
+          - generic [ref=e89]: "#5"
+          - generic [ref=e90]: sql
+          - generic [ref=e91]: 19/04/2026, 06:31 UTC
+        - heading "SQL row backfill succeeded" [level=3] [ref=e92]
+        - paragraph [ref=e93]: Missing records were recovered and merged into the current latest feed.

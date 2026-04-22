@@ -1,0 +1,21 @@
+[     427ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4174/node_modules/.vite/deps/react-dom_client.js?v=7a6bd91b:20102
+[    1446ms] [ERROR] Error: The layer 'countries-interactive' does not exist in the map's style and cannot be queried for features.
+    at Li.queryRenderedFeatures (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:18998:51)
+    at cs.queryRenderedFeatures (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:22863:31)
+    at cs.<anonymous> (http://localhost:4174/src/map/components/MapRenderer.tsx?t=1776834511397:106:30)
+    at cs.fire (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:496:39)
+    at la.mousemove (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:20906:23)
+    at Ha.handleEvent (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:21754:43) @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:500
+[    1465ms] [ERROR] Error: The layer 'countries-interactive' does not exist in the map's style and cannot be queried for features.
+    at Li.queryRenderedFeatures (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:18998:51)
+    at cs.queryRenderedFeatures (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:22863:31)
+    at cs.<anonymous> (http://localhost:4174/src/map/components/MapRenderer.tsx?t=1776834511397:106:30)
+    at cs.fire (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:496:39)
+    at la.mousemove (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:20906:23)
+    at Ha.handleEvent (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:21754:43) @ http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:500
+[    1477ms] [ERROR] [layer-module] countries-base Error: Source "countries" already exists.
+    at Li.addSource (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:18825:78)
+    at cs.addSource (http://localhost:4174/node_modules/.vite/deps/maplibre-gl.js?v=cfeea773:22924:59)
+    at Object.ensureCountrySource [as registerMapSources] (http://localhost:4174/src/map/layers/modules.ts:34:15)
+    at async initializeLayerModules (http://localhost:4174/src/map/layers/registry.ts:12:7)
+    at async syncModules (http://localhost:4174/src/map/components/MapRenderer.tsx?t=1776834511397:190:26) @ http://localhost:4174/src/map/layers/registry.ts:19
