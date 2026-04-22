@@ -3,13 +3,12 @@ import maplibregl from 'maplibre-gl';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import type { MapboxOverlayProps } from '@deck.gl/mapbox';
 
-import {
-  createHoverAnchor,
-} from 'map/hooks/useMapDataSync';
+import { createHoverAnchor } from 'map/lib/hover-anchor';
 import { LAYER_MODULES } from 'map/layers/modules';
 import { getBasemapStyleUrl } from 'map/lib/map-style';
 import {
   initializeLayerModules,
+  isLayerModuleEnabled,
   synchronizeLayerModules,
   type LayerModule,
 } from 'map/layers/registry';
@@ -45,7 +44,10 @@ function syncModuleVisibility(
       continue;
     }
 
-    const isVisible = module.supportsView.includes(viewMode) && activeLayerIds.includes(module.id);
+    const isVisible = isLayerModuleEnabled(module, {
+      view: viewMode,
+      activeLayerIds,
+    });
     for (const layerId of module.styleLayerIds) {
       if (map.getLayer(layerId)) {
         map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
@@ -102,6 +104,7 @@ export function MapRenderer(props: MapViewProps) {
       maxZoom: debugSettings.maxZoom,
       renderWorldCopies: false,
       attributionControl: false,
+      localIdeographFontFamily: 'sans-serif',
     });
 
     mapRef.current = map;

@@ -10,19 +10,6 @@
   position: relative;
 }
 
-.latest-section::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -8px;
-  height: 16px;
-  cursor: row-resize;
-  background: transparent;
-  z-index: 2;
-  pointer-events: auto;
-}
-
 .latest-section::after {
   content: '';
   position: absolute;

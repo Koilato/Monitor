@@ -21,7 +21,7 @@ test('serializes and parses preset URL state', () => {
       bearing: 12,
       pitch: 48,
     },
-    activeLayerIds: ['countries-base', 'threat-fill'],
+    activeLayerIds: ['countries-base', 'threat-highlight', 'threat-labels'],
     timeFilter: {
       mode: 'preset',
       preset: '24h',
@@ -37,7 +37,7 @@ test('serializes and parses preset URL state', () => {
   assert.equal(parsed.camera.lng, 120.125);
   assert.equal(parsed.camera.lat, 31.25);
   assert.equal(parsed.camera.zoom, 2.4);
-  assert.deepEqual(parsed.activeLayerIds, ['countries-base', 'threat-fill']);
+  assert.deepEqual(parsed.activeLayerIds, ['countries-base', 'threat-highlight', 'threat-labels']);
   assert.deepEqual(parsed.timeFilter, {
     mode: 'preset',
     preset: '24h',
@@ -61,6 +61,34 @@ test('supports fixed custom time filter URLs', () => {
     startDate: '2026-04-01',
     endDate: '2026-04-22',
   });
+});
+
+test('normalizes legacy layer ids and strips internal layers from URL state', () => {
+  const parsed = parseMapStateFromSearch(
+    '?layers=countries-base,threat-fill,threat-outline,hover-highlight,attack-arcs,attack-arrowheads',
+  );
+
+  assert.deepEqual(parsed.activeLayerIds, [
+    'countries-base',
+    'threat-highlight',
+    'attack-arcs',
+  ]);
+});
+
+test('serializes legacy layer ids as the new public layer model', () => {
+  const search = serializeMapStateToSearch({
+    ...DEFAULT_MAP_STATE,
+    activeLayerIds: [
+      'countries-base',
+      'threat-fill',
+      'threat-outline',
+      'hover-highlight',
+      'attack-arcs',
+      'attack-arrowheads',
+    ],
+  });
+
+  assert.match(search, /layers=countries-base%2Cthreat-highlight%2Cattack-arcs/);
 });
 
 test('preset time filters resolve as sliding UTC date windows', () => {

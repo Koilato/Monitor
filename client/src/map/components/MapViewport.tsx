@@ -36,7 +36,9 @@ export function MapViewport(props: MapViewportProps) {
     debugSettings,
   } = props;
 
-  const visibleModules = LAYER_MODULES.filter((module) => module.supportsView.includes(viewMode));
+  const visibleModules = LAYER_MODULES.filter(
+    (module) => module.supportsView.includes(viewMode) && module.showInLayerControls !== false,
+  );
   const legendItems = visibleModules.flatMap((module) => module.legend?.items ?? []);
 
   return (

@@ -24,6 +24,7 @@ export interface LayerModule {
   id: string;
   label: string;
   defaultEnabled: boolean;
+  showInLayerControls?: boolean;
   supportsView: MapViewMode[];
   styleLayerIds?: string[];
   registerMapSources?: (context: LayerRenderContext) => Promise<void> | void;
@@ -45,9 +46,14 @@ export interface LayerModuleInitResult {
   failures: LayerModuleFailure[];
 }
 
-function isModuleEnabled(module: LayerModule, context: LayerRenderContext): boolean {
+export function isLayerModuleEnabled(module: LayerModule, context: Pick<LayerRenderContext, 'view' | 'activeLayerIds'>): boolean {
+  const isUserFacing = module.showInLayerControls !== false;
+  const isEnabledByState = isUserFacing
+    ? context.activeLayerIds.includes(module.id)
+    : module.defaultEnabled;
+
   return module.supportsView.includes(context.view)
-    && context.activeLayerIds.includes(module.id);
+    && isEnabledByState;
 }
 
 export async function initializeLayerModules(
@@ -57,7 +63,7 @@ export async function initializeLayerModules(
   const activeModules: LayerModule[] = [];
 
   for (const module of context.modules) {
-    if (!isModuleEnabled(module, context)) {
+    if (!isLayerModuleEnabled(module, context)) {
       continue;
     }
 

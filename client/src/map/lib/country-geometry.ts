@@ -94,6 +94,80 @@ function computeBbox(polygons: [number, number][][][]): [number, number, number,
   return hasPoint ? [minLon, minLat, maxLon, maxLat] : null;
 }
 
+function computeRingArea(ring: [number, number][]): number {
+  if (ring.length < 3) {
+    return 0;
+  }
+
+  let area = 0;
+
+  for (let index = 0; index < ring.length; index += 1) {
+    const current = ring[index];
+    const next = ring[(index + 1) % ring.length];
+    if (!current || !next) {
+      continue;
+    }
+
+    area += (current[0] * next[1]) - (next[0] * current[1]);
+  }
+
+  return area / 2;
+}
+
+function computeRingCentroid(ring: [number, number][]): { lon: number; lat: number } | null {
+  const area = computeRingArea(ring);
+  if (!Number.isFinite(area) || Math.abs(area) < 1e-9) {
+    return null;
+  }
+
+  let lon = 0;
+  let lat = 0;
+
+  for (let index = 0; index < ring.length; index += 1) {
+    const current = ring[index];
+    const next = ring[(index + 1) % ring.length];
+    if (!current || !next) {
+      continue;
+    }
+
+    const cross = (current[0] * next[1]) - (next[0] * current[1]);
+    lon += (current[0] + next[0]) * cross;
+    lat += (current[1] + next[1]) * cross;
+  }
+
+  const factor = 1 / (6 * area);
+  const centroidLon = lon * factor;
+  const centroidLat = lat * factor;
+
+  return Number.isFinite(centroidLon) && Number.isFinite(centroidLat)
+    ? { lon: centroidLon, lat: centroidLat }
+    : null;
+}
+
+function computeRingBbox(ring: [number, number][]): [number, number, number, number] | null {
+  return computeBbox([[ring]]);
+}
+
+function getLargestPolygonOuterRing(country: IndexedCountryGeometry): [number, number][] | null {
+  let largestRing: [number, number][] | null = null;
+  let largestArea = -Infinity;
+
+  for (const polygon of country.polygons) {
+    const outerRing = polygon[0];
+    if (!outerRing) {
+      continue;
+    }
+
+    const area = Math.abs(computeRingArea(outerRing));
+    if (area > largestArea) {
+      largestArea = area;
+      largestRing = outerRing;
+    }
+  }
+
+  return largestRing;
+}
+
 function pointOnSegment(
   px: number,
   py: number,
@@ -248,6 +322,34 @@ export async function getCountryCentroid(code: string): Promise<{ lat: number; l
   return {
     lat: (minLat + maxLat) / 2,
     lon: (minLon + maxLon) / 2,
+  };
+}
+
+export async function getCountryLabelAnchor(code: string): Promise<{ lat: number; lon: number } | null> {
+  await ensureLoaded();
+  const country = countriesByCode.get(code.toUpperCase());
+  if (!country) {
+    return null;
+  }
+
+  const outerRing = getLargestPolygonOuterRing(country);
+  if (!outerRing) {
+    return null;
+  }
+
+  const centroid = computeRingCentroid(outerRing);
+  if (centroid) {
+    return centroid;
+  }
+
+  const bbox = computeRingBbox(outerRing);
+  if (!bbox) {
+    return null;
+  }
+
+  return {
+    lat: (bbox[1] + bbox[3]) / 2,
+    lon: (bbox[0] + bbox[2]) / 2,
   };
 }
 

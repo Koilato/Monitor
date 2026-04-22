@@ -31,14 +31,25 @@ export const MIN_3D_ZOOM = 1.2;
 export const MAX_3D_ZOOM = 5;
 export const MAX_3D_PITCH = 55;
 
-export const DEFAULT_LAYER_IDS = [
+export const PUBLIC_LAYER_IDS = [
   'countries-base',
-  'threat-fill',
-  'threat-outline',
-  'hover-highlight',
+  'threat-highlight',
+  'threat-labels',
   'attack-arcs',
-  'attack-arrowheads',
 ] as const;
+
+export const DEFAULT_LAYER_IDS = [...PUBLIC_LAYER_IDS];
+
+const LAYER_ID_ALIASES: Record<string, string | null> = {
+  'countries-base': 'countries-base',
+  'threat-highlight': 'threat-highlight',
+  'threat-labels': 'threat-labels',
+  'attack-arcs': 'attack-arcs',
+  'threat-fill': 'threat-highlight',
+  'threat-outline': 'threat-highlight',
+  'attack-arrowheads': 'attack-arcs',
+  'hover-highlight': null,
+};
 
 function getUtcDateString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -135,12 +146,26 @@ function normalizeTimeFilter(timeFilter: Partial<TimeFilterState> | undefined): 
   return getDefaultTimeFilter();
 }
 
+function normalizeActiveLayerIds(activeLayerIds: unknown): string[] {
+  if (!Array.isArray(activeLayerIds) || activeLayerIds.length === 0) {
+    return [...DEFAULT_LAYER_IDS];
+  }
+
+  const normalized = activeLayerIds
+    .filter((value): value is string => typeof value === 'string' && value.length > 0)
+    .map((value) => LAYER_ID_ALIASES[value] ?? value)
+    .filter((value): value is string => typeof value === 'string')
+    .filter((value): value is (typeof PUBLIC_LAYER_IDS)[number] =>
+      (PUBLIC_LAYER_IDS as readonly string[]).includes(value))
+    .filter((value, index, values) => values.indexOf(value) === index);
+
+  return normalized.length > 0 ? normalized : [...DEFAULT_LAYER_IDS];
+}
+
 export function normalizeMapState(input: Partial<MapState>): MapState {
   const view = input.view === '3d' ? '3d' : '2d';
   const timeFilter = normalizeTimeFilter(input.timeFilter);
-  const activeLayerIds = Array.isArray(input.activeLayerIds) && input.activeLayerIds.length > 0
-    ? [...new Set(input.activeLayerIds.filter((value): value is string => typeof value === 'string' && value.length > 0))]
-    : [...DEFAULT_LAYER_IDS];
+  const activeLayerIds = normalizeActiveLayerIds(input.activeLayerIds);
 
   return {
     view,
