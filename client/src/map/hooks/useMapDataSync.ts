@@ -24,7 +24,7 @@ interface UseMapDataSyncInput {
   timeFilter: TimeFilterState;
 }
 
-function serializeDateRange(range: DateRange): string {
+export function serializeDateRange(range: DateRange): string {
   return `${range.startDate ?? ''}__${range.endDate ?? ''}`;
 }
 
@@ -37,6 +37,7 @@ function isAbortError(error: unknown): boolean {
 
 export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
   const dateRange = timeFilterToDateRange(input.timeFilter);
+  const dateRangeKey = serializeDateRange(dateRange);
   const [hoveredCountry, setHoveredCountry] = useState<HoverCountryState | null>(null);
   const [popupAnchor, setPopupAnchor] = useState<PopupAnchor | null>(null);
   const [hoverData, setHoverData] = useState<CountryHoverResponse | null>(null);
@@ -149,14 +150,13 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
 
   useEffect(() => {
     latestRangeRef.current = dateRange;
-    const nextRange = serializeDateRange(dateRange);
     void startThreatRequest(dateRange);
-    if (!hoveredCountry || nextRange === activeRangeRef.current) {
+    if (!hoveredCountry || dateRangeKey === activeRangeRef.current) {
       return;
     }
 
     void startHoverRequest(hoveredCountry, dateRange, true);
-  }, [dateRange, hoveredCountry, startHoverRequest, startThreatRequest]);
+  }, [dateRangeKey, hoveredCountry, startHoverRequest, startThreatRequest]);
 
   useEffect(() => () => {
     requestRef.current?.abort();

@@ -5,7 +5,11 @@ import type {
   ThreatMapResponse,
 } from '@shared/types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787';
+const API_BASE_URL = (import.meta as ImportMeta & {
+  env?: {
+    VITE_API_BASE_URL?: string;
+  };
+}).env?.VITE_API_BASE_URL ?? 'http://localhost:8787';
 
 export function buildCountryHoverUrl(victimCountry: string, range: DateRange): string {
   const url = new URL('/api/map/country-hover', API_BASE_URL);
