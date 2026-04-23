@@ -66,15 +66,13 @@ test('buildThreatLabelFeatures returns only threatened countries with Chinese na
           country: 'US',
           incidentCount: 1,
           severityCounts: { low: 1, medium: 0, high: 0 },
-          threatScore: 1,
-          threatLevel: 'low',
+          eventLevel: 'low',
         },
         {
           country: 'CN',
           incidentCount: 2,
           severityCounts: { low: 0, medium: 1, high: 1 },
-          threatScore: 5,
-          threatLevel: 'high',
+          eventLevel: 'high',
         },
       ],
     });

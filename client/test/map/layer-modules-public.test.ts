@@ -56,6 +56,17 @@ test('exposes only the public map layers in the expected order', () => {
   ]);
 });
 
+test('threat module legend includes active level swatch', () => {
+  const threatModule = LAYER_MODULES.find((module) => module.id === 'threat-highlight');
+  assert.ok(threatModule?.legend);
+  assert.deepEqual(threatModule.legend?.items.map((item) => item.label), [
+    'LOW',
+    'MED',
+    'HIGH',
+    'ACTIVE',
+  ]);
+});
+
 test('attack-arcs builds arc and arrowhead overlays together', async () => {
   const attackArcsModule = LAYER_MODULES.find((module) => module.id === 'attack-arcs');
   assert.ok(attackArcsModule?.buildOverlayLayers);
@@ -77,6 +88,7 @@ test('attack-arcs builds arc and arrowhead overlays together', async () => {
       deckOverlay: null,
       view: '2d',
       activeLayerIds: ['attack-arcs'],
+      activeThreatCountryCodes: [],
       threatData: null,
       hoveredCountryCode: null,
       data: {

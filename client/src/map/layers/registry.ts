@@ -15,6 +15,7 @@ export interface LayerRenderContext {
   deckOverlay: MapboxOverlay | null;
   view: MapViewMode;
   activeLayerIds: string[];
+  activeThreatCountryCodes: string[];
   data: CountryHoverResponse | null;
   threatData: ThreatMapResponse | null;
   hoveredCountryCode?: string | null;

@@ -33,3 +33,27 @@ test('resolveDraggedSplitSize applies delta and clamps to bounds', () => {
     160,
   );
 });
+
+test('resolveDraggedSplitSize supports anchored panels that resize in reverse drag direction', () => {
+  assert.equal(
+    resolveDraggedSplitSize({
+      startSize: 220,
+      delta: 70,
+      minSize: 160,
+      maxSize: 280,
+      anchor: 'end',
+    }),
+    160,
+  );
+
+  assert.equal(
+    resolveDraggedSplitSize({
+      startSize: 220,
+      delta: -40,
+      minSize: 160,
+      maxSize: 280,
+      anchor: 'end',
+    }),
+    260,
+  );
+});

@@ -27,13 +27,13 @@
 }
 
 .popup-header.hotspot {
-  background: rgba(68, 255, 136, 0.06);
+  background: rgba(82, 214, 255, 0.08);
 }
 
 .popup-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--green);
+  color: var(--threat-low);
   letter-spacing: 0.5px;
   flex: 1;
   overflow: hidden;
@@ -63,27 +63,27 @@
 }
 
 .popup-badge.low {
-  color: var(--text-dim);
+  color: var(--threat-low);
 }
 
 .popup-badge.low::before {
-  background: var(--text-dim);
+  background: var(--threat-low);
 }
 
 .popup-badge.medium {
-  color: var(--yellow);
+  color: var(--threat-medium);
 }
 
 .popup-badge.medium::before {
-  background: var(--yellow);
+  background: var(--threat-medium);
 }
 
 .popup-badge.high {
-  color: var(--red);
+  color: var(--threat-high);
 }
 
 .popup-badge.high::before {
-  background: var(--red);
+  background: var(--threat-high);
 }
 
 .popup-body {
@@ -92,7 +92,7 @@
 
 .popup-subtitle {
   font-size: 10px;
-  color: var(--green);
+  color: var(--threat-low);
   margin-bottom: 8px;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -134,7 +134,7 @@
 
 .stat-value {
   font-size: 11px;
-  color: var(--green);
+  color: var(--threat-low);
 }
 
 .popup-section {
@@ -176,7 +176,7 @@
 }
 
 .popup-flow-count {
-  color: var(--green);
+  color: var(--threat-low);
   font-size: 11px;
 }
 

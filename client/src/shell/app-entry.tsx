@@ -3,6 +3,7 @@ import 'shared/styles/theme.css';
 import 'shell/styles/app-shell.css';
 import 'shell/styles/toolbar.css';
 import 'shell/styles/debug-panel.css';
+import 'shell/styles/threat-panels.css';
 import 'content/styles/latest-feed.css';
 import 'map/styles/map.css';
 import 'map/styles/renderer.css';

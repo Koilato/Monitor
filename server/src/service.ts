@@ -1,6 +1,7 @@
 import type {
   CountryHoverQuery,
   CountryHoverResponse,
+  EventLevel,
   HoverFlow,
   HoverIncident,
   LatestContentItem,
@@ -9,23 +10,14 @@ import type {
   ThreatCountryStat,
   ThreatMapQuery,
   ThreatMapResponse,
-  ThreatLevel,
   ThreatSeverityCounts,
 } from '../../shared/types.js';
 
-const THREAT_SCORE_BY_SEVERITY: Record<HoverIncident['details']['severity'], number> = {
+const EVENT_LEVEL_PRIORITY: Record<EventLevel, number> = {
   low: 1,
   medium: 2,
   high: 3,
 };
-
-const THREAT_LEVEL_BY_SCORE: Array<{ max: number; level: ThreatLevel }> = [
-  { max: 0, level: 'none' },
-  { max: 2, level: 'low' },
-  { max: 5, level: 'medium' },
-  { max: 8, level: 'high' },
-  { max: Number.POSITIVE_INFINITY, level: 'critical' },
-];
 
 export function filterIncidents(
   incidents: HoverIncident[],
@@ -108,8 +100,10 @@ function createSeverityCounts(): ThreatSeverityCounts {
   };
 }
 
-function classifyThreatLevel(score: number): ThreatLevel {
-  return THREAT_LEVEL_BY_SCORE.find((entry) => score <= entry.max)?.level ?? 'critical';
+function resolveMaxEventLevel(current: EventLevel, next: EventLevel): EventLevel {
+  return EVENT_LEVEL_PRIORITY[next] > EVENT_LEVEL_PRIORITY[current]
+    ? next
+    : current;
 }
 
 export function buildThreatMapResponse(
@@ -125,13 +119,11 @@ export function buildThreatMapResponse(
     total += 1;
     const existing = byCountry.get(incident.victimCountry);
     const severity = incident.details.severity;
-    const severityScore = THREAT_SCORE_BY_SEVERITY[severity];
 
     if (existing) {
       existing.incidentCount += 1;
       existing.severityCounts[severity] += 1;
-      existing.threatScore += severityScore;
-      existing.threatLevel = classifyThreatLevel(existing.threatScore);
+      existing.eventLevel = resolveMaxEventLevel(existing.eventLevel, severity);
       continue;
     }
 
@@ -142,8 +134,7 @@ export function buildThreatMapResponse(
       country: incident.victimCountry,
       incidentCount: 1,
       severityCounts,
-      threatScore: severityScore,
-      threatLevel: classifyThreatLevel(severityScore),
+      eventLevel: severity,
     });
   }
 
@@ -152,8 +143,9 @@ export function buildThreatMapResponse(
     endDate: query.endDate,
     total,
     countries: [...byCountry.values()].sort((left, right) => {
-      if (right.threatScore !== left.threatScore) {
-        return right.threatScore - left.threatScore;
+      const levelPriorityDelta = EVENT_LEVEL_PRIORITY[right.eventLevel] - EVENT_LEVEL_PRIORITY[left.eventLevel];
+      if (levelPriorityDelta !== 0) {
+        return levelPriorityDelta;
       }
       if (right.incidentCount !== left.incidentCount) {
         return right.incidentCount - left.incidentCount;

@@ -4,6 +4,8 @@ import { MapViewport } from 'map/components/MapViewport';
 import { useMapDataSync } from 'map/hooks/useMapDataSync';
 import { useMapDebugSettings } from 'map/hooks/useMapDebugSettings';
 import { useMapUrlState } from 'map/hooks/useMapUrlState';
+import { ThreatIntelPanel } from 'shell/components/ThreatIntelPanel';
+import { ThreatTickerPanel } from 'shell/components/ThreatTickerPanel';
 import { MapDebugPanel } from 'shell/panels/MapDebugPanel';
 import { clampSize, resolveDraggedSplitSize } from 'shell/lib/split-size';
 import { AppToolbar } from 'shell/toolbar/AppToolbar';
@@ -59,6 +61,7 @@ export function AppShell() {
     resetSettings,
     updateLatestSectionHeight,
     updateMapSettings,
+    updateActiveCountryCodes,
   } = useMapDebugSettings();
   const {
     state: mapState,
@@ -296,7 +299,9 @@ export function AppShell() {
 
         <div className="workspace-grid" ref={workspaceRef}>
           <section className="workspace-column workspace-column--left">
-            <div className="workspace-pane workspace-pane--blank workspace-pane--left-top" />
+            <div className="workspace-pane workspace-pane--blank workspace-pane--left-top">
+              <ThreatIntelPanel />
+            </div>
             <div
               className="split-divider split-divider--horizontal"
               role="separator"
@@ -307,7 +312,9 @@ export function AppShell() {
             <div
               className="workspace-pane workspace-pane--blank workspace-pane--left-bottom"
               style={{ flexBasis: `${clampedLeftBottomHeight}px` }}
-            />
+            >
+              <ThreatTickerPanel />
+            </div>
           </section>
 
           <div
@@ -348,6 +355,7 @@ export function AppShell() {
                   onReset={resetSettings}
                   onLatestSectionHeightChange={updateLatestSectionHeight}
                   onMapSettingsChange={updateMapSettings}
+                  onActiveCountryCodesChange={updateActiveCountryCodes}
                 />
               ) : null}
             </div>

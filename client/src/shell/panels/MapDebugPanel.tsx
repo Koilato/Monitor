@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import type { MapDebugSettings } from 'map/state/map-types';
 import 'shell/styles/debug-panel.css';
 
@@ -9,7 +10,8 @@ interface MapDebugPanelProps {
   onPersistChange: (enabled: boolean) => void;
   onReset: () => void;
   onLatestSectionHeightChange: (value: number) => void;
-  onMapSettingsChange: (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight'>>) => void;
+  onMapSettingsChange: (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight' | 'activeCountryCodes'>>) => void;
+  onActiveCountryCodesChange: (value: string) => void;
 }
 
 interface NumberFieldProps {
@@ -54,7 +56,13 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
     onReset,
     onLatestSectionHeightChange,
     onMapSettingsChange,
+    onActiveCountryCodesChange,
   } = props;
+  const [activeCountryInput, setActiveCountryInput] = useState(settings.activeCountryCodes.join(', '));
+
+  useEffect(() => {
+    setActiveCountryInput(settings.activeCountryCodes.join(', '));
+  }, [settings.activeCountryCodes]);
 
   return (
     <aside className={`map-debug-panel ${open ? 'map-debug-panel--open' : 'map-debug-panel--closed'}`}>
@@ -71,7 +79,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
           <div className="map-debug-header">
             <div className="map-debug-title-block">
               <span className="map-debug-title">Map Debug</span>
-              <span className="map-debug-subtitle">Layout and zoom bounds only</span>
+              <span className="map-debug-subtitle">Layout, zoom bounds, and threat overrides</span>
             </div>
             <button
               type="button"
@@ -121,6 +129,27 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
               step={0.1}
               onChange={(value) => onMapSettingsChange({ maxZoom: value })}
             />
+          </section>
+
+          <section className="map-debug-section">
+            <h3>Threat Overrides</h3>
+            <label className="map-debug-field map-debug-field--stacked">
+              <span className="map-debug-field-label">Active Countries (ISO2, comma separated)</span>
+              <input
+                type="text"
+                value={activeCountryInput}
+                placeholder="CN, US, JP"
+                onChange={(event) => {
+                  setActiveCountryInput(event.target.value);
+                }}
+                onBlur={() => onActiveCountryCodesChange(activeCountryInput)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    onActiveCountryCodesChange(activeCountryInput);
+                  }
+                }}
+              />
+            </label>
           </section>
         </div>
       ) : null}

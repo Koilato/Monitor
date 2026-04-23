@@ -32,6 +32,7 @@ export interface MapDebugSettings {
   latestSectionHeight: number;
   minZoom: number;
   maxZoom: number;
+  activeCountryCodes: string[];
 }
 
 export interface MapViewProps {

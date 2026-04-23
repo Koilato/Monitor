@@ -130,6 +130,11 @@
   margin-bottom: 0;
 }
 
+.map-debug-field--stacked {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
 .map-debug-field-label {
   font-size: 9px;
   text-transform: uppercase;
@@ -148,7 +153,19 @@
   text-align: right;
 }
 
+.map-debug-field input[type='text'] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
 .map-debug-field input[type='number']:focus,
+.map-debug-field input[type='text']:focus,
 .map-debug-toggle:focus,
 .map-debug-reset:focus {
   outline: 1px solid rgba(68, 255, 136, 0.5);

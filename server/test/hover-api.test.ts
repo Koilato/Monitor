@@ -65,8 +65,8 @@ test('today range returns the mock China incidents', () => {
 
   assert.equal(threatMap.total, 4);
   assert.deepEqual(
-    threatMap.countries.map((country) => `${country.country}:${country.threatLevel}:${country.incidentCount}`),
-    ['CN:high:3', 'DK:medium:1'],
+    threatMap.countries.map((country) => `${country.country}:${country.eventLevel}:${country.incidentCount}`),
+    ['CN:high:3', 'DK:high:1'],
   );
 });
 
@@ -81,6 +81,18 @@ test('today hover range returns the China mock incidents', () => {
   assert.deepEqual(
     result.incidents.map((incident) => incident.uuid),
     ['mock-019a', 'mock-019b', 'mock-019c'],
+  );
+});
+
+test('threat map uses the highest incident severity as country event level', () => {
+  const threatMap = buildThreatMapResponse(MOCK_INCIDENTS, {
+    startDate: '2026-04-01',
+    endDate: '2026-04-03',
+  });
+
+  assert.deepEqual(
+    threatMap.countries.map((country) => `${country.country}:${country.eventLevel}`),
+    ['CN:medium'],
   );
 });
 
@@ -152,7 +164,7 @@ test('threat map response changes with the selected date range', () => {
 
   assert.equal(earlyRange.total, 4);
   assert.deepEqual(
-    earlyRange.countries.map((country) => `${country.country}:${country.threatLevel}:${country.incidentCount}`),
+    earlyRange.countries.map((country) => `${country.country}:${country.eventLevel}:${country.incidentCount}`),
     ['CN:high:4'],
   );
 
@@ -163,8 +175,8 @@ test('threat map response changes with the selected date range', () => {
 
   assert.equal(laterRange.total, 8);
   assert.deepEqual(
-    laterRange.countries.map((country) => `${country.country}:${country.threatLevel}:${country.incidentCount}`),
-    ['CN:critical:8'],
+    laterRange.countries.map((country) => `${country.country}:${country.eventLevel}:${country.incidentCount}`),
+    ['CN:high:8'],
   );
 });
 
@@ -187,8 +199,8 @@ test('HTTP API returns threat map data for the selected date range', async () =>
     assert.equal(response.status, 200);
     assert.equal(body.total, 8);
     assert.deepEqual(
-      body.countries.map((country: { country: string; threatLevel: string; incidentCount: number }) => `${country.country}:${country.threatLevel}:${country.incidentCount}`),
-      ['CN:critical:8'],
+      body.countries.map((country: { country: string; eventLevel: string; incidentCount: number }) => `${country.country}:${country.eventLevel}:${country.incidentCount}`),
+      ['CN:high:8'],
     );
   } finally {
     server.close();

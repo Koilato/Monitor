@@ -118,7 +118,7 @@
 }
 
 .maplibregl-ctrl-attrib {
-  background: rgba(10, 10, 10, 0.88) !important;
+  background: rgba(0, 10, 10, 0.88) !important;
   color: var(--text-dim) !important;
   border-top-left-radius: 4px;
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { MapDebugSettings } from 'map/state/map-types';
 
-const STORAGE_KEY = 'world-monitor.map-debug-settings.v11';
+const STORAGE_KEY = 'world-monitor.map-debug-settings.v12';
 const DEBUG_MODE_STORAGE_KEY = 'world-monitor.map-debug-mode.v1';
 const LATEST_SECTION_HEIGHT_MIN = 100;
 const LATEST_SECTION_HEIGHT_MAX = 560;
@@ -10,6 +10,7 @@ const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
   latestSectionHeight: 160,
   minZoom: -2,
   maxZoom: 6,
+  activeCountryCodes: [],
 };
 
 function clamp(value: number, min: number, max: number): number {
@@ -20,7 +21,25 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function coerceMapDebugSettings(value: unknown): MapDebugSettings {
+function normalizeActiveCountryCodes(value: unknown): string[] {
+  const rawValues = Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === 'string')
+    : typeof value === 'string'
+      ? value.split(',')
+      : [];
+
+  const normalized = rawValues
+    .map((entry) => entry.trim().toUpperCase())
+    .filter((entry) => /^[A-Z]{2}$/.test(entry));
+
+  return normalized.filter((entry, index) => normalized.indexOf(entry) === index);
+}
+
+export function parseActiveCountryCodesInput(value: string): string[] {
+  return normalizeActiveCountryCodes(value);
+}
+
+export function coerceMapDebugSettings(value: unknown): MapDebugSettings {
   if (typeof value !== 'object' || value === null) {
     return DEFAULT_MAP_DEBUG_SETTINGS;
   }
@@ -39,6 +58,7 @@ function coerceMapDebugSettings(value: unknown): MapDebugSettings {
       : DEFAULT_MAP_DEBUG_SETTINGS.latestSectionHeight,
     minZoom,
     maxZoom,
+    activeCountryCodes: normalizeActiveCountryCodes(record.activeCountryCodes),
   };
 }
 
@@ -69,7 +89,8 @@ export interface UseMapDebugSettingsResult {
   settings: MapDebugSettings;
   resetSettings: () => void;
   updateLatestSectionHeight: (value: number) => void;
-  updateMapSettings: (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight'>>) => void;
+  updateMapSettings: (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight' | 'activeCountryCodes'>>) => void;
+  updateActiveCountryCodes: (value: string) => void;
 }
 
 export function useMapDebugSettings(): UseMapDebugSettingsResult {
@@ -131,10 +152,17 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     }));
   };
 
-  const updateMapSettings = (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight'>>) => {
+  const updateMapSettings = (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight' | 'activeCountryCodes'>>) => {
     setSettings((current) => coerceMapDebugSettings({
       ...current,
       ...patch,
+    }));
+  };
+
+  const updateActiveCountryCodes = (value: string) => {
+    setSettings((current) => ({
+      ...current,
+      activeCountryCodes: parseActiveCountryCodesInput(value),
     }));
   };
 
@@ -157,5 +185,6 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     resetSettings: () => setSettings(DEFAULT_MAP_DEBUG_SETTINGS),
     updateLatestSectionHeight,
     updateMapSettings,
+    updateActiveCountryCodes,
   };
 }

@@ -3,6 +3,7 @@ export interface DraggedSplitSizeParams {
   delta: number;
   minSize: number;
   maxSize: number;
+  anchor?: 'start' | 'end';
 }
 
 export function clampSize(value: number, minSize: number, maxSize: number): number {
@@ -10,8 +11,12 @@ export function clampSize(value: number, minSize: number, maxSize: number): numb
 }
 
 export function resolveDraggedSplitSize(params: DraggedSplitSizeParams): number {
+  const directionalDelta = params.anchor === 'end'
+    ? -params.delta
+    : params.delta;
+
   return clampSize(
-    params.startSize + params.delta,
+    params.startSize + directionalDelta,
     params.minSize,
     params.maxSize,
   );

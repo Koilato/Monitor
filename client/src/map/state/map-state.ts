@@ -47,6 +47,7 @@ const LAYER_ID_ALIASES: Record<string, string | null> = {
   'attack-arcs': 'attack-arcs',
   'threat-fill': 'threat-highlight',
   'threat-outline': 'threat-highlight',
+  'threat-glow': 'threat-highlight',
   'attack-arrowheads': 'attack-arcs',
   'hover-highlight': null,
 };

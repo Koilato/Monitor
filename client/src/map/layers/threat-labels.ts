@@ -5,9 +5,19 @@ import type { GeoJSONSource } from 'maplibre-gl';
 import { getCountryLabelAnchor, getCountryName } from 'map/lib/country-geometry';
 import { getChineseCountryName } from 'map/lib/country-names-zh';
 import type { LayerRenderContext } from 'map/layers/registry';
+import {
+  createActiveCountryCodeSet,
+  getThreatVisualToken,
+  resolveThreatVisualLevel,
+} from 'map/layers/tokens';
 
 export const THREAT_LABEL_SOURCE_ID = 'threat-labels-source';
 export const THREAT_LABEL_LAYER_ID = 'threat-labels';
+const EVENT_LEVEL_PRIORITY = {
+  low: 1,
+  medium: 2,
+  high: 3,
+} as const;
 
 function createEmptyThreatLabelFeatureCollection(): FeatureCollection<Point> {
   return {
@@ -17,8 +27,9 @@ function createEmptyThreatLabelFeatureCollection(): FeatureCollection<Point> {
 }
 
 function compareThreatPriority(left: ThreatCountryStat, right: ThreatCountryStat): number {
-  if (right.threatScore !== left.threatScore) {
-    return right.threatScore - left.threatScore;
+  const levelPriorityDelta = EVENT_LEVEL_PRIORITY[right.eventLevel] - EVENT_LEVEL_PRIORITY[left.eventLevel];
+  if (levelPriorityDelta !== 0) {
+    return levelPriorityDelta;
   }
 
   if (right.incidentCount !== left.incidentCount) {
@@ -36,11 +47,13 @@ export function resolveThreatLabelName(code: string, englishName: string | null)
 
 export async function buildThreatLabelFeatures(
   threatData: ThreatMapResponse | null,
+  activeThreatCountryCodes: readonly string[] = [],
 ): Promise<FeatureCollection<Point>> {
   if (!threatData || threatData.countries.length === 0) {
     return createEmptyThreatLabelFeatureCollection();
   }
 
+  const activeCountryCodeSet = createActiveCountryCodeSet(activeThreatCountryCodes);
   const sortedCountries = [...threatData.countries].sort(compareThreatPriority);
   const features = await Promise.all(sortedCountries.map(async (country) => {
     const [anchor, englishName] = await Promise.all([
@@ -52,15 +65,22 @@ export async function buildThreatLabelFeatures(
       return null;
     }
 
+    const threatVisualLevel = resolveThreatVisualLevel(
+      country.eventLevel,
+      country.country,
+      activeThreatCountryCodes,
+      activeCountryCodeSet,
+    );
+
     return {
       type: 'Feature' as const,
       properties: {
         label: resolveThreatLabelName(country.country, englishName),
         'ISO3166-1-Alpha-2': country.country,
-        threatLevel: country.threatLevel,
-        threatScore: country.threatScore,
+        eventLevel: country.eventLevel,
+        threatVisualLevel,
         incidentCount: country.incidentCount,
-        sortKey: -((country.threatScore * 1000) + country.incidentCount),
+        sortKey: -((EVENT_LEVEL_PRIORITY[country.eventLevel] * 1000) + country.incidentCount),
       },
       geometry: {
         type: 'Point' as const,
@@ -116,9 +136,37 @@ export function registerThreatLabelLayer(context: LayerRenderContext) {
       'symbol-sort-key': ['get', 'sortKey'],
     },
     paint: {
-      'text-color': '#F4F5F7',
-      'text-halo-color': 'rgba(12,14,18,0.94)',
-      'text-halo-width': 1.5,
+      'text-color': 'rgba(230,238,245,0.82)',
+      'text-halo-color': [
+        'match',
+        ['get', 'threatVisualLevel'],
+        'low',
+        getThreatVisualToken('low').glow,
+        'medium',
+        getThreatVisualToken('medium').glow,
+        'high',
+        getThreatVisualToken('high').glow,
+        'critical',
+        getThreatVisualToken('critical').glow,
+        'active',
+        getThreatVisualToken('active').glow,
+        'rgba(12,14,18,0.94)',
+      ],
+      'text-halo-width': [
+        'match',
+        ['get', 'threatVisualLevel'],
+        'low',
+        1.5,
+        'medium',
+        1.6,
+        'high',
+        1.8,
+        'critical',
+        2.05,
+        'active',
+        2.2,
+        1.5,
+      ],
       'text-halo-blur': 0.4,
     },
   });
@@ -130,5 +178,5 @@ export async function applyThreatLabelState(context: LayerRenderContext) {
     return;
   }
 
-  source.setData(await buildThreatLabelFeatures(context.threatData));
+  source.setData(await buildThreatLabelFeatures(context.threatData, context.activeThreatCountryCodes));
 }

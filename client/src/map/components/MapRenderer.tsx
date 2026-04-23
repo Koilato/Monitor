@@ -221,6 +221,7 @@ export function MapRenderer(props: MapViewProps) {
         deckOverlay: activeOverlay,
         view: viewMode,
         activeLayerIds: mapState.activeLayerIds,
+        activeThreatCountryCodes: debugSettings.activeCountryCodes,
         data,
         threatData,
         hoveredCountryCode,
@@ -239,6 +240,7 @@ export function MapRenderer(props: MapViewProps) {
         deckOverlay: activeOverlay,
         view: viewMode,
         activeLayerIds: mapState.activeLayerIds,
+        activeThreatCountryCodes: debugSettings.activeCountryCodes,
         data,
         threatData,
         hoveredCountryCode,
@@ -262,7 +264,15 @@ export function MapRenderer(props: MapViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [data, hoveredCountryCode, mapState.activeLayerIds, styleReady, threatData, viewMode]);
+  }, [
+    data,
+    hoveredCountryCode,
+    mapState.activeLayerIds,
+    styleReady,
+    threatData,
+    viewMode,
+    debugSettings.activeCountryCodes,
+  ]);
 
   return (
     <div className="deckgl-map-wrapper deckgl-map-wrapper--2d">

@@ -2,6 +2,7 @@ import type { LayerModule } from 'map/layers/registry';
 import {
   applyHoverHighlightState,
   applyThreatFillState,
+  applyThreatGlowState,
   applyThreatOutlineState,
 } from 'map/layers/effects';
 import {
@@ -12,6 +13,7 @@ import {
   registerHoverHighlightLayers,
   registerThreatHighlightLayers,
   THREAT_FILL_LAYER_ID,
+  THREAT_GLOW_LAYER_ID,
   THREAT_OUTLINE_LAYER_ID,
 } from 'map/layers/maplibre';
 import {
@@ -41,11 +43,12 @@ const threatHighlightModule: LayerModule = {
   label: 'Threat Highlight',
   defaultEnabled: true,
   supportsView: ['2d', '3d'],
-  styleLayerIds: [THREAT_FILL_LAYER_ID, THREAT_OUTLINE_LAYER_ID],
+  styleLayerIds: [THREAT_FILL_LAYER_ID, THREAT_OUTLINE_LAYER_ID, THREAT_GLOW_LAYER_ID],
   registerStyleLayers: registerThreatHighlightLayers,
   applyState(context) {
     applyThreatFillState(context);
     applyThreatOutlineState(context);
+    applyThreatGlowState(context);
   },
   legend: THREAT_LEGEND,
 };

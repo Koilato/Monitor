@@ -1,8 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildThreatColorExpression } from '../../src/map/layers/effects';
-import { THREAT_LEVEL_COLORS } from '../../src/map/layers/tokens';
+import {
+  buildThreatColorExpression,
+  buildThreatGlowColorExpression,
+  buildThreatOutlineColorExpression,
+} from '../../src/map/layers/effects';
+import {
+  THREAT_VISUAL_LEVEL_TOKENS,
+  resolveThreatVisualLevel,
+} from '../../src/map/layers/tokens';
 
 test('builds a maplibre match expression from threat data', () => {
   assert.deepEqual(buildThreatColorExpression({
@@ -14,33 +21,30 @@ test('builds a maplibre match expression from threat data', () => {
         country: 'US',
         incidentCount: 2,
         severityCounts: { low: 0, medium: 1, high: 1 },
-        threatScore: 5,
-        threatLevel: 'medium',
+        eventLevel: 'medium',
       },
       {
         country: 'CN',
         incidentCount: 1,
         severityCounts: { low: 0, medium: 0, high: 1 },
-        threatScore: 3,
-        threatLevel: 'high',
+        eventLevel: 'high',
       },
       {
         country: 'RU',
         incidentCount: 1,
-        severityCounts: { low: 0, medium: 0, high: 1 },
-        threatScore: 12,
-        threatLevel: 'critical',
+        severityCounts: { low: 1, medium: 0, high: 0 },
+        eventLevel: 'low',
       },
     ],
   }), [
     'match',
     ['get', 'ISO3166-1-Alpha-2'],
     'US',
-    THREAT_LEVEL_COLORS.medium,
+    THREAT_VISUAL_LEVEL_TOKENS.medium.fill,
     'CN',
-    THREAT_LEVEL_COLORS.high,
+    THREAT_VISUAL_LEVEL_TOKENS.critical.fill,
     'RU',
-    THREAT_LEVEL_COLORS.critical,
+    THREAT_VISUAL_LEVEL_TOKENS.low.fill,
     'rgba(0,0,0,0)',
   ]);
 });
@@ -54,9 +58,50 @@ test('returns a transparent fallback threat color when no countries are present'
   }), 'rgba(0,0,0,0)');
 });
 
-test('uses the warm threat palette with a deep red critical color', () => {
-  assert.equal(THREAT_LEVEL_COLORS.low, 'rgba(250,204,21,0.68)');
-  assert.equal(THREAT_LEVEL_COLORS.medium, 'rgba(249,115,22,0.74)');
-  assert.equal(THREAT_LEVEL_COLORS.high, 'rgba(239,68,68,0.78)');
-  assert.equal(THREAT_LEVEL_COLORS.critical, 'rgba(185,28,28,0.82)');
+test('builds outline and glow expressions with active overrides', () => {
+  const threatData = {
+    startDate: '2026-04-01',
+    endDate: '2026-04-22',
+    total: 3,
+    countries: [
+      {
+        country: 'US',
+        incidentCount: 2,
+        severityCounts: { low: 0, medium: 1, high: 1 },
+        eventLevel: 'medium' as const,
+      },
+      {
+        country: 'CN',
+        incidentCount: 1,
+        severityCounts: { low: 0, medium: 0, high: 1 },
+        eventLevel: 'high' as const,
+      },
+    ],
+  };
+
+  assert.deepEqual(buildThreatOutlineColorExpression(threatData, ['CN']), [
+    'match',
+    ['get', 'ISO3166-1-Alpha-2'],
+    'US',
+    THREAT_VISUAL_LEVEL_TOKENS.medium.stroke,
+    'CN',
+    THREAT_VISUAL_LEVEL_TOKENS.active.stroke,
+    'rgba(0,0,0,0)',
+  ]);
+
+  assert.deepEqual(buildThreatGlowColorExpression(threatData, ['CN']), [
+    'match',
+    ['get', 'ISO3166-1-Alpha-2'],
+    'US',
+    THREAT_VISUAL_LEVEL_TOKENS.medium.glow,
+    'CN',
+    THREAT_VISUAL_LEVEL_TOKENS.active.glow,
+    'rgba(0,0,0,0)',
+  ]);
+});
+
+test('resolves visual levels using active overrides', () => {
+  assert.equal(resolveThreatVisualLevel('low', 'US', []), 'low');
+  assert.equal(resolveThreatVisualLevel('medium', 'US', []), 'medium');
+  assert.equal(resolveThreatVisualLevel('high', 'CN', ['cn']), 'active');
 });

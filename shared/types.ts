@@ -11,7 +11,7 @@ export interface IncidentDetails {
   severity: 'low' | 'medium' | 'high';
 }
 
-export type ThreatLevel = 'none' | 'low' | 'medium' | 'high' | 'critical';
+export type EventLevel = IncidentDetails['severity'];
 
 export interface ThreatSeverityCounts {
   low: number;
@@ -23,8 +23,7 @@ export interface ThreatCountryStat {
   country: CountryCode;
   incidentCount: number;
   severityCounts: ThreatSeverityCounts;
-  threatScore: number;
-  threatLevel: ThreatLevel;
+  eventLevel: EventLevel;
 }
 
 export interface HoverIncident {
