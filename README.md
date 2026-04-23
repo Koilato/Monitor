@@ -34,7 +34,7 @@ Build both apps:
 npm run build
 ```
 
-Run server tests:
+Run tests:
 
 ```bash
 npm run test

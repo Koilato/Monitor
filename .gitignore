@@ -3,4 +3,8 @@ client/node_modules/
 server/node_modules/
 client/dist/
 server/dist/
+.playwright-cli/
+.DS_Store
+playwright-report/
+test-results/
 .worktrees/

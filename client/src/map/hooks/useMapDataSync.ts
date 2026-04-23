@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CountryHoverResponse, DateRange, ThreatMapResponse } from '@shared/types';
 import { fetchCountryHover, fetchThreatMap } from 'shared/api/client';
+import { createRequestTracker } from 'map/lib/request-tracker';
 import { timeFilterToDateRange, type TimeFilterState } from 'map/state/map-state';
 import type { CountryHoverEvent, HoverCountryState, PopupAnchor } from 'map/state/map-types';
 
@@ -46,10 +47,8 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
   const [threatLoading, setThreatLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [threatError, setThreatError] = useState<string | null>(null);
-  const requestRef = useRef<AbortController | null>(null);
-  const requestIdRef = useRef(0);
-  const threatRequestRef = useRef<AbortController | null>(null);
-  const threatRequestIdRef = useRef(0);
+  const hoverRequestTrackerRef = useRef(createRequestTracker());
+  const threatRequestTrackerRef = useRef(createRequestTracker());
   const activeCountryRef = useRef<string | null>(null);
   const activeRangeRef = useRef(serializeDateRange(dateRange));
   const latestRangeRef = useRef<DateRange>(dateRange);
@@ -68,62 +67,50 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
 
     activeCountryRef.current = country.code;
     activeRangeRef.current = rangeState;
-    requestRef.current?.abort();
-
-    const controller = new AbortController();
-    requestRef.current = controller;
-
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
+    const requestTicket = hoverRequestTrackerRef.current.next();
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetchCountryHover(country.code, range, controller.signal);
-      if (controller.signal.aborted || requestIdRef.current !== requestId) {
+      const response = await fetchCountryHover(country.code, range, requestTicket.signal);
+      if (requestTicket.signal.aborted || !hoverRequestTrackerRef.current.isCurrent(requestTicket.id)) {
         return;
       }
       setHoverData(response);
     } catch (fetchError) {
-      if (isAbortError(fetchError) || controller.signal.aborted || requestIdRef.current !== requestId) {
+      if (isAbortError(fetchError) || requestTicket.signal.aborted || !hoverRequestTrackerRef.current.isCurrent(requestTicket.id)) {
         return;
       }
       setHoverData(null);
       setError((fetchError as Error).message);
     } finally {
-      if (!controller.signal.aborted && requestIdRef.current === requestId) {
+      if (!requestTicket.signal.aborted && hoverRequestTrackerRef.current.isCurrent(requestTicket.id)) {
         setLoading(false);
       }
     }
   }, []);
 
   const startThreatRequest = useCallback(async (range: DateRange) => {
-    threatRequestRef.current?.abort();
-
-    const controller = new AbortController();
-    threatRequestRef.current = controller;
-
-    const requestId = threatRequestIdRef.current + 1;
-    threatRequestIdRef.current = requestId;
+    const requestTicket = threatRequestTrackerRef.current.next();
 
     setThreatLoading(true);
     setThreatError(null);
 
     try {
-      const response = await fetchThreatMap(range, controller.signal);
-      if (controller.signal.aborted || threatRequestIdRef.current !== requestId) {
+      const response = await fetchThreatMap(range, requestTicket.signal);
+      if (requestTicket.signal.aborted || !threatRequestTrackerRef.current.isCurrent(requestTicket.id)) {
         return;
       }
       setThreatData(response);
     } catch (fetchError) {
-      if (isAbortError(fetchError) || controller.signal.aborted || threatRequestIdRef.current !== requestId) {
+      if (isAbortError(fetchError) || requestTicket.signal.aborted || !threatRequestTrackerRef.current.isCurrent(requestTicket.id)) {
         return;
       }
       setThreatData(null);
       setThreatError((fetchError as Error).message);
     } finally {
-      if (!controller.signal.aborted && threatRequestIdRef.current === requestId) {
+      if (!requestTicket.signal.aborted && threatRequestTrackerRef.current.isCurrent(requestTicket.id)) {
         setThreatLoading(false);
       }
     }
@@ -135,8 +122,7 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
     if (!event.country) {
       activeCountryRef.current = null;
       activeRangeRef.current = serializeDateRange(latestRangeRef.current);
-      requestRef.current?.abort();
-      requestRef.current = null;
+      hoverRequestTrackerRef.current.abort();
       setHoveredCountry(null);
       setHoverData(null);
       setLoading(false);
@@ -159,8 +145,8 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
   }, [dateRangeKey, hoveredCountry, startHoverRequest, startThreatRequest]);
 
   useEffect(() => () => {
-    requestRef.current?.abort();
-    threatRequestRef.current?.abort();
+    hoverRequestTrackerRef.current.abort();
+    threatRequestTrackerRef.current.abort();
   }, []);
 
   const panelCount = hoveredCountry ? hoverData?.total ?? 0 : 0;
