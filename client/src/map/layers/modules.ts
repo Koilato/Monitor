@@ -44,6 +44,7 @@ const threatHighlightModule: LayerModule = {
   defaultEnabled: true,
   supportsView: ['2d', '3d'],
   styleLayerIds: [THREAT_FILL_LAYER_ID, THREAT_OUTLINE_LAYER_ID, THREAT_GLOW_LAYER_ID],
+  registerMapSources: ensureCountrySource,
   registerStyleLayers: registerThreatHighlightLayers,
   applyState(context) {
     applyThreatFillState(context);
@@ -71,6 +72,7 @@ const hoverHighlightModule: LayerModule = {
   showInLayerControls: false,
   supportsView: ['2d', '3d'],
   styleLayerIds: [...HOVER_HIGHLIGHT_LAYER_IDS],
+  registerMapSources: ensureCountrySource,
   registerStyleLayers: registerHoverHighlightLayers,
   applyState: applyHoverHighlightState,
 };

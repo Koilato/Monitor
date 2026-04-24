@@ -42,7 +42,7 @@ export function MapViewport(props: MapViewportProps) {
   const legendItems = visibleModules.flatMap((module) => module.legend?.items ?? []);
 
   return (
-    <div className={`map-container map-container--${viewMode}`}>
+    <div className="map-container">
       <div className="map-stage">
         <MapRenderer
           viewMode={viewMode}

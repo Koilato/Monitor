@@ -229,3 +229,27 @@ test('HTTP API rejects invalid threat map date ranges', async () => {
   server.close();
   await once(server, 'close');
 });
+
+test('HTTP API rejects impossible calendar dates', async () => {
+  const server = createServer(createApp());
+  server.listen(0);
+  await once(server, 'listening');
+
+  try {
+    const address = server.address();
+    if (!address || typeof address === 'string') {
+      throw new Error('Failed to get dynamic port');
+    }
+
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/map/threat-map?startDate=2026-02-31&endDate=2026-02-31`,
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 400);
+    assert.equal(body.error, 'startDate must be a valid YYYY-MM-DD date');
+  } finally {
+    server.close();
+    await once(server, 'close');
+  }
+});

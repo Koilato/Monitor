@@ -7,7 +7,6 @@
     "server"
   ],
   "scripts": {
-    "install:all": "npm install --workspaces",
     "dev": "sh -c 'npm run dev:server & npm run dev:client && wait'",
     "dev:client": "npm run dev --workspace client --",
     "dev:server": "npm run dev --workspace server",
@@ -17,9 +16,11 @@
     "build:server": "npm run build --workspace server",
     "build": "npm run build --workspace client && npm run build --workspace server",
     "test": "npm run test:client && npm run test:server",
-    "test:e2e:client": "start-server-and-test \"npm run dev:client\" http://127.0.0.1:4174 \"npm run test:e2e --workspace client\"",
-    "test:e2e": "start-server-and-test \"npm run dev:server\" http://127.0.0.1:8787/api/health \"npm run test:e2e:client\"",
-    "verify": "npm run test:client && npm run build:client && npm run test:server && npm run build:server"
+    "test:e2e:client": "start-server-and-test \"npm run dev:client\" http://localhost:4174 \"npm run test:e2e --workspace client\"",
+    "serve:server": "npm run serve --workspace server",
+    "test:e2e": "start-server-and-test \"npm run serve:server\" http://127.0.0.1:8787/api/health \"npm run test:e2e:client\"",
+    "check:lockfiles": "node scripts/check-no-nested-lockfiles.mjs",
+    "verify": "npm run check:lockfiles && npm run test:client && npm run build:client && npm run test:server && npm run build:server"
   },
   "devDependencies": {
     "start-server-and-test": "^2.1.2"

@@ -1,7 +1,7 @@
 import type { DateRange } from '@shared/types';
 
 export type MapViewMode = '2d' | '3d';
-export type TimePreset = '1h' | '6h' | '24h' | '48h' | '7d';
+export type TimePreset = '1d' | '2d' | '7d';
 
 export interface TimeFilterState {
   mode: 'preset' | 'custom';
@@ -29,6 +29,7 @@ export const MIN_2D_ZOOM = -2;
 export const MAX_2D_ZOOM = 6;
 export const MIN_3D_ZOOM = 1.2;
 export const MAX_3D_ZOOM = 5;
+export const MAX_2D_PITCH = 60;
 export const MAX_3D_PITCH = 55;
 
 export const PUBLIC_LAYER_IDS = [
@@ -93,11 +94,25 @@ function parseNumber(value: string | null): number | null {
 }
 
 function isTimePreset(value: string | null): value is TimePreset {
-  return value === '1h'
-    || value === '6h'
-    || value === '24h'
-    || value === '48h'
+  return value === '1d'
+    || value === '2d'
     || value === '7d';
+}
+
+function normalizeTimePreset(value: string | null): TimePreset | null {
+  if (isTimePreset(value)) {
+    return value;
+  }
+
+  if (value === '1h' || value === '6h' || value === '24h') {
+    return '1d';
+  }
+
+  if (value === '48h') {
+    return '2d';
+  }
+
+  return null;
 }
 
 function isIsoDate(value: string | null): value is string {
@@ -105,6 +120,8 @@ function isIsoDate(value: string | null): value is string {
 }
 
 function normalizeCamera(camera: Partial<MapCameraState>, view: MapViewMode): MapCameraState {
+  const maxPitch = view === '3d' ? MAX_3D_PITCH : MAX_2D_PITCH;
+
   return {
     lng: clamp(camera.lng ?? DEFAULT_MAP_STATE.camera.lng, -180, 180),
     lat: clamp(camera.lat ?? DEFAULT_MAP_STATE.camera.lat, -90, 90),
@@ -117,14 +134,18 @@ function normalizeCamera(camera: Partial<MapCameraState>, view: MapViewMode): Ma
     pitch: clamp(
       camera.pitch ?? (view === '3d' ? MAX_3D_PITCH : 0),
       0,
-      view === '3d' ? MAX_3D_PITCH : 0,
+      maxPitch,
     ),
   };
 }
 
 function normalizeTimeFilter(timeFilter: Partial<TimeFilterState> | undefined): TimeFilterState {
-  if (timeFilter?.mode === 'preset' && isTimePreset(timeFilter.preset ?? null)) {
-    const preset = timeFilter.preset as TimePreset;
+  if (timeFilter?.mode === 'preset') {
+    const preset = normalizeTimePreset(timeFilter.preset ?? null);
+    if (!preset) {
+      return getDefaultTimeFilter();
+    }
+
     return {
       mode: 'preset',
       preset,
@@ -222,7 +243,7 @@ export function parseMapStateFromSearch(search: string): MapState {
   const timeFilter = timeMode === 'preset'
     ? normalizeTimeFilter({
       mode: 'preset',
-      preset: isTimePreset(timePreset) ? timePreset : undefined,
+      preset: normalizeTimePreset(timePreset) ?? undefined,
     })
     : timeMode === 'custom'
       ? normalizeTimeFilter({
@@ -245,7 +266,7 @@ export function parseMapStateFromSearch(search: string): MapState {
       bearing: bearing !== null && bearing >= -180 && bearing <= 180
         ? bearing
         : DEFAULT_MAP_STATE.camera.bearing,
-      pitch: pitch !== null && pitch >= 0 && pitch <= (view === '3d' ? MAX_3D_PITCH : 0)
+      pitch: pitch !== null && pitch >= 0 && pitch <= (view === '3d' ? MAX_3D_PITCH : MAX_2D_PITCH)
         ? pitch
         : (view === '3d' ? MAX_3D_PITCH : 0),
     },
@@ -262,15 +283,17 @@ export function timeFilterToDateRange(timeFilter: TimeFilterState, now = new Dat
     };
   }
 
-  const hoursByPreset: Record<TimePreset, number> = {
-    '1h': 1,
-    '6h': 6,
-    '24h': 24,
-    '48h': 48,
-    '7d': 7 * 24,
+  const daysByPreset: Record<TimePreset, number> = {
+    '1d': 1,
+    '2d': 2,
+    '7d': 7,
   };
   const end = now;
-  const start = new Date(end.getTime() - (hoursByPreset[timeFilter.preset ?? '24h'] * 60 * 60 * 1000));
+  const start = new Date(Date.UTC(
+    end.getUTCFullYear(),
+    end.getUTCMonth(),
+    end.getUTCDate() - (daysByPreset[timeFilter.preset ?? '1d'] - 1),
+  ));
   return {
     startDate: getUtcDateString(start),
     endDate: getUtcDateString(end),

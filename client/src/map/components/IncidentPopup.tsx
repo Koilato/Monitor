@@ -1,7 +1,6 @@
 import type { CountryHoverResponse } from '@shared/types';
 import type { HoverCountryState, PopupAnchor } from 'map/state/map-types';
 import { getPopupPosition } from 'map/lib/popup-layout';
-import 'map/styles/popup.css';
 
 interface IncidentPopupProps {
   country: HoverCountryState | null;

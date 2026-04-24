@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { LAYER_MODULES } from '../../src/map/layers/modules';
+import { initializeLayerModules } from '../../src/map/layers/registry';
 
 const GEOJSON_RESPONSE = {
   type: 'FeatureCollection',
@@ -65,6 +66,55 @@ test('threat module legend includes active level swatch', () => {
     'HIGH',
     'ACTIVE',
   ]);
+});
+
+test('threat highlight initializes its country source when countries base is disabled', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: string | URL | Request) => {
+    assert.equal(String(input), '/data/countries.geojson');
+    return new Response(JSON.stringify(GEOJSON_RESPONSE), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }) as typeof fetch;
+
+  const sources = new Set<string>();
+  const layers = new Set<string>();
+  const map = {
+    getSource: (id: string) => (sources.has(id) ? {} : undefined),
+    addSource: (id: string) => {
+      sources.add(id);
+    },
+    getLayer: (id: string) => (layers.has(id) ? {} : undefined),
+    addLayer: (layer: { id: string; source?: string }) => {
+      if (layer.source && !sources.has(layer.source)) {
+        throw new Error(`missing source ${layer.source} for ${layer.id}`);
+      }
+      layers.add(layer.id);
+    },
+  };
+
+  try {
+    const result = await initializeLayerModules({
+      map: map as never,
+      deckOverlay: null,
+      view: '2d',
+      modules: LAYER_MODULES,
+      activeLayerIds: ['threat-highlight'],
+      activeThreatCountryCodes: [],
+      data: null,
+      threatData: null,
+      hoveredCountryCode: null,
+    });
+
+    assert.equal(result.failedModuleIds.length, 0);
+    assert.ok(result.activeModuleIds.includes('threat-highlight'));
+    assert.ok(result.activeModuleIds.includes('hover-highlight'));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('attack-arcs builds arc and arrowhead overlays together', async () => {

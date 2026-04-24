@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import type { MapDebugSettings } from 'map/state/map-types';
-import 'shell/styles/debug-panel.css';
 
 interface MapDebugPanelProps {
   open: boolean;
@@ -65,7 +64,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
   }, [settings.activeCountryCodes]);
 
   return (
-    <aside className={`map-debug-panel ${open ? 'map-debug-panel--open' : 'map-debug-panel--closed'}`}>
+    <aside className={`map-debug-panel ${open ? '' : 'map-debug-panel--closed'}`}>
       <button
         type="button"
         className="map-debug-toggle"

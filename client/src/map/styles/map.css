@@ -61,7 +61,7 @@
   background: rgba(3, 8, 20, 0.75);
   backdrop-filter: blur(10px);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
-  color: var(--text-primary);
+  color: var(--text);
   font-size: 10px;
   letter-spacing: 0.8px;
   text-transform: uppercase;

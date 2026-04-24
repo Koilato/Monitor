@@ -1,5 +1,5 @@
 const ISO2_PATTERN = /^[A-Z]{2}$/;
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 export class ValidationError extends Error {
   public readonly statusCode: number;
@@ -25,7 +25,30 @@ export function normalizeDate(value: unknown, fieldName: string): string | null 
   }
 
   const normalized = String(value).trim();
-  if (!DATE_PATTERN.test(normalized) || Number.isNaN(Date.parse(`${normalized}T00:00:00Z`))) {
+  const match = DATE_PATTERN.exec(normalized);
+  if (!match) {
+    throw new ValidationError(`${fieldName} must be a valid YYYY-MM-DD date`);
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const daysInMonth = [
+    31,
+    year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ];
+
+  if (month < 1 || month > 12 || day < 1 || day > daysInMonth[month - 1]) {
     throw new ValidationError(`${fieldName} must be a valid YYYY-MM-DD date`);
   }
   return normalized;

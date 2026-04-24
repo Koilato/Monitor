@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   beginResizeDrag,
+  applyWorkspaceLayoutCssVars,
   resolveWorkspaceLayout,
 } from '../../src/shell/hooks/useWorkspaceLayout';
 
@@ -80,4 +81,44 @@ test('beginResizeDrag restores body styles and removes listeners when the drag f
   assert.equal(document.body.style.userSelect, 'text');
   assert.equal(listeners.mousemove.size, 0);
   assert.equal(listeners.mouseup.size, 0);
+});
+
+test('applyWorkspaceLayoutCssVars writes layout variables to the shell root and latest section', () => {
+  const appShellWrites: Array<[string, string]> = [];
+  const latestSectionWrites: Array<[string, string]> = [];
+
+  applyWorkspaceLayoutCssVars(
+    {
+      appShell: {
+        style: {
+          setProperty(name: string, value: string) {
+            appShellWrites.push([name, value]);
+          },
+        },
+      },
+      latestSection: {
+        style: {
+          setProperty(name: string, value: string) {
+            latestSectionWrites.push([name, value]);
+          },
+        },
+      },
+    },
+    {
+      hasWorkspaceBounds: true,
+      maxRightColumnWidth: 892,
+      maxBottomPanelHeight: 612,
+      clampedRightColumnWidth: 720,
+      clampedLeftBottomHeight: 180,
+      clampedLatestSectionHeight: 160,
+    },
+  );
+
+  assert.deepEqual(appShellWrites, [
+    ['--workspace-right-column-width', '720px'],
+    ['--workspace-left-bottom-height', '180px'],
+  ]);
+  assert.deepEqual(latestSectionWrites, [
+    ['--latest-feed-height', '160px'],
+  ]);
 });

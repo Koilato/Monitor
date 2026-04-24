@@ -3,6 +3,8 @@ client/node_modules/
 server/node_modules/
 client/dist/
 server/dist/
+client/package-lock.json
+server/package-lock.json
 .playwright-cli/
 .DS_Store
 playwright-report/

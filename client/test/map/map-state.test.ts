@@ -4,6 +4,7 @@ import {
   DEFAULT_MAP_STATE,
   MAX_3D_PITCH,
   MIN_3D_ZOOM,
+  normalizeMapState,
   parseMapStateFromSearch,
   serializeMapStateToSearch,
   switchMapStateView,
@@ -24,7 +25,7 @@ test('serializes and parses preset URL state', () => {
     activeLayerIds: ['countries-base', 'threat-highlight', 'threat-labels'],
     timeFilter: {
       mode: 'preset',
-      preset: '24h',
+      preset: '1d',
       startDate: null,
       endDate: null,
     },
@@ -40,7 +41,18 @@ test('serializes and parses preset URL state', () => {
   assert.deepEqual(parsed.activeLayerIds, ['countries-base', 'threat-highlight', 'threat-labels']);
   assert.deepEqual(parsed.timeFilter, {
     mode: 'preset',
-    preset: '24h',
+    preset: '1d',
+    startDate: null,
+    endDate: null,
+  });
+});
+
+test('normalizes legacy hour presets to day presets', () => {
+  const parsed = parseMapStateFromSearch('?timeMode=preset&timePreset=48h');
+
+  assert.deepEqual(parsed.timeFilter, {
+    mode: 'preset',
+    preset: '2d',
     startDate: null,
     endDate: null,
   });
@@ -50,6 +62,34 @@ test('falls back to defaults for invalid URL state', () => {
   const parsed = parseMapStateFromSearch('?view=x&lat=999&lon=nope&zoom=nan&layers=&timeMode=weird');
 
   assert.deepEqual(parsed, DEFAULT_MAP_STATE);
+});
+
+test('preserves 2d pitch when normalizing camera updates from map gestures', () => {
+  const normalized = normalizeMapState({
+    ...DEFAULT_MAP_STATE,
+    camera: {
+      ...DEFAULT_MAP_STATE.camera,
+      pitch: 38,
+    },
+  });
+
+  assert.equal(normalized.view, '2d');
+  assert.equal(normalized.camera.pitch, 38);
+});
+
+test('serializes and parses 2d pitch from URL state', () => {
+  const search = serializeMapStateToSearch({
+    ...DEFAULT_MAP_STATE,
+    camera: {
+      ...DEFAULT_MAP_STATE.camera,
+      pitch: 42,
+    },
+  });
+
+  const parsed = parseMapStateFromSearch(search);
+
+  assert.equal(parsed.view, '2d');
+  assert.equal(parsed.camera.pitch, 42);
 });
 
 test('supports fixed custom time filter URLs', () => {
@@ -91,16 +131,16 @@ test('serializes legacy layer ids as the new public layer model', () => {
   assert.match(search, /layers=countries-base%2Cthreat-highlight%2Cattack-arcs/);
 });
 
-test('preset time filters resolve as sliding UTC date windows', () => {
+test('preset time filters resolve as calendar-day UTC windows', () => {
   const range = timeFilterToDateRange({
     mode: 'preset',
-    preset: '1h',
+    preset: '1d',
     startDate: null,
     endDate: null,
   }, new Date('2026-04-22T00:30:00.000Z'));
 
   assert.deepEqual(range, {
-    startDate: '2026-04-21',
+    startDate: '2026-04-22',
     endDate: '2026-04-22',
   });
 });

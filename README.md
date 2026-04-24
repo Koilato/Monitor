@@ -10,11 +10,13 @@ Minimal standalone attack-flow map project.
 
 ## Run
 
-Install dependencies from the repository root:
+Install dependencies only from the repository root:
 
 ```bash
 npm install
 ```
+
+Do not run `npm install` inside `client/` or `server/`; the root `package-lock.json` is the only supported lockfile.
 
 Start the mock API:
 

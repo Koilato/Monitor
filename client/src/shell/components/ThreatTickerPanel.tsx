@@ -39,7 +39,7 @@ export function ThreatTickerPanel(props: ThreatTickerPanelProps) {
               aria-hidden={copyIndex === 1}
             >
               {tickerItems.map((item) => (
-                <article key={`${copyIndex}-${item.id}`} className={`ticker-item ticker-item--${item.tone}`}>
+                <article key={`${copyIndex}-${item.id}`} className="ticker-item">
                   <span className={`ticker-item-pill ticker-item-pill--${item.tone}`}>{item.label}</span>
                   <span className="ticker-item-text">{item.text}</span>
                   <span className="ticker-item-time">{item.timestamp}</span>

@@ -51,10 +51,3 @@ button,
 input {
   font: inherit;
 }
-
-canvas,
-.maplibregl-map,
-.maplibregl-canvas,
-.deck-canvas {
-  transition: none !important;
-}

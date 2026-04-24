@@ -12,7 +12,7 @@ function ThreatIntelCard(props: { item: ThreatIntelItem }) {
   return (
     <article className={`intel-card intel-card--${item.tone}`}>
       <div className="intel-card-top">
-        <span className={`intel-pill intel-pill--${item.tone}`}>{item.level}</span>
+        <span className="intel-pill">{item.level}</span>
         <span className="intel-time">{item.timestamp}</span>
       </div>
 

@@ -42,11 +42,9 @@ export function AppShell() {
     updateActiveCountryCodes,
   } = useMapDebugSettings();
   const {
+    appShellRef,
     workspaceRef,
     latestSectionRef,
-    clampedRightColumnWidth,
-    clampedLeftBottomHeight,
-    clampedLatestSectionHeight,
     handleOuterDividerMouseDown,
     handleLeftDividerMouseDown,
     handleRightDividerMouseDown,
@@ -82,7 +80,7 @@ export function AppShell() {
   }, []);
 
   return (
-    <div id="app">
+    <div id="app" className="app-shell" ref={appShellRef}>
       <main className="main-content">
         <div className="panel-header">
           <div className="panel-header-left">
@@ -116,7 +114,6 @@ export function AppShell() {
             />
             <div
               className="workspace-pane workspace-pane--blank workspace-pane--left-bottom"
-              style={{ flexBasis: `${clampedLeftBottomHeight}px` }}
             >
               <ThreatTickerPanel />
             </div>
@@ -132,7 +129,6 @@ export function AppShell() {
 
           <section
             className="workspace-column workspace-column--right"
-            style={{ width: `${clampedRightColumnWidth}px` }}
           >
             <div className="workspace-pane workspace-pane--map">
               <MapViewport
@@ -175,7 +171,6 @@ export function AppShell() {
 
             <LatestFeedSection
               sectionRef={latestSectionRef}
-              height={clampedLatestSectionHeight}
               category="sql"
               limit={5}
             />

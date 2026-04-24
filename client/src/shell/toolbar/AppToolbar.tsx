@@ -1,5 +1,4 @@
 import type { TimeFilterState, TimePreset } from 'map/state/map-state';
-import 'shell/styles/toolbar.css';
 
 interface AppToolbarProps {
   viewMode: '2d' | '3d';
@@ -12,7 +11,7 @@ interface AppToolbarProps {
   onDebugModeToggle: () => void;
 }
 
-const TIME_PRESETS: TimePreset[] = ['1h', '6h', '24h', '48h', '7d'];
+const TIME_PRESETS: TimePreset[] = ['1d', '2d', '7d'];
 
 export function AppToolbar(props: AppToolbarProps) {
   const {
@@ -108,7 +107,7 @@ export function AppToolbar(props: AppToolbarProps) {
         <div className="map-brand-panel-top">
           <span className="map-brand-title">SIGNAL CONSOLE</span>
           <span className={`map-brand-status ${statusTone}`}>
-            <span className={`status-dot ${statusTone}`} />
+            <span className="status-dot" />
             <span className="map-brand-status-label">{statusLabel}</span>
           </span>
         </div>

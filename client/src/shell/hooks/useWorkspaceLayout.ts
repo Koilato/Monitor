@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type RefObject } from 'react';
+import { useEffect, useRef, type MouseEvent as ReactMouseEvent, type RefObject } from 'react';
 
 import { clampSize, resolveDraggedSplitSize } from 'shell/lib/split-size';
 
@@ -32,12 +32,15 @@ export interface BeginResizeDragOptions {
   onFinish?: () => void;
 }
 
+export interface WorkspaceLayoutCssVarTargets {
+  appShell: Pick<HTMLElement, 'style'> | null;
+  latestSection: Pick<HTMLElement, 'style'> | null;
+}
+
 export interface UseWorkspaceLayoutResult {
+  appShellRef: RefObject<HTMLDivElement | null>;
   workspaceRef: RefObject<HTMLDivElement | null>;
   latestSectionRef: RefObject<HTMLElement | null>;
-  clampedRightColumnWidth: number;
-  clampedLeftBottomHeight: number;
-  clampedLatestSectionHeight: number;
   handleOuterDividerMouseDown: (event: ReactMouseEvent<HTMLDivElement>) => void;
   handleLeftDividerMouseDown: (event: ReactMouseEvent<HTMLDivElement>) => void;
   handleRightDividerMouseDown: (event: ReactMouseEvent<HTMLDivElement>) => void;
@@ -104,6 +107,24 @@ export function resolveWorkspaceLayout(
   };
 }
 
+export function applyWorkspaceLayoutCssVars(
+  targets: WorkspaceLayoutCssVarTargets,
+  snapshot: WorkspaceLayoutSnapshot,
+): void {
+  targets.appShell?.style.setProperty(
+    '--workspace-right-column-width',
+    `${snapshot.clampedRightColumnWidth}px`,
+  );
+  targets.appShell?.style.setProperty(
+    '--workspace-left-bottom-height',
+    `${snapshot.clampedLeftBottomHeight}px`,
+  );
+  targets.latestSection?.style.setProperty(
+    '--latest-feed-height',
+    `${snapshot.clampedLatestSectionHeight}px`,
+  );
+}
+
 export function beginResizeDrag(
   environment: ResizeDragEnvironment,
   options: BeginResizeDragOptions,
@@ -157,22 +178,60 @@ export function useWorkspaceLayout(
   latestSectionHeight: number,
   updateLatestSectionHeight: (value: number) => void,
 ): UseWorkspaceLayoutResult {
-  const [rightColumnWidth, setRightColumnWidth] = useState(() => getInitialRightColumnWidth());
-  const [leftBottomHeight, setLeftBottomHeight] = useState(DEFAULT_LEFT_BOTTOM_HEIGHT);
-  const [workspaceBounds, setWorkspaceBounds] = useState<WorkspaceBounds>({
-    width: 0,
-    height: 0,
-  });
+  const appShellRef = useRef<HTMLDivElement | null>(null);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const latestSectionRef = useRef<HTMLElement | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
+  const workspaceBoundsRef = useRef<WorkspaceBounds>({
+    width: 0,
+    height: 0,
+  });
+  const rightColumnWidthRef = useRef(getInitialRightColumnWidth());
+  const leftBottomHeightRef = useRef(DEFAULT_LEFT_BOTTOM_HEIGHT);
+  const latestSectionDraftRef = useRef(latestSectionHeight);
+  const latestSectionCommittedRef = useRef(latestSectionHeight);
+  const updateLatestSectionHeightRef = useRef(updateLatestSectionHeight);
 
-  const layout = resolveWorkspaceLayout(
-    workspaceBounds,
-    rightColumnWidth,
-    leftBottomHeight,
-    latestSectionHeight,
-  );
+  useEffect(() => {
+    updateLatestSectionHeightRef.current = updateLatestSectionHeight;
+  }, [updateLatestSectionHeight]);
+
+  const syncLayout = (commitLatestSectionHeight = true) => {
+    const snapshot = resolveWorkspaceLayout(
+      workspaceBoundsRef.current,
+      rightColumnWidthRef.current,
+      leftBottomHeightRef.current,
+      latestSectionDraftRef.current,
+    );
+
+    rightColumnWidthRef.current = snapshot.clampedRightColumnWidth;
+    leftBottomHeightRef.current = snapshot.clampedLeftBottomHeight;
+    latestSectionDraftRef.current = snapshot.clampedLatestSectionHeight;
+
+    applyWorkspaceLayoutCssVars(
+      {
+        appShell: appShellRef.current,
+        latestSection: latestSectionRef.current,
+      },
+      snapshot,
+    );
+
+    if (
+      commitLatestSectionHeight
+      && snapshot.clampedLatestSectionHeight !== latestSectionCommittedRef.current
+    ) {
+      latestSectionCommittedRef.current = snapshot.clampedLatestSectionHeight;
+      updateLatestSectionHeightRef.current(snapshot.clampedLatestSectionHeight);
+    }
+
+    return snapshot;
+  };
+
+  useEffect(() => {
+    latestSectionCommittedRef.current = latestSectionHeight;
+    latestSectionDraftRef.current = latestSectionHeight;
+    syncLayout(true);
+  }, [latestSectionHeight]);
 
   useEffect(() => {
     const element = workspaceRef.current;
@@ -182,11 +241,15 @@ export function useWorkspaceLayout(
 
     const updateBounds = () => {
       const nextBounds = measureWorkspaceBounds(element);
-      setWorkspaceBounds((current) => (
-        current.width === nextBounds.width && current.height === nextBounds.height
-          ? current
-          : nextBounds
-      ));
+      if (
+        workspaceBoundsRef.current.width === nextBounds.width
+        && workspaceBoundsRef.current.height === nextBounds.height
+      ) {
+        return;
+      }
+
+      workspaceBoundsRef.current = nextBounds;
+      syncLayout(true);
     };
 
     updateBounds();
@@ -211,30 +274,6 @@ export function useWorkspaceLayout(
     dragCleanupRef.current = null;
   }, []);
 
-  useEffect(() => {
-    if (!layout.hasWorkspaceBounds) {
-      return;
-    }
-
-    setRightColumnWidth((current) => (
-      clampSize(current, MIN_RIGHT_COLUMN_WIDTH, layout.maxRightColumnWidth)
-    ));
-    setLeftBottomHeight((current) => (
-      clampSize(current, MIN_BOTTOM_PANEL_HEIGHT, layout.maxBottomPanelHeight)
-    ));
-
-    if (layout.clampedLatestSectionHeight !== latestSectionHeight) {
-      updateLatestSectionHeight(layout.clampedLatestSectionHeight);
-    }
-  }, [
-    latestSectionHeight,
-    layout.clampedLatestSectionHeight,
-    layout.hasWorkspaceBounds,
-    layout.maxBottomPanelHeight,
-    layout.maxRightColumnWidth,
-    updateLatestSectionHeight,
-  ]);
-
   const startDrag = (
     axis: 'x' | 'y',
     anchor: 'start' | 'end',
@@ -243,6 +282,7 @@ export function useWorkspaceLayout(
     maxSize: number,
     startClientPosition: number,
     onResize: (size: number) => void,
+    onFinish?: () => void,
   ) => {
     dragCleanupRef.current?.();
     dragCleanupRef.current = beginResizeDrag(
@@ -257,6 +297,7 @@ export function useWorkspaceLayout(
         onResize,
         onFinish: () => {
           dragCleanupRef.current = null;
+          onFinish?.();
         },
       },
     );
@@ -271,11 +312,19 @@ export function useWorkspaceLayout(
     startDrag(
       'x',
       'end',
-      layout.clampedRightColumnWidth,
+      rightColumnWidthRef.current,
       MIN_RIGHT_COLUMN_WIDTH,
-      layout.maxRightColumnWidth,
+      workspaceBoundsRef.current.width > 0
+        ? Math.max(
+          MIN_RIGHT_COLUMN_WIDTH,
+          workspaceBoundsRef.current.width - MIN_LEFT_COLUMN_WIDTH - OUTER_DIVIDER_SIZE,
+        )
+        : rightColumnWidthRef.current,
       event.clientX,
-      setRightColumnWidth,
+      (size) => {
+        rightColumnWidthRef.current = size;
+        syncLayout(false);
+      },
     );
   };
 
@@ -288,11 +337,19 @@ export function useWorkspaceLayout(
     startDrag(
       'y',
       'end',
-      layout.clampedLeftBottomHeight,
+      leftBottomHeightRef.current,
       MIN_BOTTOM_PANEL_HEIGHT,
-      layout.maxBottomPanelHeight,
+      workspaceBoundsRef.current.height > 0
+        ? Math.max(
+          MIN_BOTTOM_PANEL_HEIGHT,
+          workspaceBoundsRef.current.height - MIN_TOP_PANEL_HEIGHT - INNER_DIVIDER_SIZE,
+        )
+        : leftBottomHeightRef.current,
       event.clientY,
-      setLeftBottomHeight,
+      (size) => {
+        leftBottomHeightRef.current = size;
+        syncLayout(false);
+      },
     );
   };
 
@@ -305,20 +362,29 @@ export function useWorkspaceLayout(
     startDrag(
       'y',
       'end',
-      layout.clampedLatestSectionHeight,
+      latestSectionDraftRef.current,
       MIN_BOTTOM_PANEL_HEIGHT,
-      layout.maxBottomPanelHeight,
+      workspaceBoundsRef.current.height > 0
+        ? Math.max(
+          MIN_BOTTOM_PANEL_HEIGHT,
+          workspaceBoundsRef.current.height - MIN_TOP_PANEL_HEIGHT - INNER_DIVIDER_SIZE,
+        )
+        : latestSectionDraftRef.current,
       event.clientY,
-      updateLatestSectionHeight,
+      (size) => {
+        latestSectionDraftRef.current = size;
+        syncLayout(false);
+      },
+      () => {
+        updateLatestSectionHeightRef.current(latestSectionDraftRef.current);
+      },
     );
   };
 
   return {
+    appShellRef,
     workspaceRef,
     latestSectionRef,
-    clampedRightColumnWidth: layout.clampedRightColumnWidth,
-    clampedLeftBottomHeight: layout.clampedLeftBottomHeight,
-    clampedLatestSectionHeight: layout.clampedLatestSectionHeight,
     handleOuterDividerMouseDown,
     handleLeftDividerMouseDown,
     handleRightDividerMouseDown,

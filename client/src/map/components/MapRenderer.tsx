@@ -1,14 +1,13 @@
 import { useMapRuntime } from 'map/hooks/useMapRuntime';
 import { DEFAULT_MAP_STATE } from 'map/state/map-state';
 import type { MapViewProps } from 'map/state/map-types';
-import 'map/styles/renderer.css';
 
 export function MapRenderer(props: MapViewProps) {
   const { viewMode, onCameraChange } = props;
   const { containerRef, mapRef } = useMapRuntime(props);
 
   return (
-    <div className="deckgl-map-wrapper deckgl-map-wrapper--2d">
+    <div className="deckgl-map-wrapper">
       <div className="map-surface" id="deckgl-basemap" ref={containerRef} />
       <div className="deckgl-controls">
         <div className="zoom-controls">

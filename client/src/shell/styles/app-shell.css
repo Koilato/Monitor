@@ -1,4 +1,4 @@
-#app {
+#app.app-shell {
   height: 100%;
   width: 100%;
   min-height: 100vh;
@@ -7,6 +7,8 @@
   flex-direction: column;
   position: absolute;
   inset: 0;
+  --workspace-right-column-width: 720px;
+  --workspace-left-bottom-height: 180px;
 }
 
 .main-content {
@@ -101,6 +103,7 @@
 
 .workspace-column--right {
   flex: 0 0 auto;
+  width: var(--workspace-right-column-width);
 }
 
 .workspace-pane {
@@ -128,7 +131,7 @@
 }
 
 .workspace-pane--left-bottom {
-  flex: 0 0 auto;
+  flex: 0 0 var(--workspace-left-bottom-height);
   border-top: 1px solid var(--border);
 }
 
@@ -215,7 +218,7 @@
   }
 
   .workspace-column--right {
-    width: 100% !important;
+    --workspace-right-column-width: 100%;
   }
 
   .split-divider--vertical {
