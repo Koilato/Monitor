@@ -1,4 +1,6 @@
+import polylabel from '@mapbox/polylabel';
 import type { Feature, FeatureCollection, Geometry, GeoJsonProperties, Position } from 'geojson';
+import { COUNTRY_CENTERS, type CountryCenterPoint } from 'map/lib/country-centers';
 
 interface IndexedCountryGeometry {
   code: string;
@@ -13,12 +15,25 @@ interface CountryHit {
   name: string;
 }
 
+interface CountryPoint {
+  lat: number;
+  lon: number;
+}
+
+interface InteriorPointCandidate {
+  point: CountryPoint;
+  score: number;
+}
+
 const COUNTRY_GEOJSON_URL = '/data/countries.geojson';
+const COUNTRY_INTERIOR_POINT_PRECISION = 0.25;
 
 let loadPromise: Promise<void> | null = null;
 let countriesGeoJson: FeatureCollection<Geometry> | null = null;
 let countryList: IndexedCountryGeometry[] = [];
 const countriesByCode = new Map<string, IndexedCountryGeometry>();
+const countryInteriorPointCache = new Map<string, CountryPoint | null>();
+const countryCenterOverrides = new Map<string, CountryPoint>();
 
 function normalizeCode(properties: GeoJsonProperties | null | undefined): string | null {
   const raw = properties?.['ISO3166-1-Alpha-2'] ?? properties?.ISO_A2 ?? properties?.iso_a2;
@@ -142,6 +157,137 @@ function computeRingCentroid(ring: [number, number][]): { lon: number; lat: numb
   return Number.isFinite(centroidLon) && Number.isFinite(centroidLat)
     ? { lon: centroidLon, lat: centroidLat }
     : null;
+}
+
+function distanceSquaredToSegment(
+  px: number,
+  py: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+): number {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  if (dx === 0 && dy === 0) {
+    const offsetX = px - x1;
+    const offsetY = py - y1;
+    return (offsetX * offsetX) + (offsetY * offsetY);
+  }
+
+  const t = ((px - x1) * dx + (py - y1) * dy) / ((dx * dx) + (dy * dy));
+
+  let closestX = x1;
+  let closestY = y1;
+  if (t >= 1) {
+    closestX = x2;
+    closestY = y2;
+  } else if (t > 0) {
+    closestX = x1 + (dx * t);
+    closestY = y1 + (dy * t);
+  }
+
+  const offsetX = px - closestX;
+  const offsetY = py - closestY;
+  return (offsetX * offsetX) + (offsetY * offsetY);
+}
+
+function distanceToRingOutlineSquared(point: [number, number], ring: [number, number][]): number {
+  let minDistance = Infinity;
+
+  for (let index = 1; index < ring.length; index += 1) {
+    const previous = ring[index - 1];
+    const current = ring[index];
+    if (!previous || !current) {
+      continue;
+    }
+
+    const distance = distanceSquaredToSegment(point[0], point[1], previous[0], previous[1], current[0], current[1]);
+    if (distance < minDistance) {
+      minDistance = distance;
+    }
+  }
+
+  return minDistance;
+}
+
+function getPolygonInteriorCandidate(polygon: [number, number][][]): InteriorPointCandidate | null {
+  const outerRing = polygon[0];
+  if (!outerRing || outerRing.length < 3) {
+    return null;
+  }
+
+  try {
+    const [lon, lat] = polylabel(polygon, COUNTRY_INTERIOR_POINT_PRECISION);
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+      return null;
+    }
+
+    let minDistanceSquared = Infinity;
+    for (const ring of polygon) {
+      const ringDistance = distanceToRingOutlineSquared([lon, lat], ring);
+      if (ringDistance < minDistanceSquared) {
+        minDistanceSquared = ringDistance;
+      }
+    }
+
+    if (!Number.isFinite(minDistanceSquared)) {
+      return null;
+    }
+
+    return {
+      point: { lon, lat },
+      score: Math.sqrt(minDistanceSquared),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getCountryFallbackPoint(country: IndexedCountryGeometry): CountryPoint | null {
+  const outerRing = getLargestPolygonOuterRing(country);
+  if (outerRing) {
+    const centroid = computeRingCentroid(outerRing);
+    if (centroid) {
+      return { lat: centroid.lat, lon: centroid.lon };
+    }
+
+    const bbox = computeRingBbox(outerRing);
+    if (bbox) {
+      return {
+        lat: (bbox[1] + bbox[3]) / 2,
+        lon: (bbox[0] + bbox[2]) / 2,
+      };
+    }
+  }
+
+  const bbox = computeBbox(country.polygons);
+  if (!bbox) {
+    return null;
+  }
+
+  return {
+    lat: (bbox[1] + bbox[3]) / 2,
+    lon: (bbox[0] + bbox[2]) / 2,
+  };
+}
+
+function resolveCountryInteriorPoint(country: IndexedCountryGeometry): CountryPoint | null {
+  let bestCandidate: InteriorPointCandidate | null = null;
+
+  for (const polygon of country.polygons) {
+    const candidate = getPolygonInteriorCandidate(polygon);
+    if (!candidate) {
+      continue;
+    }
+
+    if (!bestCandidate || candidate.score > bestCandidate.score) {
+      bestCandidate = candidate;
+    }
+  }
+
+  return bestCandidate?.point ?? getCountryFallbackPoint(country);
 }
 
 function computeRingBbox(ring: [number, number][]): [number, number, number, number] | null {
@@ -291,6 +437,59 @@ async function ensureLoaded(): Promise<void> {
   await loadPromise;
 }
 
+function cloneCountryPoint(point: CountryPoint | CountryCenterPoint): CountryPoint {
+  return {
+    lon: point.lon,
+    lat: point.lat,
+  };
+}
+
+export function setCountryCenterOverrides(overrides: Record<string, CountryCenterPoint>): void {
+  countryCenterOverrides.clear();
+
+  for (const [code, point] of Object.entries(overrides)) {
+    const normalizedCode = code.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(normalizedCode)) {
+      continue;
+    }
+
+    if (!Number.isFinite(point.lon) || !Number.isFinite(point.lat)) {
+      continue;
+    }
+
+    countryCenterOverrides.set(normalizedCode, cloneCountryPoint(point));
+  }
+}
+
+export function getCountryCenterOverride(code: string): CountryPoint | null {
+  const normalizedCode = code.trim().toUpperCase();
+  const override = countryCenterOverrides.get(normalizedCode);
+  return override ? cloneCountryPoint(override) : null;
+}
+
+export function getStaticCountryCenter(code: string): CountryPoint | null {
+  const normalizedCode = code.trim().toUpperCase();
+  const point = COUNTRY_CENTERS[normalizedCode];
+  return point ? cloneCountryPoint(point) : null;
+}
+
+export function getCountryCenterSource(code: string): 'override' | 'preset' | 'computed' | 'missing' {
+  const normalizedCode = code.trim().toUpperCase();
+  if (countryCenterOverrides.has(normalizedCode)) {
+    return 'override';
+  }
+
+  if (COUNTRY_CENTERS[normalizedCode]) {
+    return 'preset';
+  }
+
+  if (countryInteriorPointCache.has(normalizedCode)) {
+    return countryInteriorPointCache.get(normalizedCode) ? 'computed' : 'missing';
+  }
+
+  return 'missing';
+}
+
 export async function getCountriesGeoJson(): Promise<FeatureCollection<Geometry>> {
   await ensureLoaded();
   if (!countriesGeoJson) {
@@ -312,45 +511,35 @@ export async function getCountryAtCoordinates(lat: number, lon: number): Promise
 }
 
 export async function getCountryCentroid(code: string): Promise<{ lat: number; lon: number } | null> {
+  const normalizedCode = code.toUpperCase();
+  const override = countryCenterOverrides.get(normalizedCode);
+  if (override) {
+    return cloneCountryPoint(override);
+  }
+
+  const preset = COUNTRY_CENTERS[normalizedCode];
+  if (preset) {
+    return cloneCountryPoint(preset);
+  }
+
   await ensureLoaded();
-  const country = countriesByCode.get(code.toUpperCase());
+  if (countryInteriorPointCache.has(normalizedCode)) {
+    return countryInteriorPointCache.get(normalizedCode) ?? null;
+  }
+
+  const country = countriesByCode.get(normalizedCode);
   if (!country) {
+    countryInteriorPointCache.set(normalizedCode, null);
     return null;
   }
 
-  const [minLon, minLat, maxLon, maxLat] = country.bbox;
-  return {
-    lat: (minLat + maxLat) / 2,
-    lon: (minLon + maxLon) / 2,
-  };
+  const point = resolveCountryInteriorPoint(country);
+  countryInteriorPointCache.set(normalizedCode, point);
+  return point;
 }
 
 export async function getCountryLabelAnchor(code: string): Promise<{ lat: number; lon: number } | null> {
-  await ensureLoaded();
-  const country = countriesByCode.get(code.toUpperCase());
-  if (!country) {
-    return null;
-  }
-
-  const outerRing = getLargestPolygonOuterRing(country);
-  if (!outerRing) {
-    return null;
-  }
-
-  const centroid = computeRingCentroid(outerRing);
-  if (centroid) {
-    return centroid;
-  }
-
-  const bbox = computeRingBbox(outerRing);
-  if (!bbox) {
-    return null;
-  }
-
-  return {
-    lat: (bbox[1] + bbox[3]) / 2,
-    lon: (bbox[0] + bbox[2]) / 2,
-  };
+  return getCountryCentroid(code);
 }
 
 export async function getCountryName(code: string): Promise<string | null> {

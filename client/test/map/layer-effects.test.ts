@@ -177,8 +177,6 @@ test('applies threat outline width and visibility state', async () => {
 
   const context = {
     map: map as never,
-    deckOverlay: null,
-    view: '2d' as const,
     activeLayerIds: ['threat-highlight'],
     activeThreatCountryCodes: [],
     debugSettings: {
@@ -186,15 +184,36 @@ test('applies threat outline width and visibility state', async () => {
       minZoom: -2,
       maxZoom: 6,
       activeCountryCodes: [],
+      countryCenterOverrides: {},
       threatColorsEnabled: true,
       threatOutlineVisible: false,
       threatOutlineWidth: 2.75,
       attackArc: {
         bundleCount: 4,
-        bundleSpreadRatio: 0.08,
-        curvatureRatio: 0.16,
-        lineWidth: 1.8,
-        segmentCount: 100,
+        lengthThresholds: {
+          shortMax: 18,
+          mediumMax: 55,
+        },
+        lengthPresets: {
+          short: {
+            bundleSpreadRatio: 0.05,
+            curvatureRatio: 0.08,
+            lineWidth: 1.5,
+            segmentCount: 64,
+          },
+          medium: {
+            bundleSpreadRatio: 0.08,
+            curvatureRatio: 0.16,
+            lineWidth: 1.8,
+            segmentCount: 100,
+          },
+          long: {
+            bundleSpreadRatio: 0.12,
+            curvatureRatio: 0.24,
+            lineWidth: 2.2,
+            segmentCount: 140,
+          },
+        },
         flightDuration: 1300,
         holdDuration: 2000,
         fadeoutDuration: 700,
@@ -206,8 +225,6 @@ test('applies threat outline width and visibility state', async () => {
         ringSpacing: 5,
         ringLineWidth: 2.5,
         ringDotRadius: 6,
-        arcWidthScale3d: 1,
-        arrowSizeScale3d: 1,
       },
     },
     hoverData: null,

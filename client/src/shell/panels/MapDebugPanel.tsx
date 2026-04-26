@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import type { MapDebugSettings } from 'map/state/map-types';
+import { useEffect, useMemo, useState } from 'react';
+import { getCountryCenterSource, getStaticCountryCenter } from 'map/lib/country-geometry';
+import type { ArcLengthPreset, CountryCenterPoint, MapDebugSettings } from 'map/state/map-types';
 
 interface MapDebugPanelProps {
   open: boolean;
@@ -22,6 +23,16 @@ interface NumberFieldProps {
   onChange: (value: number) => void;
 }
 
+interface TextFieldProps {
+  label: string;
+  value: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+  onCommit?: () => void;
+}
+
+const ARC_LENGTH_PRESETS: ArcLengthPreset[] = ['short', 'medium', 'long'];
+
 function parseNumber(value: string): number {
   const next = Number(value);
   return Number.isFinite(next) ? next : 0;
@@ -40,6 +51,28 @@ function NumberField(props: NumberFieldProps) {
         min={min}
         max={max}
         onChange={(event) => onChange(parseNumber(event.target.value))}
+      />
+    </label>
+  );
+}
+
+function TextField(props: TextFieldProps) {
+  const { label, value, placeholder, onChange, onCommit } = props;
+
+  return (
+    <label className="map-debug-field map-debug-field--stacked">
+      <span className="map-debug-field-label">{label}</span>
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        onBlur={onCommit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            onCommit?.();
+          }
+        }}
       />
     </label>
   );
@@ -66,6 +99,38 @@ function CheckboxField(props: CheckboxFieldProps) {
   );
 }
 
+function getPresetLabel(preset: ArcLengthPreset): string {
+  if (preset === 'short') {
+    return '短线';
+  }
+
+  if (preset === 'medium') {
+    return '中线';
+  }
+
+  return '长线';
+}
+
+function getSourceLabel(source: ReturnType<typeof getCountryCenterSource>): string {
+  if (source === 'override') {
+    return '调试覆写';
+  }
+
+  if (source === 'preset') {
+    return '固化字典';
+  }
+
+  if (source === 'computed') {
+    return '运行时计算';
+  }
+
+  return '未命中';
+}
+
+function formatCoordinateValue(value: number | undefined): string {
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+}
+
 export function MapDebugPanel(props: MapDebugPanelProps) {
   const {
     open,
@@ -79,10 +144,64 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
     onActiveCountryCodesChange,
   } = props;
   const [activeCountryInput, setActiveCountryInput] = useState(settings.activeCountryCodes.join(', '));
+  const [centerCountryCode, setCenterCountryCode] = useState('CN');
+  const normalizedCenterCountryCode = centerCountryCode.trim().toUpperCase();
+
+  const resolvedCenterPoint = useMemo(() => {
+    if (!/^[A-Z]{2}$/.test(normalizedCenterCountryCode)) {
+      return null;
+    }
+
+    return settings.countryCenterOverrides[normalizedCenterCountryCode]
+      ?? getStaticCountryCenter(normalizedCenterCountryCode)
+      ?? null;
+  }, [normalizedCenterCountryCode, settings.countryCenterOverrides]);
+  const [centerLonInput, setCenterLonInput] = useState(formatCoordinateValue(resolvedCenterPoint?.lon));
+  const [centerLatInput, setCenterLatInput] = useState(formatCoordinateValue(resolvedCenterPoint?.lat));
 
   useEffect(() => {
     setActiveCountryInput(settings.activeCountryCodes.join(', '));
   }, [settings.activeCountryCodes]);
+
+  useEffect(() => {
+    setCenterLonInput(formatCoordinateValue(resolvedCenterPoint?.lon));
+    setCenterLatInput(formatCoordinateValue(resolvedCenterPoint?.lat));
+  }, [resolvedCenterPoint]);
+
+  const applyCenterOverride = () => {
+    if (!/^[A-Z]{2}$/.test(normalizedCenterCountryCode)) {
+      return;
+    }
+
+    const lon = Number(centerLonInput);
+    const lat = Number(centerLatInput);
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+      return;
+    }
+
+    onMapSettingsChange({
+      countryCenterOverrides: {
+        ...settings.countryCenterOverrides,
+        [normalizedCenterCountryCode]: { lon, lat } satisfies CountryCenterPoint,
+      },
+    });
+  };
+
+  const clearCenterOverride = () => {
+    if (!/^[A-Z]{2}$/.test(normalizedCenterCountryCode)) {
+      return;
+    }
+
+    const nextOverrides = { ...settings.countryCenterOverrides };
+    delete nextOverrides[normalizedCenterCountryCode];
+    onMapSettingsChange({
+      countryCenterOverrides: nextOverrides,
+    });
+  };
+
+  const currentCenterSource = /^[A-Z]{2}$/.test(normalizedCenterCountryCode)
+    ? getCountryCenterSource(normalizedCenterCountryCode)
+    : 'missing';
 
   return (
     <aside className={`map-debug-panel ${open ? '' : 'map-debug-panel--closed'}`}>
@@ -99,7 +218,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
           <div className="map-debug-header">
             <div className="map-debug-title-block">
               <span className="map-debug-title">地图调试</span>
-              <span className="map-debug-subtitle">布局、缩放范围、威胁覆盖与 A→B 动画设置</span>
+              <span className="map-debug-subtitle">布局、缩放范围、威胁覆盖、长度分档与国家中心点</span>
             </div>
             <button
               type="button"
@@ -168,27 +287,17 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
               step={0.1}
               onChange={(value) => onMapSettingsChange({ threatOutlineWidth: value })}
             />
-            <label className="map-debug-field map-debug-field--stacked">
-              <span className="map-debug-field-label">启用国家（两位字母国家代码，英文逗号分隔）</span>
-              <input
-                type="text"
-                value={activeCountryInput}
-                placeholder="CN, US, JP"
-                onChange={(event) => {
-                  setActiveCountryInput(event.target.value);
-                }}
-                onBlur={() => onActiveCountryCodesChange(activeCountryInput)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    onActiveCountryCodesChange(activeCountryInput);
-                  }
-                }}
-              />
-            </label>
+            <TextField
+              label="启用国家（两位字母国家代码，英文逗号分隔）"
+              value={activeCountryInput}
+              placeholder="CN, US, JP"
+              onChange={setActiveCountryInput}
+              onCommit={() => onActiveCountryCodesChange(activeCountryInput)}
+            />
           </section>
 
           <section className="map-debug-section">
-            <h3>阶段一</h3>
+            <h3>长度分档</h3>
             <NumberField
               label="线条数量"
               value={settings.attackArc.bundleCount}
@@ -198,25 +307,152 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
               onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, bundleCount: value } })}
             />
             <NumberField
-              label="弧度"
-              value={settings.attackArc.curvatureRatio}
-              min={0.01}
-              max={0.6}
-              step={0.01}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, curvatureRatio: value } })}
+              label="短线最大距离"
+              value={settings.attackArc.lengthThresholds.shortMax}
+              min={1}
+              max={settings.attackArc.lengthThresholds.mediumMax}
+              step={1}
+              onChange={(value) => onMapSettingsChange({
+                attackArc: {
+                  ...settings.attackArc,
+                  lengthThresholds: {
+                    ...settings.attackArc.lengthThresholds,
+                    shortMax: value,
+                  },
+                },
+              })}
             />
             <NumberField
-              label="线条间距"
-              value={settings.attackArc.bundleSpreadRatio}
-              min={0.01}
-              max={0.5}
-              step={0.01}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, bundleSpreadRatio: value } })}
+              label="中线最大距离"
+              value={settings.attackArc.lengthThresholds.mediumMax}
+              min={settings.attackArc.lengthThresholds.shortMax}
+              max={360}
+              step={1}
+              onChange={(value) => onMapSettingsChange({
+                attackArc: {
+                  ...settings.attackArc,
+                  lengthThresholds: {
+                    ...settings.attackArc.lengthThresholds,
+                    mediumMax: value,
+                  },
+                },
+              })}
             />
           </section>
 
+          {ARC_LENGTH_PRESETS.map((preset) => (
+            <section className="map-debug-section" key={preset}>
+              <h3>{getPresetLabel(preset)}</h3>
+              <NumberField
+                label="弧度"
+                value={settings.attackArc.lengthPresets[preset].curvatureRatio}
+                min={0.01}
+                max={0.6}
+                step={0.01}
+                onChange={(value) => onMapSettingsChange({
+                  attackArc: {
+                    ...settings.attackArc,
+                    lengthPresets: {
+                      ...settings.attackArc.lengthPresets,
+                      [preset]: {
+                        ...settings.attackArc.lengthPresets[preset],
+                        curvatureRatio: value,
+                      },
+                    },
+                  },
+                })}
+              />
+              <NumberField
+                label="线条间距"
+                value={settings.attackArc.lengthPresets[preset].bundleSpreadRatio}
+                min={0.01}
+                max={0.5}
+                step={0.01}
+                onChange={(value) => onMapSettingsChange({
+                  attackArc: {
+                    ...settings.attackArc,
+                    lengthPresets: {
+                      ...settings.attackArc.lengthPresets,
+                      [preset]: {
+                        ...settings.attackArc.lengthPresets[preset],
+                        bundleSpreadRatio: value,
+                      },
+                    },
+                  },
+                })}
+              />
+              <NumberField
+                label="线宽"
+                value={settings.attackArc.lengthPresets[preset].lineWidth}
+                min={0.5}
+                max={6}
+                step={0.1}
+                onChange={(value) => onMapSettingsChange({
+                  attackArc: {
+                    ...settings.attackArc,
+                    lengthPresets: {
+                      ...settings.attackArc.lengthPresets,
+                      [preset]: {
+                        ...settings.attackArc.lengthPresets[preset],
+                        lineWidth: value,
+                      },
+                    },
+                  },
+                })}
+              />
+              <NumberField
+                label="采样段数"
+                value={settings.attackArc.lengthPresets[preset].segmentCount}
+                min={12}
+                max={240}
+                step={1}
+                onChange={(value) => onMapSettingsChange({
+                  attackArc: {
+                    ...settings.attackArc,
+                    lengthPresets: {
+                      ...settings.attackArc.lengthPresets,
+                      [preset]: {
+                        ...settings.attackArc.lengthPresets[preset],
+                        segmentCount: value,
+                      },
+                    },
+                  },
+                })}
+              />
+            </section>
+          ))}
+
           <section className="map-debug-section">
-            <h3>阶段二</h3>
+            <h3>国家中心点</h3>
+            <TextField
+              label="国家代码"
+              value={centerCountryCode}
+              placeholder="CN"
+              onChange={setCenterCountryCode}
+            />
+            <p>当前来源：{getSourceLabel(currentCenterSource)}</p>
+            <TextField
+              label="经度"
+              value={centerLonInput}
+              placeholder="109.505273"
+              onChange={setCenterLonInput}
+              onCommit={applyCenterOverride}
+            />
+            <TextField
+              label="纬度"
+              value={centerLatInput}
+              placeholder="32.434741"
+              onChange={setCenterLatInput}
+              onCommit={applyCenterOverride}
+            />
+            <div className="map-debug-actions">
+              <button type="button" className="map-debug-reset" onClick={applyCenterOverride}>应用覆写</button>
+              <button type="button" className="map-debug-reset" onClick={clearCenterOverride}>清除覆写</button>
+            </div>
+          </section>
+
+          <section className="map-debug-section">
+            <h3>命中环</h3>
             <NumberField
               label="圆环大小"
               value={settings.attackArc.ringRadius}
@@ -260,18 +496,6 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
           </section>
 
           <section className="map-debug-section">
-            <h3>阶段三</h3>
-            <NumberField
-              label="消失时间"
-              value={settings.attackArc.fadeoutDuration}
-              min={100}
-              max={20000}
-              step={50}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, fadeoutDuration: value } })}
-            />
-          </section>
-
-          <section className="map-debug-section">
             <h3>播放调试</h3>
             <NumberField
               label="飞行时长"
@@ -288,6 +512,14 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
               max={20000}
               step={50}
               onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, holdDuration: value } })}
+            />
+            <NumberField
+              label="消失时间"
+              value={settings.attackArc.fadeoutDuration}
+              min={100}
+              max={20000}
+              step={50}
+              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, fadeoutDuration: value } })}
             />
             <NumberField
               label="重播延迟"
@@ -312,42 +544,6 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
               max={20000}
               step={10}
               onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, bundleIntervalMs: value } })}
-            />
-            <NumberField
-              label="线宽"
-              value={settings.attackArc.lineWidth}
-              min={0.5}
-              max={6}
-              step={0.1}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, lineWidth: value } })}
-            />
-            <NumberField
-              label="采样段数"
-              value={settings.attackArc.segmentCount}
-              min={12}
-              max={240}
-              step={1}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, segmentCount: value } })}
-            />
-          </section>
-
-          <section className="map-debug-section">
-            <h3>3D 缩放</h3>
-            <NumberField
-              label="弧线宽度缩放"
-              value={settings.attackArc.arcWidthScale3d}
-              min={0.25}
-              max={3}
-              step={0.05}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, arcWidthScale3d: value } })}
-            />
-            <NumberField
-              label="箭头尺寸缩放"
-              value={settings.attackArc.arrowSizeScale3d}
-              min={0.25}
-              max={3}
-              step={0.05}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, arrowSizeScale3d: value } })}
             />
           </section>
         </div>

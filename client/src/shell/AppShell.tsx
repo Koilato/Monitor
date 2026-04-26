@@ -51,7 +51,6 @@ export function AppShell() {
   } = useWorkspaceLayout(debugSettings.latestSectionHeight, updateLatestSectionHeight);
   const {
     state: mapState,
-    setView,
     setCamera,
     setTimeFilter,
     setFlowMode,
@@ -92,20 +91,18 @@ export function AppShell() {
             <span className="panel-count">{panelCount}</span>
           </div>
           <div className="header-clock">{clock} 协调世界时</div>
-            <AppToolbar
-              viewMode={mapState.view}
-              timeFilter={mapState.timeFilter}
-              flowMode={mapState.flowMode}
-              flowPlaybackMode={mapState.flowPlaybackMode}
-              debugModeEnabled={debugModeEnabled}
-              statusTone={statusTone}
-              statusLabel={statusLabel}
-              onViewModeChange={setView}
-              onTimeFilterChange={setTimeFilter}
-              onFlowModeChange={setFlowMode}
-              onFlowPlaybackModeChange={setFlowPlaybackMode}
-              onDebugModeToggle={() => setDebugModeEnabled(!debugModeEnabled)}
-            />
+          <AppToolbar
+            timeFilter={mapState.timeFilter}
+            flowMode={mapState.flowMode}
+            flowPlaybackMode={mapState.flowPlaybackMode}
+            debugModeEnabled={debugModeEnabled}
+            statusTone={statusTone}
+            statusLabel={statusLabel}
+            onTimeFilterChange={setTimeFilter}
+            onFlowModeChange={setFlowMode}
+            onFlowPlaybackModeChange={setFlowPlaybackMode}
+            onDebugModeToggle={() => setDebugModeEnabled(!debugModeEnabled)}
+          />
         </div>
 
         <div className="workspace-grid" ref={workspaceRef}>
@@ -140,7 +137,6 @@ export function AppShell() {
           >
             <div className="workspace-pane workspace-pane--map">
               <MapViewport
-                viewMode={mapState.view}
                 mapState={mapState}
                 hoveredCountry={hoveredCountry}
                 hoverData={hoverData}

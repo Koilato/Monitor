@@ -1,14 +1,12 @@
 import type { FlowMode, FlowPlaybackMode, TimeFilterState, TimePreset } from 'map/state/map-state';
 
 interface AppToolbarProps {
-  viewMode: '2d' | '3d';
   timeFilter: TimeFilterState;
   flowMode: FlowMode;
   flowPlaybackMode: FlowPlaybackMode;
   debugModeEnabled: boolean;
   statusTone: 'live' | 'warning' | 'error';
   statusLabel: string;
-  onViewModeChange: (mode: '2d' | '3d') => void;
   onTimeFilterChange: (filter: TimeFilterState) => void;
   onFlowModeChange: (mode: FlowMode) => void;
   onFlowPlaybackModeChange: (mode: FlowPlaybackMode) => void;
@@ -30,14 +28,12 @@ const TIME_PRESET_LABELS: Record<TimePreset, string> = {
 
 export function AppToolbar(props: AppToolbarProps) {
   const {
-    viewMode,
     timeFilter,
     flowMode,
     flowPlaybackMode,
     debugModeEnabled,
     statusTone,
     statusLabel,
-    onViewModeChange,
     onTimeFilterChange,
     onFlowModeChange,
     onFlowPlaybackModeChange,
@@ -46,23 +42,6 @@ export function AppToolbar(props: AppToolbarProps) {
 
   return (
     <div className="map-header-actions">
-      <div className="map-dimension-toggle" role="tablist" aria-label="地图模式">
-        <button
-          type="button"
-          className={`map-dim-btn ${viewMode === '2d' ? 'active' : ''}`}
-          onClick={() => onViewModeChange('2d')}
-        >
-          2D
-        </button>
-        <button
-          type="button"
-          className={`map-dim-btn ${viewMode === '3d' ? 'active' : ''}`}
-          onClick={() => onViewModeChange('3d')}
-        >
-          3D
-        </button>
-      </div>
-
       <div className="map-dimension-toggle" role="group" aria-label="时间预设">
         {TIME_PRESETS.map((preset) => (
           <button

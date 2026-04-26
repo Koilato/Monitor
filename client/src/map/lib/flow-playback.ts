@@ -58,6 +58,10 @@ function compareByMode(left: CanvasArcDatum, right: CanvasArcDatum, mode: FlowPl
   return 0;
 }
 
+function resolveFlowKey(datum: CanvasArcDatum): string {
+  return datum.flowKey || `${datum.attackerCountry}->${datum.victimCountry}`;
+}
+
 export function sortFlowPlaybackData(
   data: CanvasArcDatum[],
   mode: FlowPlaybackMode,
@@ -87,16 +91,19 @@ export function createInitialFlowSchedule(
   const scheduled: ScheduledFlowDatum[] = [];
 
   for (let index = 0, groupIndex = 0; index < ordered.length; groupIndex += 1) {
-    const datum = ordered[index] as (CanvasArcDatum & { bundleCount?: number }) | undefined;
-    const groupSize = typeof datum?.bundleCount === 'number' && datum.bundleCount > 0
-      ? datum.bundleCount
-      : 1;
+    const datum = ordered[index];
+    if (!datum) {
+      break;
+    }
+
+    const groupKey = resolveFlowKey(datum);
     const startAt = now + (Math.floor(groupIndex / settings.maxConcurrentStarts) * settings.flowStartSpacingMs);
 
-    for (let offset = 0; offset < groupSize && index + offset < ordered.length; offset += 1) {
+    let offset = 0;
+    while (index + offset < ordered.length) {
       const bundledDatum = ordered[index + offset];
-      if (!bundledDatum) {
-        continue;
+      if (!bundledDatum || resolveFlowKey(bundledDatum) !== groupKey) {
+        break;
       }
 
       scheduled.push({
@@ -104,9 +111,11 @@ export function createInitialFlowSchedule(
         sourceIndex: index + offset,
         startAt,
       });
+
+      offset += 1;
     }
 
-    index += groupSize;
+    index += offset;
   }
 
   return scheduled;

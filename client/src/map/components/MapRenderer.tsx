@@ -5,7 +5,6 @@ import type { MapViewProps } from 'map/state/map-types';
 
 export function MapRenderer(props: MapViewProps) {
   const {
-    viewMode,
     onCameraChange,
     mapState,
     flowData,
@@ -17,21 +16,20 @@ export function MapRenderer(props: MapViewProps) {
   const { containerRef, mapRef, mapReady } = useMapRuntime(props);
 
   return (
-    <div className="deckgl-map-wrapper">
+    <div className="map-wrapper">
       <div className="map-surface" id="deckgl-basemap" ref={containerRef} />
       <AttackArcCanvas
         mapRef={mapRef}
         mapReady={mapReady}
-        viewMode={viewMode}
         isEnabled={mapState.activeLayerIds.includes('attack-arcs')}
-      flowData={flowData}
-      threatData={threatData}
-      activeThreatCountryCodes={debugSettings.activeCountryCodes}
-      playbackMode={flowPlaybackMode}
-      themeRevision={themeRevision}
-      debugSettings={debugSettings}
-    />
-      <div className="deckgl-controls">
+        flowData={flowData}
+        threatData={threatData}
+        activeThreatCountryCodes={debugSettings.activeCountryCodes}
+        playbackMode={flowPlaybackMode}
+        themeRevision={themeRevision}
+        debugSettings={debugSettings}
+      />
+      <div className="map-controls">
         <div className="zoom-controls">
           <button
             type="button"
@@ -54,14 +52,7 @@ export function MapRenderer(props: MapViewProps) {
             className="map-btn"
             aria-label="重置视图"
             onClick={() => {
-              const defaults = viewMode === '3d'
-                ? {
-                  ...DEFAULT_MAP_STATE.camera,
-                  zoom: 1.2,
-                  pitch: 55,
-                }
-                : DEFAULT_MAP_STATE.camera;
-              onCameraChange(defaults);
+              onCameraChange(DEFAULT_MAP_STATE.camera);
             }}
           >
             o

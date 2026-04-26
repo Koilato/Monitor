@@ -99,8 +99,54 @@ test('threat highlight initializes its country source when countries base is dis
   try {
     const result = await initializeLayerModules({
       map: map as never,
-      deckOverlay: null,
-      view: '2d',
+      debugSettings: {
+        latestSectionHeight: 160,
+        minZoom: -2,
+        maxZoom: 6,
+        activeCountryCodes: [],
+        countryCenterOverrides: {},
+        threatColorsEnabled: true,
+        threatOutlineVisible: true,
+        threatOutlineWidth: 1.8,
+        attackArc: {
+          bundleCount: 4,
+          lengthThresholds: {
+            shortMax: 18,
+            mediumMax: 55,
+          },
+          lengthPresets: {
+            short: {
+              bundleSpreadRatio: 0.05,
+              curvatureRatio: 0.08,
+              lineWidth: 1.5,
+              segmentCount: 64,
+            },
+            medium: {
+              bundleSpreadRatio: 0.08,
+              curvatureRatio: 0.16,
+              lineWidth: 1.8,
+              segmentCount: 100,
+            },
+            long: {
+              bundleSpreadRatio: 0.12,
+              curvatureRatio: 0.24,
+              lineWidth: 2.2,
+              segmentCount: 140,
+            },
+          },
+          flightDuration: 1300,
+          holdDuration: 2000,
+          fadeoutDuration: 700,
+          replayDelayMs: 5000,
+          bundleIntervalMs: 220,
+          maxConcurrentStarts: 4,
+          ringRadius: 15,
+          ringCount: 2,
+          ringSpacing: 5,
+          ringLineWidth: 2.5,
+          ringDotRadius: 6,
+        },
+      },
       modules: LAYER_MODULES,
       activeLayerIds: ['threat-highlight'],
       activeThreatCountryCodes: [],
@@ -113,58 +159,6 @@ test('threat highlight initializes its country source when countries base is dis
     assert.equal(result.failedModuleIds.length, 0);
     assert.ok(result.activeModuleIds.includes('threat-highlight'));
     assert.ok(result.activeModuleIds.includes('hover-highlight'));
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-test('attack-arcs builds arc and arrowhead overlays together', async () => {
-  const attackArcsModule = LAYER_MODULES.find((module) => module.id === 'attack-arcs');
-  assert.ok(attackArcsModule?.buildOverlayLayers);
-
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = (async (input: string | URL | Request) => {
-    assert.equal(String(input), '/data/countries.geojson');
-    return new Response(JSON.stringify(GEOJSON_RESPONSE), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  }) as typeof fetch;
-
-  try {
-    const layers = await attackArcsModule.buildOverlayLayers({
-      map: {} as never,
-      deckOverlay: null,
-      view: '3d',
-      activeLayerIds: ['attack-arcs'],
-      activeThreatCountryCodes: [],
-      threatData: null,
-      hoveredCountryCode: null,
-      hoverData: {
-        victimCountry: 'CN',
-        startDate: '2026-04-01',
-        endDate: '2026-04-22',
-        total: 2,
-        incidents: [],
-        flows: [
-          {
-            attackerCountry: 'US',
-            victimCountry: 'CN',
-            count: 2,
-            uuids: ['a', 'b'],
-          },
-        ],
-      },
-      flowData: null,
-    });
-
-    assert.deepEqual(layers.map((layer) => layer.id), [
-      'attack-arcs-glow',
-      'attack-arcs',
-      'attack-arrowheads',
-    ]);
   } finally {
     globalThis.fetch = originalFetch;
   }

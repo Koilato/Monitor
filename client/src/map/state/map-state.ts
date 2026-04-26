@@ -1,6 +1,5 @@
 import type { DateRange } from '@shared/types';
 
-export type MapViewMode = '2d' | '3d';
 export type TimePreset = '1d' | '2d' | '7d';
 export type FlowMode = 'hover' | 'allflow';
 export type FlowPlaybackMode = 'fifo' | 'country' | 'time';
@@ -21,7 +20,6 @@ export interface MapCameraState {
 }
 
 export interface MapState {
-  view: MapViewMode;
   camera: MapCameraState;
   activeLayerIds: string[];
   timeFilter: TimeFilterState;
@@ -31,10 +29,7 @@ export interface MapState {
 
 export const MIN_2D_ZOOM = -2;
 export const MAX_2D_ZOOM = 6;
-export const MIN_3D_ZOOM = 1.2;
-export const MAX_3D_ZOOM = 5;
 export const MAX_2D_PITCH = 60;
-export const MAX_3D_PITCH = 55;
 
 export const PUBLIC_LAYER_IDS = [
   'countries-base',
@@ -72,7 +67,6 @@ function getDefaultTimeFilter(): TimeFilterState {
 }
 
 export const DEFAULT_MAP_STATE: MapState = {
-  view: '2d',
   camera: {
     lng: 0,
     lat: 0,
@@ -125,23 +119,17 @@ function isIsoDate(value: string | null): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-function normalizeCamera(camera: Partial<MapCameraState>, view: MapViewMode): MapCameraState {
-  const maxPitch = view === '3d' ? MAX_3D_PITCH : MAX_2D_PITCH;
-
+function normalizeCamera(camera: Partial<MapCameraState>): MapCameraState {
   return {
     lng: clamp(camera.lng ?? DEFAULT_MAP_STATE.camera.lng, -180, 180),
     lat: clamp(camera.lat ?? DEFAULT_MAP_STATE.camera.lat, -90, 90),
     zoom: clamp(
       camera.zoom ?? DEFAULT_MAP_STATE.camera.zoom,
-      view === '3d' ? MIN_3D_ZOOM : MIN_2D_ZOOM,
-      view === '3d' ? MAX_3D_ZOOM : MAX_2D_ZOOM,
+      MIN_2D_ZOOM,
+      MAX_2D_ZOOM,
     ),
     bearing: clamp(camera.bearing ?? DEFAULT_MAP_STATE.camera.bearing, -180, 180),
-    pitch: clamp(
-      camera.pitch ?? (view === '3d' ? MAX_3D_PITCH : 0),
-      0,
-      maxPitch,
-    ),
+    pitch: clamp(camera.pitch ?? 0, 0, MAX_2D_PITCH),
   };
 }
 
@@ -207,13 +195,11 @@ function normalizeFlowPlaybackMode(value: string | null): FlowPlaybackMode {
 }
 
 export function normalizeMapState(input: Partial<MapState>): MapState {
-  const view = input.view === '3d' ? '3d' : '2d';
   const timeFilter = normalizeTimeFilter(input.timeFilter);
   const activeLayerIds = normalizeActiveLayerIds(input.activeLayerIds);
 
   return {
-    view,
-    camera: normalizeCamera(input.camera ?? DEFAULT_MAP_STATE.camera, view),
+    camera: normalizeCamera(input.camera ?? DEFAULT_MAP_STATE.camera),
     activeLayerIds,
     timeFilter,
     flowMode: normalizeFlowMode(input.flowMode ?? DEFAULT_MAP_STATE.flowMode),
@@ -226,7 +212,6 @@ export function normalizeMapState(input: Partial<MapState>): MapState {
 export function serializeMapStateToSearch(state: MapState): string {
   const normalized = normalizeMapState(state);
   const params = new URLSearchParams();
-  params.set('view', normalized.view);
   params.set('lat', normalized.camera.lat.toFixed(4));
   params.set('lon', normalized.camera.lng.toFixed(4));
   params.set('zoom', normalized.camera.zoom.toFixed(2));
@@ -255,7 +240,6 @@ export function serializeMapStateToSearch(state: MapState): string {
 
 export function parseMapStateFromSearch(search: string): MapState {
   const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
-  const view = params.get('view') === '3d' ? '3d' : '2d';
   const lat = parseNumber(params.get('lat'));
   const lon = parseNumber(params.get('lon'));
   const zoom = parseNumber(params.get('zoom'));
@@ -284,21 +268,18 @@ export function parseMapStateFromSearch(search: string): MapState {
       : getDefaultTimeFilter();
 
   return normalizeMapState({
-    view,
     camera: {
       lat: lat !== null && lat >= -90 && lat <= 90 ? lat : DEFAULT_MAP_STATE.camera.lat,
       lng: lon !== null && lon >= -180 && lon <= 180 ? lon : DEFAULT_MAP_STATE.camera.lng,
-      zoom: zoom !== null
-        && zoom >= (view === '3d' ? MIN_3D_ZOOM : MIN_2D_ZOOM)
-        && zoom <= (view === '3d' ? MAX_3D_ZOOM : MAX_2D_ZOOM)
+      zoom: zoom !== null && zoom >= MIN_2D_ZOOM && zoom <= MAX_2D_ZOOM
         ? zoom
         : DEFAULT_MAP_STATE.camera.zoom,
       bearing: bearing !== null && bearing >= -180 && bearing <= 180
         ? bearing
         : DEFAULT_MAP_STATE.camera.bearing,
-      pitch: pitch !== null && pitch >= 0 && pitch <= (view === '3d' ? MAX_3D_PITCH : MAX_2D_PITCH)
+      pitch: pitch !== null && pitch >= 0 && pitch <= MAX_2D_PITCH
         ? pitch
-        : (view === '3d' ? MAX_3D_PITCH : 0),
+        : DEFAULT_MAP_STATE.camera.pitch,
     },
     activeLayerIds,
     timeFilter,
@@ -330,23 +311,4 @@ export function timeFilterToDateRange(timeFilter: TimeFilterState, now = new Dat
     startDate: getUtcDateString(start),
     endDate: getUtcDateString(end),
   };
-}
-
-export function switchMapStateView(state: MapState, targetView: MapViewMode): MapState {
-  const normalized = normalizeMapState(state);
-  if (normalized.view === targetView) {
-    return normalized;
-  }
-
-  return normalizeMapState({
-    ...normalized,
-    view: targetView,
-    camera: {
-      lng: normalized.camera.lng,
-      lat: normalized.camera.lat,
-      zoom: normalized.camera.zoom,
-      bearing: 0,
-      pitch: targetView === '3d' ? MAX_3D_PITCH : 0,
-    },
-  });
 }

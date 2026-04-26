@@ -23,7 +23,6 @@ import type { MapDebugSettings } from 'map/state/map-types';
 interface AttackArcCanvasProps {
   mapRef: RefObject<maplibregl.Map | null>;
   mapReady: boolean;
-  viewMode: '2d' | '3d';
   isEnabled: boolean;
   flowData: FlowArcSource | null;
   threatData: ThreatMapResponse | null;
@@ -233,7 +232,6 @@ function clearCanvas(canvas: HTMLCanvasElement | null) {
 export function AttackArcCanvas({
   mapRef,
   mapReady,
-  viewMode,
   isEnabled,
   flowData,
   threatData,
@@ -247,7 +245,7 @@ export function AttackArcCanvas({
   const attackArcSettings = debugSettings.attackArc;
 
   useEffect(() => {
-    if (!isEnabled || viewMode !== '2d' || !flowData) {
+    if (!isEnabled || !flowData) {
       setArcData([]);
       return;
     }
@@ -255,10 +253,7 @@ export function AttackArcCanvas({
     let cancelled = false;
 
     async function loadArcData() {
-      const nextData = await buildCanvasArcData(flowData, threatData, activeThreatCountryCodes, {
-        bundleCount: attackArcSettings.bundleCount,
-        bundleSpreadRatio: attackArcSettings.bundleSpreadRatio,
-      });
+      const nextData = await buildCanvasArcData(flowData, threatData, activeThreatCountryCodes, attackArcSettings);
       if (!cancelled) {
         setArcData(nextData);
       }
@@ -276,19 +271,17 @@ export function AttackArcCanvas({
     };
   }, [
     activeThreatCountryCodes,
-    attackArcSettings.bundleCount,
-    attackArcSettings.bundleSpreadRatio,
+    attackArcSettings,
     flowData,
     isEnabled,
     threatData,
-    viewMode,
   ]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const map = mapRef.current;
 
-    if (!canvas || !mapReady || !map || viewMode !== '2d' || !isEnabled || arcData.length === 0) {
+    if (!canvas || !mapReady || !map || !isEnabled || arcData.length === 0) {
       clearCanvas(canvas);
       return;
     }
@@ -386,9 +379,9 @@ export function AttackArcCanvas({
           frameWindow.alpha,
           start,
           end,
-          attackArcSettings.lineWidth,
-          attackArcSettings.segmentCount,
-          attackArcSettings.curvatureRatio,
+          attack.lineWidth,
+          attack.segmentCount,
+          attack.curvatureRatio,
         );
         activeContext.restore();
 
@@ -437,11 +430,9 @@ export function AttackArcCanvas({
   }, [
     arcData,
     attackArcSettings.bundleIntervalMs,
-    attackArcSettings.curvatureRatio,
     attackArcSettings.fadeoutDuration,
     attackArcSettings.flightDuration,
     attackArcSettings.holdDuration,
-    attackArcSettings.lineWidth,
     attackArcSettings.maxConcurrentStarts,
     attackArcSettings.ringCount,
     attackArcSettings.ringDotRadius,
@@ -449,13 +440,11 @@ export function AttackArcCanvas({
     attackArcSettings.ringRadius,
     attackArcSettings.ringSpacing,
     attackArcSettings.replayDelayMs,
-    attackArcSettings.segmentCount,
     isEnabled,
     mapReady,
     mapRef,
     playbackMode,
     themeRevision,
-    viewMode,
   ]);
 
   return <canvas ref={canvasRef} className="attack-arc-canvas" aria-hidden="true" />;

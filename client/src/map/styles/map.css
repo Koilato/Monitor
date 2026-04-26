@@ -1,5 +1,4 @@
-.deckgl-map-wrapper,
-.globe-map-wrapper {
+.map-wrapper {
   position: absolute;
   inset: 0;
   width: 100%;

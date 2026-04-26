@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import maplibregl from 'maplibre-gl';
-import { MapboxOverlay } from '@deck.gl/mapbox';
-import type { MapboxOverlayProps } from '@deck.gl/mapbox';
 
 import { createMapEventBridge, isCameraSynced, syncModuleVisibility } from 'map/lib/map-runtime';
+import { setCountryCenterOverrides } from 'map/lib/country-geometry';
 import { LAYER_MODULES } from 'map/layers/modules';
 import { getBasemapStyleUrl } from 'map/lib/map-style';
 import {
@@ -21,7 +20,6 @@ interface UseMapRuntimeResult {
 
 export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
   const {
-    viewMode,
     mapState,
     themeRevision,
     hoveredCountryCode,
@@ -34,23 +32,19 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
   } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const overlayRef = useRef<MapboxOverlay | null>(null);
   const activeModulesRef = useRef<LayerModule[]>([]);
   const failedModuleIdsRef = useRef<string[]>([]);
   const suppressMoveSyncRef = useRef(false);
   const [styleReady, setStyleReady] = useState(false);
-  const viewModeRef = useRef(viewMode);
   const onCountryHoverRef = useRef(onCountryHover);
   const onCameraChangeRef = useRef(onCameraChange);
   const eventBridgeRef = useRef<ReturnType<typeof createMapEventBridge> | null>(null);
 
-  viewModeRef.current = viewMode;
   onCountryHoverRef.current = onCountryHover;
   onCameraChangeRef.current = onCameraChange;
 
   if (!eventBridgeRef.current) {
     eventBridgeRef.current = createMapEventBridge({
-      getViewMode: () => viewModeRef.current,
       getCountryHoverHandler: () => onCountryHoverRef.current,
       getCameraChangeHandler: () => onCameraChangeRef.current,
       suppressMoveSyncRef,
@@ -78,15 +72,9 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
 
     mapRef.current = map;
 
-    const overlay = new MapboxOverlay({
-      interleaved: true,
-      layers: [],
-    } satisfies MapboxOverlayProps);
-    overlayRef.current = overlay;
-    map.addControl(overlay);
-
     map.once('load', () => {
       setStyleReady(true);
+      map.setProjection({ type: 'mercator' });
       map.on('mousemove', (event) => {
         eventBridgeRef.current?.handleMouseMove(map as never, event as never);
       });
@@ -99,12 +87,14 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
     });
 
     return () => {
-      overlay.finalize();
       map.remove();
       mapRef.current = null;
-      overlayRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    setCountryCenterOverrides(debugSettings.countryCenterOverrides);
+  }, [debugSettings.countryCenterOverrides]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -122,7 +112,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
       return;
     }
 
-    map.setProjection({ type: viewMode === '3d' ? 'globe' : 'mercator' });
+    map.setProjection({ type: 'mercator' });
     if (!isCameraSynced(map, mapState.camera)) {
       suppressMoveSyncRef.current = true;
       map.easeTo({
@@ -133,24 +123,20 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
         duration: 0,
       });
     }
-  }, [mapState.camera, styleReady, viewMode]);
+  }, [mapState.camera, styleReady]);
 
   useEffect(() => {
     const mapInstance = mapRef.current;
-    const overlayInstance = overlayRef.current;
-    if (!mapInstance || !overlayInstance || !styleReady || !mapInstance.isStyleLoaded()) {
+    if (!mapInstance || !styleReady || !mapInstance.isStyleLoaded()) {
       return;
     }
     const activeMap = mapInstance;
-    const activeOverlay = overlayInstance;
 
     let cancelled = false;
 
     async function syncModules() {
       const initResult = await initializeLayerModules({
         map: activeMap,
-        deckOverlay: activeOverlay,
-        view: viewMode,
         activeLayerIds: mapState.activeLayerIds,
         activeThreatCountryCodes: debugSettings.activeCountryCodes,
         debugSettings,
@@ -166,12 +152,10 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
 
       activeModulesRef.current = initResult.activeModules;
       failedModuleIdsRef.current = initResult.failedModuleIds;
-      syncModuleVisibility(activeMap, LAYER_MODULES, mapState.activeLayerIds, viewMode);
+      syncModuleVisibility(activeMap, LAYER_MODULES, mapState.activeLayerIds);
 
       const syncResult = await synchronizeLayerModules({
         map: activeMap,
-        deckOverlay: activeOverlay,
-        view: viewMode,
         activeLayerIds: mapState.activeLayerIds,
         activeThreatCountryCodes: debugSettings.activeCountryCodes,
         debugSettings,
@@ -187,9 +171,6 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
       }
 
       failedModuleIdsRef.current = syncResult.failedModuleIds;
-      activeOverlay.setProps({
-        layers: syncResult.overlayLayers,
-      });
     }
 
     syncModules().catch((error) => {
@@ -206,7 +187,6 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
     mapState.activeLayerIds,
     styleReady,
     threatData,
-    viewMode,
     debugSettings,
     themeRevision,
   ]);

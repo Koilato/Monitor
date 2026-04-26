@@ -4,12 +4,10 @@ import {
   normalizeMapState,
   parseMapStateFromSearch,
   serializeMapStateToSearch,
-  switchMapStateView,
   type FlowMode,
   type FlowPlaybackMode,
   type MapCameraState,
   type MapState,
-  type MapViewMode,
   type TimeFilterState,
 } from 'map/state/map-state';
 
@@ -50,9 +48,6 @@ export function useMapUrlState() {
   return {
     state,
     setState,
-    setView(view: MapViewMode) {
-      setState((current) => switchMapStateView(current, view));
-    },
     setCamera(camera: Partial<MapCameraState>) {
       setState((current) => normalizeMapState({
         ...current,

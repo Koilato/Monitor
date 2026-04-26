@@ -3,9 +3,8 @@ import assert from 'node:assert/strict';
 
 import { createMapEventBridge } from '../../src/map/lib/map-runtime';
 
-test('createMapEventBridge reads the latest view mode for hover anchors', () => {
-  let viewMode: '2d' | '3d' = '2d';
-  const hoverEvents: Array<{ country: { code: string; name: string } | null; anchor: { mode: '2d' | '3d' } | null }> = [];
+test('createMapEventBridge always emits 2d hover anchors', () => {
+  const hoverEvents: Array<{ country: { code: string; name: string } | null; anchor: { mode: '2d' } | null }> = [];
   const previousWindow = globalThis.window;
   Object.defineProperty(globalThis, 'window', {
     value: { innerWidth: 800 },
@@ -15,7 +14,6 @@ test('createMapEventBridge reads the latest view mode for hover anchors', () => 
 
   try {
     const bridge = createMapEventBridge({
-      getViewMode: () => viewMode,
       getCountryHoverHandler: () => (event) => {
         hoverEvents.push(event);
       },
@@ -44,12 +42,11 @@ test('createMapEventBridge reads the latest view mode for hover anchors', () => 
     };
 
     bridge.handleMouseMove(map as never, { point: { x: 8, y: 9 } } as never);
-    viewMode = '3d';
     bridge.handleMouseMove(map as never, { point: { x: 8, y: 9 } } as never);
     bridge.handleMouseOut(map as never);
 
     assert.equal(canvas.style.cursor, '');
-    assert.deepEqual(hoverEvents.map((event) => event.anchor?.mode ?? null), ['2d', '3d', null]);
+    assert.deepEqual(hoverEvents.map((event) => event.anchor?.mode ?? null), ['2d', '2d', null]);
     assert.deepEqual(hoverEvents.map((event) => event.country?.code ?? null), ['US', 'US', null]);
   } finally {
     if (previousWindow === undefined) {
@@ -69,7 +66,6 @@ test('createMapEventBridge reads the latest camera change handler and respects s
   const primaryCameraEvents: Array<Record<string, number>> = [];
   const secondaryCameraEvents: Array<Record<string, number>> = [];
   const bridge = createMapEventBridge({
-    getViewMode: () => '2d',
     getCountryHoverHandler: () => () => {},
     getCameraChangeHandler: () => (
       useSecondaryHandler
@@ -107,7 +103,6 @@ test('createMapEventBridge reads the latest camera change handler and respects s
 
   const suppressedRef = { current: true };
   const suppressedBridge = createMapEventBridge({
-    getViewMode: () => '2d',
     getCountryHoverHandler: () => () => {},
     getCameraChangeHandler: () => () => {
       throw new Error('should not be called');

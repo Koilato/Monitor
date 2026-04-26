@@ -2,19 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DEFAULT_MAP_STATE,
-  MAX_3D_PITCH,
-  MIN_3D_ZOOM,
   normalizeMapState,
   parseMapStateFromSearch,
   serializeMapStateToSearch,
-  switchMapStateView,
   timeFilterToDateRange,
   type MapState,
 } from '../../src/map/state/map-state';
 
 test('serializes and parses preset URL state', () => {
   const state: MapState = {
-    view: '3d',
     camera: {
       lng: 120.125,
       lat: 31.25,
@@ -36,7 +32,6 @@ test('serializes and parses preset URL state', () => {
   const search = serializeMapStateToSearch(state);
   const parsed = parseMapStateFromSearch(search);
 
-  assert.equal(parsed.view, '3d');
   assert.equal(parsed.camera.lng, 120.125);
   assert.equal(parsed.camera.lat, 31.25);
   assert.equal(parsed.camera.zoom, 2.4);
@@ -88,7 +83,6 @@ test('preserves 2d pitch when normalizing camera updates from map gestures', () 
     },
   });
 
-  assert.equal(normalized.view, '2d');
   assert.equal(normalized.camera.pitch, 38);
 });
 
@@ -103,7 +97,6 @@ test('serializes and parses 2d pitch from URL state', () => {
 
   const parsed = parseMapStateFromSearch(search);
 
-  assert.equal(parsed.view, '2d');
   assert.equal(parsed.camera.pitch, 42);
 });
 
@@ -158,45 +151,4 @@ test('preset time filters resolve as calendar-day UTC windows', () => {
     startDate: '2026-04-22',
     endDate: '2026-04-22',
   });
-});
-
-test('switching 2d to 3d preserves center and normalizes camera', () => {
-  const state = switchMapStateView({
-    ...DEFAULT_MAP_STATE,
-    camera: {
-      lng: 110,
-      lat: 40,
-      zoom: 0.2,
-      bearing: 32,
-      pitch: 0,
-    },
-  }, '3d');
-
-  assert.equal(state.view, '3d');
-  assert.equal(state.camera.lng, 110);
-  assert.equal(state.camera.lat, 40);
-  assert.equal(state.camera.bearing, 0);
-  assert.equal(state.camera.pitch, MAX_3D_PITCH);
-  assert.equal(state.camera.zoom, MIN_3D_ZOOM);
-});
-
-test('switching 3d to 2d resets pitch and bearing but keeps valid zoom', () => {
-  const state = switchMapStateView({
-    ...DEFAULT_MAP_STATE,
-    view: '3d',
-    camera: {
-      lng: 15,
-      lat: -22,
-      zoom: 3.6,
-      bearing: 25,
-      pitch: 45,
-    },
-  }, '2d');
-
-  assert.equal(state.view, '2d');
-  assert.equal(state.camera.lng, 15);
-  assert.equal(state.camera.lat, -22);
-  assert.equal(state.camera.bearing, 0);
-  assert.equal(state.camera.pitch, 0);
-  assert.equal(state.camera.zoom, 3.6);
 });

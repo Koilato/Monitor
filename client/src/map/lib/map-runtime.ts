@@ -2,7 +2,7 @@ import type maplibregl from 'maplibre-gl';
 
 import { createHoverAnchor } from 'map/lib/hover-anchor';
 import { isLayerModuleEnabled, type LayerModule } from 'map/layers/registry';
-import type { MapCameraState, MapViewMode } from 'map/state/map-state';
+import type { MapCameraState } from 'map/state/map-state';
 import type { CountryHoverEvent } from 'map/state/map-types';
 
 interface RenderedFeature {
@@ -38,7 +38,6 @@ export interface MapEventBridge {
 }
 
 export interface MapEventBridgeDeps {
-  getViewMode: () => MapViewMode;
   getCountryHoverHandler: () => (event: CountryHoverEvent) => void;
   getCameraChangeHandler: () => (camera: Partial<MapCameraState>) => void;
   suppressMoveSyncRef: { current: boolean };
@@ -46,14 +45,13 @@ export interface MapEventBridgeDeps {
 
 function emitHoverEvent(
   callback: (event: CountryHoverEvent) => void,
-  mode: MapViewMode,
   country: CountryHoverEvent['country'],
   clientX: number | null,
   clientY: number | null,
 ) {
   callback({
     country,
-    anchor: clientX !== null && clientY !== null ? createHoverAnchor(mode, clientX, clientY) : null,
+    anchor: clientX !== null && clientY !== null ? createHoverAnchor(clientX, clientY) : null,
   });
 }
 
@@ -74,7 +72,6 @@ export function syncModuleVisibility(
   map: MapVisibilityTarget,
   modules: LayerModule[],
   activeLayerIds: string[],
-  viewMode: MapViewMode,
 ) {
   for (const module of modules) {
     if (!module.styleLayerIds) {
@@ -82,7 +79,6 @@ export function syncModuleVisibility(
     }
 
     const isVisible = isLayerModuleEnabled(module, {
-      view: viewMode,
       activeLayerIds,
     });
 
@@ -110,7 +106,7 @@ export function createMapEventBridge(deps: MapEventBridgeDeps): MapEventBridge {
 
       if (code) {
         canvas.style.cursor = 'pointer';
-        emitHoverEvent(deps.getCountryHoverHandler(), deps.getViewMode(), {
+        emitHoverEvent(deps.getCountryHoverHandler(), {
           code,
           name: name ?? code,
         }, clientX, clientY);
@@ -118,11 +114,11 @@ export function createMapEventBridge(deps: MapEventBridgeDeps): MapEventBridge {
       }
 
       canvas.style.cursor = '';
-      emitHoverEvent(deps.getCountryHoverHandler(), deps.getViewMode(), null, null, null);
+      emitHoverEvent(deps.getCountryHoverHandler(), null, null, null);
     },
     handleMouseOut(map) {
       map.getCanvas().style.cursor = '';
-      emitHoverEvent(deps.getCountryHoverHandler(), deps.getViewMode(), null, null, null);
+      emitHoverEvent(deps.getCountryHoverHandler(), null, null, null);
     },
     handleMoveEnd(map) {
       if (deps.suppressMoveSyncRef.current) {

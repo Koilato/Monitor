@@ -17,10 +17,6 @@ import {
   THREAT_OUTLINE_LAYER_ID,
 } from 'map/layers/maplibre';
 import {
-  buildAttackArcLayers,
-  buildAttackArrowheadLayers,
-} from 'map/layers/overlays';
-import {
   applyThreatLabelState,
   ensureThreatLabelSource,
   registerThreatLabelLayer,
@@ -32,7 +28,6 @@ const countriesBaseModule: LayerModule = {
   id: 'countries-base',
   label: '国家',
   defaultEnabled: true,
-  supportsView: ['2d', '3d'],
   styleLayerIds: [...COUNTRIES_BASE_LAYER_IDS],
   registerMapSources: ensureCountrySource,
   registerStyleLayers: registerCountriesBaseLayers,
@@ -42,7 +37,6 @@ const threatHighlightModule: LayerModule = {
   id: 'threat-highlight',
   label: '威胁高亮',
   defaultEnabled: true,
-  supportsView: ['2d', '3d'],
   styleLayerIds: [THREAT_FILL_LAYER_ID, THREAT_OUTLINE_LAYER_ID, THREAT_GLOW_LAYER_ID],
   registerMapSources: ensureCountrySource,
   registerStyleLayers: registerThreatHighlightLayers,
@@ -58,7 +52,6 @@ const threatLabelsModule: LayerModule = {
   id: 'threat-labels',
   label: '威胁标签',
   defaultEnabled: true,
-  supportsView: ['2d', '3d'],
   styleLayerIds: [THREAT_LABEL_LAYER_ID],
   registerMapSources: ensureThreatLabelSource,
   registerStyleLayers: registerThreatLabelLayer,
@@ -70,7 +63,6 @@ const hoverHighlightModule: LayerModule = {
   label: '悬停高亮',
   defaultEnabled: true,
   showInLayerControls: false,
-  supportsView: ['2d', '3d'],
   styleLayerIds: [...HOVER_HIGHLIGHT_LAYER_IDS],
   registerMapSources: ensureCountrySource,
   registerStyleLayers: registerHoverHighlightLayers,
@@ -81,14 +73,6 @@ const attackArcsModule: LayerModule = {
   id: 'attack-arcs',
   label: '攻击弧线',
   defaultEnabled: true,
-  supportsView: ['2d', '3d'],
-  async buildOverlayLayers(context) {
-    const [arcLayers, arrowheadLayers] = await Promise.all([
-      buildAttackArcLayers(context),
-      buildAttackArrowheadLayers(context),
-    ]);
-    return [...arcLayers, ...arrowheadLayers];
-  },
 };
 
 export const LAYER_MODULES: LayerModule[] = [

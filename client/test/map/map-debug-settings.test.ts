@@ -19,15 +19,39 @@ test('coerceMapDebugSettings keeps normalized active country codes', () => {
     minZoom: -1,
     maxZoom: 5,
     activeCountryCodes: ['cn', 'us', 'US', '', 'Jp'],
+    countryCenterOverrides: {
+      cn: { lon: 120.5, lat: 31.2 },
+      bad: { lon: 1, lat: 2 },
+    },
     threatColorsEnabled: false,
     threatOutlineVisible: false,
     threatOutlineWidth: 2.4,
     attackArc: {
       bundleCount: 6,
-      bundleSpreadRatio: 0.12,
-      curvatureRatio: 0.22,
-      lineWidth: 2.1,
-      segmentCount: 120,
+      lengthThresholds: {
+        shortMax: 22,
+        mediumMax: 68,
+      },
+      lengthPresets: {
+        short: {
+          bundleSpreadRatio: 0.07,
+          curvatureRatio: 0.11,
+          lineWidth: 1.4,
+          segmentCount: 72,
+        },
+        medium: {
+          bundleSpreadRatio: 0.12,
+          curvatureRatio: 0.22,
+          lineWidth: 2.1,
+          segmentCount: 120,
+        },
+        long: {
+          bundleSpreadRatio: 0.17,
+          curvatureRatio: 0.28,
+          lineWidth: 2.6,
+          segmentCount: 160,
+        },
+      },
       flightDuration: 1500,
       holdDuration: 2100,
       fadeoutDuration: 900,
@@ -39,8 +63,6 @@ test('coerceMapDebugSettings keeps normalized active country codes', () => {
       ringSpacing: 4,
       ringLineWidth: 2.8,
       ringDotRadius: 7,
-      arcWidthScale3d: 1.2,
-      arrowSizeScale3d: 1.4,
     },
   });
 
@@ -49,15 +71,38 @@ test('coerceMapDebugSettings keeps normalized active country codes', () => {
     minZoom: -1,
     maxZoom: 5,
     activeCountryCodes: ['CN', 'US', 'JP'],
+    countryCenterOverrides: {
+      CN: { lon: 120.5, lat: 31.2 },
+    },
     threatColorsEnabled: false,
     threatOutlineVisible: false,
     threatOutlineWidth: 2.4,
     attackArc: {
       bundleCount: 6,
-      bundleSpreadRatio: 0.12,
-      curvatureRatio: 0.22,
-      lineWidth: 2.1,
-      segmentCount: 120,
+      lengthThresholds: {
+        shortMax: 22,
+        mediumMax: 68,
+      },
+      lengthPresets: {
+        short: {
+          bundleSpreadRatio: 0.07,
+          curvatureRatio: 0.11,
+          lineWidth: 1.4,
+          segmentCount: 72,
+        },
+        medium: {
+          bundleSpreadRatio: 0.12,
+          curvatureRatio: 0.22,
+          lineWidth: 2.1,
+          segmentCount: 120,
+        },
+        long: {
+          bundleSpreadRatio: 0.17,
+          curvatureRatio: 0.28,
+          lineWidth: 2.6,
+          segmentCount: 160,
+        },
+      },
       flightDuration: 1500,
       holdDuration: 2100,
       fadeoutDuration: 900,
@@ -69,8 +114,6 @@ test('coerceMapDebugSettings keeps normalized active country codes', () => {
       ringSpacing: 4,
       ringLineWidth: 2.8,
       ringDotRadius: 7,
-      arcWidthScale3d: 1.2,
-      arrowSizeScale3d: 1.4,
     },
   });
 });

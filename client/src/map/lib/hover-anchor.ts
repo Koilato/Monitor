@@ -1,10 +1,10 @@
 import type { PopupAnchor } from 'map/state/map-types';
 
-export function createHoverAnchor(mode: '2d' | '3d', x: number, y: number): PopupAnchor {
+export function createHoverAnchor(x: number, y: number): PopupAnchor {
   return {
     x,
     y,
-    mode,
+    mode: '2d',
     placement: x >= window.innerWidth / 2 ? 'left' : 'right',
   };
 }

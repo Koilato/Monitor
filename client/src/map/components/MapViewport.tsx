@@ -8,7 +8,6 @@ import { MapRenderer } from 'map/components/MapRenderer';
 import { useThemeRevision } from 'shared/styles/theme';
 
 interface MapViewportProps {
-  viewMode: '2d' | '3d';
   mapState: MapState;
   hoveredCountry: HoverCountryState | null;
   hoverData: CountryHoverResponse | null;
@@ -25,7 +24,6 @@ interface MapViewportProps {
 
 export function MapViewport(props: MapViewportProps) {
   const {
-    viewMode,
     mapState,
     hoveredCountry,
     hoverData,
@@ -41,16 +39,13 @@ export function MapViewport(props: MapViewportProps) {
   } = props;
   const themeRevision = useThemeRevision();
 
-  const visibleModules = LAYER_MODULES.filter(
-    (module) => module.supportsView.includes(viewMode) && module.showInLayerControls !== false,
-  );
+  const visibleModules = LAYER_MODULES.filter((module) => module.showInLayerControls !== false);
   const legendItems = visibleModules.flatMap((module) => module.legend?.items ?? []);
 
   return (
     <div className="map-container">
       <div className="map-stage">
         <MapRenderer
-          viewMode={viewMode}
           mapState={mapState}
           themeRevision={themeRevision}
           hoveredCountryCode={hoveredCountry?.code ?? null}

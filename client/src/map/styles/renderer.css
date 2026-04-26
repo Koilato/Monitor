@@ -1,4 +1,4 @@
-.deckgl-controls {
+.map-controls {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -9,13 +9,13 @@
   pointer-events: auto;
 }
 
-.deckgl-controls .zoom-controls {
+.map-controls .zoom-controls {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.deckgl-controls .map-btn {
+.map-controls .map-btn {
   width: 32px;
   height: 32px;
   background: var(--bg);
@@ -30,7 +30,7 @@
   pointer-events: auto;
 }
 
-.deckgl-controls .map-btn:hover {
+.map-controls .map-btn:hover {
   border-color: var(--green);
   color: var(--green);
 }
@@ -65,7 +65,7 @@
 }
 
 @media (max-width: 640px) {
-  .deckgl-controls {
+  .map-controls {
     top: auto;
     bottom: 12px;
     right: 12px;

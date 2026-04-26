@@ -113,11 +113,6 @@ test('dead map selectors stay absent across the main interaction states', async 
 
   await assertDeadSelectorsAbsent(page, 'desktop default');
 
-  await page.getByRole('button', { name: '3D' }).click();
-  await expect(page.getByRole('button', { name: '3D' })).toHaveClass(/active/);
-  await page.waitForTimeout(200);
-  await assertDeadSelectorsAbsent(page, 'desktop 3d');
-
   await page.getByRole('button', { name: '调试模式' }).click();
   await expect(page.getByText('地图调试')).toBeVisible();
   await assertDeadSelectorsAbsent(page, 'desktop debug-open');
@@ -129,19 +124,6 @@ test('dead map selectors stay absent across the main interaction states', async 
 
 test('desktop default shell snapshot', async ({ page }) => {
   await bootShell(page, DESKTOP_VIEWPORT);
-
-  await expect(page).toHaveScreenshot({
-    animations: 'disabled',
-    caret: 'hide',
-    fullPage: true,
-  });
-});
-
-test('desktop 3d shell snapshot', async ({ page }) => {
-  await bootShell(page, DESKTOP_VIEWPORT);
-  await page.getByRole('button', { name: '3D' }).click();
-  await expect(page.getByRole('button', { name: '3D' })).toHaveClass(/active/);
-  await page.waitForTimeout(200);
 
   await expect(page).toHaveScreenshot({
     animations: 'disabled',

@@ -1,7 +1,7 @@
 import type { CountryHoverResponse, ThreatMapResponse } from '@shared/types';
 
 import type { FlowArcSource } from 'map/lib/arc-data';
-import type { MapCameraState, MapState, MapViewMode } from './map-state';
+import type { MapCameraState, MapState } from './map-state';
 import type { FlowMode, FlowPlaybackMode } from './map-state';
 
 export interface HoverCountryState {
@@ -19,11 +19,7 @@ export interface PopupAnchor2D extends PopupAnchorBase {
   mode: '2d';
 }
 
-export interface PopupAnchor3D extends PopupAnchorBase {
-  mode: '3d';
-}
-
-export type PopupAnchor = PopupAnchor2D | PopupAnchor3D;
+export type PopupAnchor = PopupAnchor2D;
 
 export interface CountryHoverEvent {
   country: HoverCountryState | null;
@@ -35,18 +31,36 @@ export interface MapDebugSettings {
   minZoom: number;
   maxZoom: number;
   activeCountryCodes: string[];
+  countryCenterOverrides: Record<string, CountryCenterPoint>;
   threatColorsEnabled: boolean;
   threatOutlineVisible: boolean;
   threatOutlineWidth: number;
   attackArc: AttackArcDebugSettings;
 }
 
-export interface AttackArcDebugSettings {
-  bundleCount: number;
-  bundleSpreadRatio: number;
+export interface CountryCenterPoint {
+  lon: number;
+  lat: number;
+}
+
+export type ArcLengthPreset = 'short' | 'medium' | 'long';
+
+export interface AttackArcLengthThresholds {
+  shortMax: number;
+  mediumMax: number;
+}
+
+export interface AttackArcLengthPresetSettings {
   curvatureRatio: number;
+  bundleSpreadRatio: number;
   lineWidth: number;
   segmentCount: number;
+}
+
+export interface AttackArcDebugSettings {
+  bundleCount: number;
+  lengthThresholds: AttackArcLengthThresholds;
+  lengthPresets: Record<ArcLengthPreset, AttackArcLengthPresetSettings>;
   flightDuration: number;
   holdDuration: number;
   fadeoutDuration: number;
@@ -58,12 +72,9 @@ export interface AttackArcDebugSettings {
   ringSpacing: number;
   ringLineWidth: number;
   ringDotRadius: number;
-  arcWidthScale3d: number;
-  arrowSizeScale3d: number;
 }
 
 export interface MapViewProps {
-  viewMode: MapViewMode;
   mapState: MapState;
   themeRevision: number;
   hoveredCountryCode: string | null;

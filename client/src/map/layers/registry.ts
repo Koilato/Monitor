@@ -1,11 +1,8 @@
 import type { CountryHoverResponse, ThreatMapResponse } from '@shared/types';
-import type { Layer } from '@deck.gl/core';
-import type { MapboxOverlay } from '@deck.gl/mapbox';
 import type maplibregl from 'maplibre-gl';
 
 import type { FlowArcSource } from 'map/lib/arc-data';
 import type { MapDebugSettings } from 'map/state/map-types';
-import type { MapViewMode } from 'map/state/map-state';
 
 export interface LayerLegendDefinition {
   label: string;
@@ -14,8 +11,6 @@ export interface LayerLegendDefinition {
 
 export interface LayerRenderContext {
   map: maplibregl.Map;
-  deckOverlay: MapboxOverlay | null;
-  view: MapViewMode;
   activeLayerIds: string[];
   activeThreatCountryCodes: string[];
   debugSettings: MapDebugSettings;
@@ -30,12 +25,10 @@ export interface LayerModule {
   label: string;
   defaultEnabled: boolean;
   showInLayerControls?: boolean;
-  supportsView: MapViewMode[];
   styleLayerIds?: string[];
   registerMapSources?: (context: LayerRenderContext) => Promise<void> | void;
   registerStyleLayers?: (context: LayerRenderContext) => Promise<void> | void;
   applyState?: (context: LayerRenderContext) => Promise<void> | void;
-  buildOverlayLayers?: (context: LayerRenderContext) => Promise<Layer[]> | Layer[];
   legend?: LayerLegendDefinition;
 }
 
@@ -51,14 +44,13 @@ export interface LayerModuleInitResult {
   failures: LayerModuleFailure[];
 }
 
-export function isLayerModuleEnabled(module: LayerModule, context: Pick<LayerRenderContext, 'view' | 'activeLayerIds'>): boolean {
+export function isLayerModuleEnabled(module: LayerModule, context: Pick<LayerRenderContext, 'activeLayerIds'>): boolean {
   const isUserFacing = module.showInLayerControls !== false;
   const isEnabledByState = isUserFacing
     ? context.activeLayerIds.includes(module.id)
     : module.defaultEnabled;
 
-  return module.supportsView.includes(context.view)
-    && isEnabledByState;
+  return isEnabledByState;
 }
 
 export async function initializeLayerModules(
@@ -99,13 +91,11 @@ export async function synchronizeLayerModules(
     failedModuleIds?: string[];
   },
 ): Promise<{
-  overlayLayers: Layer[];
   failedModuleIds: string[];
   failures: LayerModuleFailure[];
 }> {
   const failedModuleIds = new Set(context.failedModuleIds ?? []);
   const failures: LayerModuleFailure[] = [];
-  const overlayLayers: Layer[] = [];
 
   for (const module of context.activeModules) {
     if (failedModuleIds.has(module.id)) {
@@ -114,10 +104,6 @@ export async function synchronizeLayerModules(
 
     try {
       await module.applyState?.(context);
-      const nextLayers = await module.buildOverlayLayers?.(context);
-      if (nextLayers) {
-        overlayLayers.push(...nextLayers);
-      }
     } catch (error) {
       failedModuleIds.add(module.id);
       failures.push({
@@ -129,7 +115,6 @@ export async function synchronizeLayerModules(
   }
 
   return {
-    overlayLayers,
     failedModuleIds: [...failedModuleIds],
     failures,
   };

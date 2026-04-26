@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
-import type { AttackArcDebugSettings, MapDebugSettings } from 'map/state/map-types';
+import type {
+  ArcLengthPreset,
+  AttackArcDebugSettings,
+  AttackArcLengthPresetSettings,
+  AttackArcLengthThresholds,
+  CountryCenterPoint,
+  MapDebugSettings,
+} from 'map/state/map-types';
 import { THREAT_LINE_WIDTH } from 'map/layers/tokens';
 
-const STORAGE_KEY = 'world-monitor.map-debug-settings.v13';
+const STORAGE_KEY = 'world-monitor.map-debug-settings.v14';
 const DEBUG_MODE_STORAGE_KEY = 'world-monitor.map-debug-mode.v1';
 const LATEST_SECTION_HEIGHT_MIN = 100;
 const LATEST_SECTION_HEIGHT_MAX = 560;
@@ -10,6 +17,8 @@ const MIN_MIN_ZOOM = -6;
 const MAX_MAX_ZOOM = 10;
 const MIN_BUNDLE_COUNT = 1;
 const MAX_BUNDLE_COUNT = 12;
+const MIN_THRESHOLD = 1;
+const MAX_THRESHOLD = 360;
 const MIN_SPREAD_RATIO = 0.01;
 const MAX_SPREAD_RATIO = 0.5;
 const MIN_CURVATURE_RATIO = 0.01;
@@ -36,23 +45,44 @@ const MIN_RING_LINE_WIDTH = 0.5;
 const MAX_RING_LINE_WIDTH = 6;
 const MIN_RING_DOT_RADIUS = 0;
 const MAX_RING_DOT_RADIUS = 16;
-const MIN_3D_SCALE = 0.25;
-const MAX_3D_SCALE = 3;
+
+const DEFAULT_ATTACK_ARC_LENGTH_PRESETS: Record<ArcLengthPreset, AttackArcLengthPresetSettings> = {
+  short: {
+    bundleSpreadRatio: 0.05,
+    curvatureRatio: 0.08,
+    lineWidth: 1.5,
+    segmentCount: 64,
+  },
+  medium: {
+    bundleSpreadRatio: 0.08,
+    curvatureRatio: 0.16,
+    lineWidth: 1.8,
+    segmentCount: 100,
+  },
+  long: {
+    bundleSpreadRatio: 0.12,
+    curvatureRatio: 0.24,
+    lineWidth: 2.2,
+    segmentCount: 140,
+  },
+};
 
 const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
   latestSectionHeight: 160,
   minZoom: -2,
   maxZoom: 6,
   activeCountryCodes: [],
+  countryCenterOverrides: {},
   threatColorsEnabled: true,
   threatOutlineVisible: true,
   threatOutlineWidth: THREAT_LINE_WIDTH,
   attackArc: {
     bundleCount: 4,
-    bundleSpreadRatio: 0.08,
-    curvatureRatio: 0.16,
-    lineWidth: 1.8,
-    segmentCount: 100,
+    lengthThresholds: {
+      shortMax: 18,
+      mediumMax: 55,
+    },
+    lengthPresets: DEFAULT_ATTACK_ARC_LENGTH_PRESETS,
     flightDuration: 1300,
     holdDuration: 2000,
     fadeoutDuration: 700,
@@ -64,8 +94,6 @@ const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
     ringSpacing: 5,
     ringLineWidth: 2.5,
     ringDotRadius: 6,
-    arcWidthScale3d: 1,
-    arrowSizeScale3d: 1,
   },
 };
 
@@ -85,6 +113,99 @@ function coerceBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
+function normalizeActiveCountryCodes(value: unknown): string[] {
+  const rawValues = Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === 'string')
+    : typeof value === 'string'
+      ? value.split(',')
+      : [];
+
+  const normalized = rawValues
+    .map((entry) => entry.trim().toUpperCase())
+    .filter((entry) => /^[A-Z]{2}$/.test(entry));
+
+  return normalized.filter((entry, index) => normalized.indexOf(entry) === index);
+}
+
+function coerceCountryCenterOverrides(value: unknown): Record<string, CountryCenterPoint> {
+  if (typeof value !== 'object' || value === null) {
+    return {};
+  }
+
+  const next: Record<string, CountryCenterPoint> = {};
+
+  for (const [rawCode, rawPoint] of Object.entries(value)) {
+    const code = rawCode.trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(code)) {
+      continue;
+    }
+
+    if (typeof rawPoint !== 'object' || rawPoint === null) {
+      continue;
+    }
+
+    const point = rawPoint as Partial<CountryCenterPoint>;
+    if (!isFiniteNumber(point.lon) || !isFiniteNumber(point.lat)) {
+      continue;
+    }
+
+    next[code] = {
+      lon: point.lon,
+      lat: point.lat,
+    };
+  }
+
+  return next;
+}
+
+function coerceLengthThresholds(value: unknown): AttackArcLengthThresholds {
+  const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcLengthThresholds> : {};
+  const shortMax = isFiniteNumber(record.shortMax)
+    ? clampNumber(record.shortMax, MIN_THRESHOLD, MAX_THRESHOLD)
+    : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.lengthThresholds.shortMax;
+  const mediumMax = isFiniteNumber(record.mediumMax)
+    ? Math.max(shortMax, clampNumber(record.mediumMax, MIN_THRESHOLD, MAX_THRESHOLD))
+    : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.lengthThresholds.mediumMax;
+
+  return { shortMax, mediumMax };
+}
+
+function coerceLengthPresetSettings(
+  value: unknown,
+  fallback: AttackArcLengthPresetSettings,
+): AttackArcLengthPresetSettings {
+  const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcLengthPresetSettings> : {};
+
+  return {
+    bundleSpreadRatio: isFiniteNumber(record.bundleSpreadRatio)
+      ? clampNumber(record.bundleSpreadRatio, MIN_SPREAD_RATIO, MAX_SPREAD_RATIO)
+      : fallback.bundleSpreadRatio,
+    curvatureRatio: isFiniteNumber(record.curvatureRatio)
+      ? clampNumber(record.curvatureRatio, MIN_CURVATURE_RATIO, MAX_CURVATURE_RATIO)
+      : fallback.curvatureRatio,
+    lineWidth: isFiniteNumber(record.lineWidth)
+      ? clampNumber(record.lineWidth, MIN_LINE_WIDTH, MAX_LINE_WIDTH)
+      : fallback.lineWidth,
+    segmentCount: isFiniteNumber(record.segmentCount)
+      ? Math.round(clampNumber(record.segmentCount, MIN_SEGMENT_COUNT, MAX_SEGMENT_COUNT))
+      : fallback.segmentCount,
+  };
+}
+
+function coerceLengthPresets(
+  value: unknown,
+): Record<ArcLengthPreset, AttackArcLengthPresetSettings> {
+  const record = typeof value === 'object' && value !== null
+    ? value as Partial<Record<ArcLengthPreset, AttackArcLengthPresetSettings>>
+    : {};
+
+  return {
+    short: coerceLengthPresetSettings(record.short, DEFAULT_ATTACK_ARC_LENGTH_PRESETS.short),
+    medium: coerceLengthPresetSettings(record.medium, DEFAULT_ATTACK_ARC_LENGTH_PRESETS.medium),
+    long: coerceLengthPresetSettings(record.long, DEFAULT_ATTACK_ARC_LENGTH_PRESETS.long),
+  };
+}
+
 function coerceAttackArcSettings(value: unknown): AttackArcDebugSettings {
   const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcDebugSettings> : {};
 
@@ -92,18 +213,8 @@ function coerceAttackArcSettings(value: unknown): AttackArcDebugSettings {
     bundleCount: isFiniteNumber(record.bundleCount)
       ? Math.round(clampNumber(record.bundleCount, MIN_BUNDLE_COUNT, MAX_BUNDLE_COUNT))
       : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.bundleCount,
-    bundleSpreadRatio: isFiniteNumber(record.bundleSpreadRatio)
-      ? clampNumber(record.bundleSpreadRatio, MIN_SPREAD_RATIO, MAX_SPREAD_RATIO)
-      : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.bundleSpreadRatio,
-    curvatureRatio: isFiniteNumber(record.curvatureRatio)
-      ? clampNumber(record.curvatureRatio, MIN_CURVATURE_RATIO, MAX_CURVATURE_RATIO)
-      : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.curvatureRatio,
-    lineWidth: isFiniteNumber(record.lineWidth)
-      ? clampNumber(record.lineWidth, MIN_LINE_WIDTH, MAX_LINE_WIDTH)
-      : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.lineWidth,
-    segmentCount: isFiniteNumber(record.segmentCount)
-      ? Math.round(clampNumber(record.segmentCount, MIN_SEGMENT_COUNT, MAX_SEGMENT_COUNT))
-      : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.segmentCount,
+    lengthThresholds: coerceLengthThresholds(record.lengthThresholds),
+    lengthPresets: coerceLengthPresets(record.lengthPresets),
     flightDuration: isFiniteNumber(record.flightDuration)
       ? Math.round(clampNumber(record.flightDuration, MIN_DURATION, MAX_DURATION))
       : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.flightDuration,
@@ -137,27 +248,7 @@ function coerceAttackArcSettings(value: unknown): AttackArcDebugSettings {
     ringDotRadius: isFiniteNumber(record.ringDotRadius)
       ? clampNumber(record.ringDotRadius, MIN_RING_DOT_RADIUS, MAX_RING_DOT_RADIUS)
       : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.ringDotRadius,
-    arcWidthScale3d: isFiniteNumber(record.arcWidthScale3d)
-      ? clampNumber(record.arcWidthScale3d, MIN_3D_SCALE, MAX_3D_SCALE)
-      : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.arcWidthScale3d,
-    arrowSizeScale3d: isFiniteNumber(record.arrowSizeScale3d)
-      ? clampNumber(record.arrowSizeScale3d, MIN_3D_SCALE, MAX_3D_SCALE)
-      : DEFAULT_MAP_DEBUG_SETTINGS.attackArc.arrowSizeScale3d,
   };
-}
-
-function normalizeActiveCountryCodes(value: unknown): string[] {
-  const rawValues = Array.isArray(value)
-    ? value.filter((entry): entry is string => typeof entry === 'string')
-    : typeof value === 'string'
-      ? value.split(',')
-      : [];
-
-  const normalized = rawValues
-    .map((entry) => entry.trim().toUpperCase())
-    .filter((entry) => /^[A-Z]{2}$/.test(entry));
-
-  return normalized.filter((entry, index) => normalized.indexOf(entry) === index);
 }
 
 export function parseActiveCountryCodesInput(value: string): string[] {
@@ -184,6 +275,7 @@ export function coerceMapDebugSettings(value: unknown): MapDebugSettings {
     minZoom,
     maxZoom,
     activeCountryCodes: normalizeActiveCountryCodes(record.activeCountryCodes),
+    countryCenterOverrides: coerceCountryCenterOverrides(record.countryCenterOverrides),
     threatColorsEnabled: coerceBoolean(record.threatColorsEnabled, DEFAULT_MAP_DEBUG_SETTINGS.threatColorsEnabled),
     threatOutlineVisible: coerceBoolean(record.threatOutlineVisible, DEFAULT_MAP_DEBUG_SETTINGS.threatOutlineVisible),
     threatOutlineWidth: isFiniteNumber(record.threatOutlineWidth)
@@ -287,6 +379,7 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     setSettings((current) => coerceMapDebugSettings({
       ...current,
       ...patch,
+      countryCenterOverrides: patch.countryCenterOverrides ?? current.countryCenterOverrides,
       attackArc: {
         ...current.attackArc,
         ...patch.attackArc,

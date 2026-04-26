@@ -12,7 +12,7 @@ test('creates a right-placed hover anchor on the left half of the viewport', () 
   });
 
   try {
-    assert.deepEqual(createHoverAnchor('2d', 250, 400), {
+    assert.deepEqual(createHoverAnchor(250, 400), {
       x: 250,
       y: 400,
       mode: '2d',
@@ -39,10 +39,10 @@ test('creates a left-placed hover anchor on the right half of the viewport', () 
   });
 
   try {
-    assert.deepEqual(createHoverAnchor('3d', 900, 320), {
+    assert.deepEqual(createHoverAnchor(900, 320), {
       x: 900,
       y: 320,
-      mode: '3d',
+      mode: '2d',
       placement: 'left',
     });
   } finally {
