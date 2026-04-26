@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getCountryCenterSource, getStaticCountryCenter } from 'map/lib/country-geometry';
-import type { ArcLengthPreset, CountryCenterPoint, MapDebugSettings } from 'map/state/map-types';
+import type {
+  ArcLengthPreset,
+  AttackArcStagePreset,
+  CountryCenterPoint,
+  MapDebugSettings,
+} from 'map/state/map-types';
 
 interface MapDebugPanelProps {
   open: boolean;
@@ -31,7 +36,8 @@ interface TextFieldProps {
   onCommit?: () => void;
 }
 
-const ARC_LENGTH_PRESETS: ArcLengthPreset[] = ['short', 'medium', 'long'];
+const ARC_LENGTH_PRESETS: ArcLengthPreset[] = ['long', 'medium', 'short'];
+const ARC_STAGE_PRESETS: AttackArcStagePreset[] = ['stage1', 'stage2', 'stage3'];
 
 function parseNumber(value: string): number {
   const next = Number(value);
@@ -100,15 +106,27 @@ function CheckboxField(props: CheckboxFieldProps) {
 }
 
 function getPresetLabel(preset: ArcLengthPreset): string {
-  if (preset === 'short') {
-    return '短线';
+  if (preset === 'long') {
+    return '长线配置';
   }
 
   if (preset === 'medium') {
-    return '中线';
+    return '中线配置';
   }
 
-  return '长线';
+  return '短线配置';
+}
+
+function getStageLabel(stage: AttackArcStagePreset): string {
+  if (stage === 'stage1') {
+    return '阶段一（flight）';
+  }
+
+  if (stage === 'stage2') {
+    return '阶段二（hold）';
+  }
+
+  return '阶段三（fadeout）';
 }
 
 function getSourceLabel(source: ReturnType<typeof getCountryCenterSource>): string {
@@ -202,6 +220,40 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
   const currentCenterSource = /^[A-Z]{2}$/.test(normalizedCenterCountryCode)
     ? getCountryCenterSource(normalizedCenterCountryCode)
     : 'missing';
+
+  const updateAttackArcPreset = (
+    preset: ArcLengthPreset,
+    patch: Partial<MapDebugSettings['attackArc']['presets'][ArcLengthPreset]>,
+  ) => {
+    onMapSettingsChange({
+      attackArc: {
+        ...settings.attackArc,
+        presets: {
+          ...settings.attackArc.presets,
+          [preset]: {
+            ...settings.attackArc.presets[preset],
+            ...patch,
+          },
+        },
+      },
+    });
+  };
+
+  const updateAttackArcStage = (
+    preset: ArcLengthPreset,
+    stage: AttackArcStagePreset,
+    patch: Partial<MapDebugSettings['attackArc']['presets'][ArcLengthPreset]['stages'][AttackArcStagePreset]>,
+  ) => {
+    updateAttackArcPreset(preset, {
+      stages: {
+        ...settings.attackArc.presets[preset].stages,
+        [stage]: {
+          ...settings.attackArc.presets[preset].stages[stage],
+          ...patch,
+        },
+      },
+    });
+  };
 
   return (
     <aside className={`map-debug-panel ${open ? '' : 'map-debug-panel--closed'}`}>
@@ -299,14 +351,6 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
           <section className="map-debug-section">
             <h3>长度分档</h3>
             <NumberField
-              label="线条数量"
-              value={settings.attackArc.bundleCount}
-              min={1}
-              max={12}
-              step={1}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, bundleCount: value } })}
-            />
-            <NumberField
               label="短线最大距离"
               value={settings.attackArc.lengthThresholds.shortMax}
               min={1}
@@ -344,81 +388,139 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
             <section className="map-debug-section" key={preset}>
               <h3>{getPresetLabel(preset)}</h3>
               <NumberField
-                label="弧度"
-                value={settings.attackArc.lengthPresets[preset].curvatureRatio}
-                min={0.01}
-                max={0.6}
-                step={0.01}
-                onChange={(value) => onMapSettingsChange({
-                  attackArc: {
-                    ...settings.attackArc,
-                    lengthPresets: {
-                      ...settings.attackArc.lengthPresets,
-                      [preset]: {
-                        ...settings.attackArc.lengthPresets[preset],
-                        curvatureRatio: value,
-                      },
-                    },
-                  },
-                })}
-              />
-              <NumberField
-                label="线条间距"
-                value={settings.attackArc.lengthPresets[preset].bundleSpreadRatio}
-                min={0.01}
-                max={0.5}
-                step={0.01}
-                onChange={(value) => onMapSettingsChange({
-                  attackArc: {
-                    ...settings.attackArc,
-                    lengthPresets: {
-                      ...settings.attackArc.lengthPresets,
-                      [preset]: {
-                        ...settings.attackArc.lengthPresets[preset],
-                        bundleSpreadRatio: value,
-                      },
-                    },
-                  },
-                })}
-              />
-              <NumberField
-                label="线宽"
-                value={settings.attackArc.lengthPresets[preset].lineWidth}
-                min={0.5}
-                max={6}
-                step={0.1}
-                onChange={(value) => onMapSettingsChange({
-                  attackArc: {
-                    ...settings.attackArc,
-                    lengthPresets: {
-                      ...settings.attackArc.lengthPresets,
-                      [preset]: {
-                        ...settings.attackArc.lengthPresets[preset],
-                        lineWidth: value,
-                      },
-                    },
-                  },
-                })}
-              />
-              <NumberField
-                label="采样段数"
-                value={settings.attackArc.lengthPresets[preset].segmentCount}
-                min={12}
-                max={240}
+                label="线条数量"
+                value={settings.attackArc.presets[preset].bundleCount}
+                min={1}
+                max={12}
                 step={1}
-                onChange={(value) => onMapSettingsChange({
-                  attackArc: {
-                    ...settings.attackArc,
-                    lengthPresets: {
-                      ...settings.attackArc.lengthPresets,
-                      [preset]: {
-                        ...settings.attackArc.lengthPresets[preset],
-                        segmentCount: value,
-                      },
-                    },
-                  },
-                })}
+                onChange={(value) => updateAttackArcPreset(preset, { bundleCount: value })}
               />
+              <NumberField
+                label="飞行时长"
+                value={settings.attackArc.presets[preset].flightDuration}
+                min={100}
+                max={20000}
+                step={50}
+                onChange={(value) => updateAttackArcPreset(preset, { flightDuration: value })}
+              />
+              <NumberField
+                label="停留时长"
+                value={settings.attackArc.presets[preset].holdDuration}
+                min={100}
+                max={20000}
+                step={50}
+                onChange={(value) => updateAttackArcPreset(preset, { holdDuration: value })}
+              />
+              <NumberField
+                label="消失时间"
+                value={settings.attackArc.presets[preset].fadeoutDuration}
+                min={100}
+                max={20000}
+                step={50}
+                onChange={(value) => updateAttackArcPreset(preset, { fadeoutDuration: value })}
+              />
+              <NumberField
+                label="重播延迟"
+                value={settings.attackArc.presets[preset].replayDelayMs}
+                min={1000}
+                max={30000}
+                step={100}
+                onChange={(value) => updateAttackArcPreset(preset, { replayDelayMs: value })}
+              />
+              <NumberField
+                label="并发起始数"
+                value={settings.attackArc.presets[preset].maxConcurrentStarts}
+                min={1}
+                max={12}
+                step={1}
+                onChange={(value) => updateAttackArcPreset(preset, { maxConcurrentStarts: value })}
+              />
+              <NumberField
+                label="bundle 间隔"
+                value={settings.attackArc.presets[preset].bundleIntervalMs}
+                min={100}
+                max={20000}
+                step={10}
+                onChange={(value) => updateAttackArcPreset(preset, { bundleIntervalMs: value })}
+              />
+
+              {ARC_STAGE_PRESETS.map((stage) => (
+                <div className="map-debug-subsection" key={`${preset}-${stage}`}>
+                  <h4>{getStageLabel(stage)}</h4>
+                  <NumberField
+                    label="弧度"
+                    value={settings.attackArc.presets[preset].stages[stage].curvatureRatio}
+                    min={0.01}
+                    max={0.6}
+                    step={0.01}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { curvatureRatio: value })}
+                  />
+                  <NumberField
+                    label="线条间距"
+                    value={settings.attackArc.presets[preset].stages[stage].bundleSpreadRatio}
+                    min={0.01}
+                    max={0.5}
+                    step={0.01}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { bundleSpreadRatio: value })}
+                  />
+                  <NumberField
+                    label="线宽"
+                    value={settings.attackArc.presets[preset].stages[stage].lineWidth}
+                    min={0.5}
+                    max={6}
+                    step={0.1}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { lineWidth: value })}
+                  />
+                  <NumberField
+                    label="采样段数"
+                    value={settings.attackArc.presets[preset].stages[stage].segmentCount}
+                    min={12}
+                    max={240}
+                    step={1}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { segmentCount: value })}
+                  />
+                  <NumberField
+                    label="圆环大小"
+                    value={settings.attackArc.presets[preset].stages[stage].ringRadius}
+                    min={2}
+                    max={80}
+                    step={1}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { ringRadius: value })}
+                  />
+                  <NumberField
+                    label="圆环数"
+                    value={settings.attackArc.presets[preset].stages[stage].ringCount}
+                    min={1}
+                    max={8}
+                    step={1}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { ringCount: value })}
+                  />
+                  <NumberField
+                    label="环间距"
+                    value={settings.attackArc.presets[preset].stages[stage].ringSpacing}
+                    min={0}
+                    max={16}
+                    step={1}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { ringSpacing: value })}
+                  />
+                  <NumberField
+                    label="环线宽"
+                    value={settings.attackArc.presets[preset].stages[stage].ringLineWidth}
+                    min={0.5}
+                    max={6}
+                    step={0.1}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { ringLineWidth: value })}
+                  />
+                  <NumberField
+                    label="中心点半径"
+                    value={settings.attackArc.presets[preset].stages[stage].ringDotRadius}
+                    min={0}
+                    max={16}
+                    step={1}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { ringDotRadius: value })}
+                  />
+                </div>
+              ))}
             </section>
           ))}
 
@@ -451,101 +553,6 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
             </div>
           </section>
 
-          <section className="map-debug-section">
-            <h3>命中环</h3>
-            <NumberField
-              label="圆环大小"
-              value={settings.attackArc.ringRadius}
-              min={2}
-              max={80}
-              step={1}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, ringRadius: value } })}
-            />
-            <NumberField
-              label="圆环数"
-              value={settings.attackArc.ringCount}
-              min={1}
-              max={8}
-              step={1}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, ringCount: value } })}
-            />
-            <NumberField
-              label="环间距"
-              value={settings.attackArc.ringSpacing}
-              min={0}
-              max={16}
-              step={1}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, ringSpacing: value } })}
-            />
-            <NumberField
-              label="环线宽"
-              value={settings.attackArc.ringLineWidth}
-              min={0.5}
-              max={6}
-              step={0.1}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, ringLineWidth: value } })}
-            />
-            <NumberField
-              label="中心点半径"
-              value={settings.attackArc.ringDotRadius}
-              min={0}
-              max={16}
-              step={1}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, ringDotRadius: value } })}
-            />
-          </section>
-
-          <section className="map-debug-section">
-            <h3>播放调试</h3>
-            <NumberField
-              label="飞行时长"
-              value={settings.attackArc.flightDuration}
-              min={100}
-              max={20000}
-              step={50}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, flightDuration: value } })}
-            />
-            <NumberField
-              label="停留时长"
-              value={settings.attackArc.holdDuration}
-              min={100}
-              max={20000}
-              step={50}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, holdDuration: value } })}
-            />
-            <NumberField
-              label="消失时间"
-              value={settings.attackArc.fadeoutDuration}
-              min={100}
-              max={20000}
-              step={50}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, fadeoutDuration: value } })}
-            />
-            <NumberField
-              label="重播延迟"
-              value={settings.attackArc.replayDelayMs}
-              min={1000}
-              max={30000}
-              step={100}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, replayDelayMs: value } })}
-            />
-            <NumberField
-              label="并发起始数"
-              value={settings.attackArc.maxConcurrentStarts}
-              min={1}
-              max={12}
-              step={1}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, maxConcurrentStarts: value } })}
-            />
-            <NumberField
-              label="bundle 间隔"
-              value={settings.attackArc.bundleIntervalMs}
-              min={100}
-              max={20000}
-              step={10}
-              onChange={(value) => onMapSettingsChange({ attackArc: { ...settings.attackArc, bundleIntervalMs: value } })}
-            />
-          </section>
         </div>
       ) : null}
     </aside>

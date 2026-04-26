@@ -118,6 +118,20 @@
   color: var(--text-secondary);
 }
 
+.map-debug-subsection {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.map-debug-subsection h4 {
+  margin: 0 0 8px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: var(--text-dim);
+}
+
 .map-debug-field {
   display: grid;
   grid-template-columns: 1fr 96px;

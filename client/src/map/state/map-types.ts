@@ -44,34 +44,39 @@ export interface CountryCenterPoint {
 }
 
 export type ArcLengthPreset = 'short' | 'medium' | 'long';
+export type AttackArcStagePreset = 'stage1' | 'stage2' | 'stage3';
 
 export interface AttackArcLengthThresholds {
   shortMax: number;
   mediumMax: number;
 }
 
-export interface AttackArcLengthPresetSettings {
+export interface AttackArcStageSettings {
   curvatureRatio: number;
   bundleSpreadRatio: number;
   lineWidth: number;
   segmentCount: number;
+  ringRadius: number;
+  ringCount: number;
+  ringSpacing: number;
+  ringLineWidth: number;
+  ringDotRadius: number;
 }
 
-export interface AttackArcDebugSettings {
+export interface AttackArcLengthPresetSettings {
   bundleCount: number;
-  lengthThresholds: AttackArcLengthThresholds;
-  lengthPresets: Record<ArcLengthPreset, AttackArcLengthPresetSettings>;
   flightDuration: number;
   holdDuration: number;
   fadeoutDuration: number;
   replayDelayMs: number;
   bundleIntervalMs: number;
   maxConcurrentStarts: number;
-  ringRadius: number;
-  ringCount: number;
-  ringSpacing: number;
-  ringLineWidth: number;
-  ringDotRadius: number;
+  stages: Record<AttackArcStagePreset, AttackArcStageSettings>;
+}
+
+export interface AttackArcDebugSettings {
+  lengthThresholds: AttackArcLengthThresholds;
+  presets: Record<ArcLengthPreset, AttackArcLengthPresetSettings>;
 }
 
 export interface MapViewProps {

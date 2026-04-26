@@ -9,8 +9,87 @@ import {
 } from '../../src/map/lib/flow-playback';
 import type { BundledCanvasArcDatum } from '../../src/map/lib/arc-data';
 
+function withArcSettings<T extends {
+  bundleSpreadRatio: number;
+  curvatureRatio: number;
+  lineWidth: number;
+  segmentCount: number;
+  lengthPreset: 'short' | 'medium' | 'long';
+}>(datum: T): T & {
+  bundleCount: number;
+  flightDuration: number;
+  holdDuration: number;
+  fadeoutDuration: number;
+  replayDelayMs: number;
+  bundleIntervalMs: number;
+  maxConcurrentStarts: number;
+  stages: {
+    stage1: {
+      bundleSpreadRatio: number;
+      curvatureRatio: number;
+      lineWidth: number;
+      segmentCount: number;
+      ringRadius: number;
+      ringCount: number;
+      ringSpacing: number;
+      ringLineWidth: number;
+      ringDotRadius: number;
+    };
+    stage2: {
+      bundleSpreadRatio: number;
+      curvatureRatio: number;
+      lineWidth: number;
+      segmentCount: number;
+      ringRadius: number;
+      ringCount: number;
+      ringSpacing: number;
+      ringLineWidth: number;
+      ringDotRadius: number;
+    };
+    stage3: {
+      bundleSpreadRatio: number;
+      curvatureRatio: number;
+      lineWidth: number;
+      segmentCount: number;
+      ringRadius: number;
+      ringCount: number;
+      ringSpacing: number;
+      ringLineWidth: number;
+      ringDotRadius: number;
+    };
+  };
+} {
+  const stage = {
+    bundleSpreadRatio: datum.bundleSpreadRatio,
+    curvatureRatio: datum.curvatureRatio,
+    lineWidth: datum.lineWidth,
+    segmentCount: datum.segmentCount,
+    ringRadius: 15,
+    ringCount: 2,
+    ringSpacing: 5,
+    ringLineWidth: 2.5,
+    ringDotRadius: 6,
+  };
+
+  return {
+    ...datum,
+    bundleCount: 'bundleCount' in datum && typeof datum.bundleCount === 'number' ? datum.bundleCount : 4,
+    flightDuration: 1300,
+    holdDuration: 2000,
+    fadeoutDuration: 700,
+    replayDelayMs: 5000,
+    bundleIntervalMs: 220,
+    maxConcurrentStarts: 4,
+    stages: {
+      stage1: { ...stage },
+      stage2: { ...stage },
+      stage3: { ...stage },
+    },
+  };
+}
+
 const FLOWS = [
-  {
+  withArcSettings({
     id: 'a',
     flowKey: 'US->CN',
     source: [0, 0] as [number, number],
@@ -27,8 +106,8 @@ const FLOWS = [
     curvatureRatio: 0.24,
     lineWidth: 2.2,
     segmentCount: 140,
-  },
-  {
+  }),
+  withArcSettings({
     id: 'b',
     flowKey: 'JP->CN',
     source: [0, 0] as [number, number],
@@ -45,8 +124,8 @@ const FLOWS = [
     curvatureRatio: 0.08,
     lineWidth: 1.5,
     segmentCount: 64,
-  },
-  {
+  }),
+  withArcSettings({
     id: 'c',
     flowKey: 'DE->FR',
     source: [0, 0] as [number, number],
@@ -63,8 +142,8 @@ const FLOWS = [
     curvatureRatio: 0.08,
     lineWidth: 1.5,
     segmentCount: 64,
-  },
-  {
+  }),
+  withArcSettings({
     id: 'd',
     flowKey: 'DE->GB',
     source: [0, 0] as [number, number],
@@ -81,8 +160,8 @@ const FLOWS = [
     curvatureRatio: 0.08,
     lineWidth: 1.5,
     segmentCount: 64,
-  },
-  {
+  }),
+  withArcSettings({
     id: 'e',
     flowKey: 'KR->SG',
     source: [0, 0] as [number, number],
@@ -99,7 +178,7 @@ const FLOWS = [
     curvatureRatio: 0.16,
     lineWidth: 1.8,
     segmentCount: 100,
-  },
+  }),
 ];
 
 test('sorts playback data by country and time modes', () => {
@@ -114,7 +193,7 @@ test('sorts playback data by country and time modes', () => {
   );
 });
 
-test('creates staggered batches of four flow starts', () => {
+test('schedules start batches independently for each length preset', () => {
   const schedule = createInitialFlowSchedule(FLOWS, 'fifo', 1000);
 
   assert.equal(schedule.length, FLOWS.length);
@@ -122,13 +201,13 @@ test('creates staggered batches of four flow starts', () => {
   assert.equal(schedule[1]?.startAt, 1000);
   assert.equal(schedule[2]?.startAt, 1000);
   assert.equal(schedule[3]?.startAt, 1000);
-  assert.equal(schedule[4]?.startAt, 1220);
+  assert.equal(schedule[4]?.startAt, 1000);
 });
 
 test('keeps all bundles for the same flow in the same start batch', () => {
   const bundledFlows: BundledCanvasArcDatum[] = Array.from({ length: 5 }, (_, flowIndex) => {
     const bundleCount = 4;
-    return Array.from({ length: bundleCount }, (_, bundleIndex) => ({
+    return Array.from({ length: bundleCount }, (_, bundleIndex) => withArcSettings({
       id: `flow-${flowIndex}-${bundleIndex}`,
       flowKey: `A${flowIndex}->B${flowIndex}`,
       source: [0, 0] as [number, number],
@@ -164,7 +243,7 @@ test('keeps all bundles for the same flow in the same start batch', () => {
 
 test('keeps bundle groups intact across playback modes', () => {
   const bundledFlows: BundledCanvasArcDatum[] = [
-    {
+    withArcSettings({
       id: 'us-cn-0',
       flowKey: 'US->CN',
       source: [0, 0] as [number, number],
@@ -184,8 +263,8 @@ test('keeps bundle groups intact across playback modes', () => {
       bundleIndex: 0,
       bundleCount: 2,
       bundleOffset: -0.5,
-    },
-    {
+    }),
+    withArcSettings({
       id: 'us-cn-1',
       flowKey: 'US->CN',
       source: [0, 0] as [number, number],
@@ -205,8 +284,8 @@ test('keeps bundle groups intact across playback modes', () => {
       bundleIndex: 1,
       bundleCount: 2,
       bundleOffset: 0.5,
-    },
-    {
+    }),
+    withArcSettings({
       id: 'jp-cn-0',
       flowKey: 'JP->CN',
       source: [0, 0] as [number, number],
@@ -226,8 +305,8 @@ test('keeps bundle groups intact across playback modes', () => {
       bundleIndex: 0,
       bundleCount: 2,
       bundleOffset: -0.5,
-    },
-    {
+    }),
+    withArcSettings({
       id: 'jp-cn-1',
       flowKey: 'JP->CN',
       source: [0, 0] as [number, number],
@@ -247,8 +326,8 @@ test('keeps bundle groups intact across playback modes', () => {
       bundleIndex: 1,
       bundleCount: 2,
       bundleOffset: 0.5,
-    },
-    {
+    }),
+    withArcSettings({
       id: 'de-fr-0',
       flowKey: 'DE->FR',
       source: [0, 0] as [number, number],
@@ -268,8 +347,8 @@ test('keeps bundle groups intact across playback modes', () => {
       bundleIndex: 0,
       bundleCount: 2,
       bundleOffset: -0.5,
-    },
-    {
+    }),
+    withArcSettings({
       id: 'de-fr-1',
       flowKey: 'DE->FR',
       source: [0, 0] as [number, number],
@@ -289,7 +368,7 @@ test('keeps bundle groups intact across playback modes', () => {
       bundleIndex: 1,
       bundleCount: 2,
       bundleOffset: 0.5,
-    },
+    }),
   ];
 
   for (const mode of ['fifo', 'country', 'time'] as const) {

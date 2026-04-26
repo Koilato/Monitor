@@ -4,6 +4,8 @@ import { getCountryCentroid } from 'map/lib/country-geometry';
 import { resolveThreatVisualLevel, type ThreatVisualLevel } from 'map/layers/tokens';
 import type {
   ArcLengthPreset,
+  AttackArcStagePreset,
+  AttackArcStageSettings,
   AttackArcDebugSettings,
   AttackArcLengthPresetSettings,
   AttackArcLengthThresholds,
@@ -22,6 +24,10 @@ export interface ArcBundleMeta {
 export interface ArcGeometryPreset extends AttackArcLengthPresetSettings {
   distance: number;
   lengthPreset: ArcLengthPreset;
+  bundleSpreadRatio: number;
+  curvatureRatio: number;
+  lineWidth: number;
+  segmentCount: number;
 }
 
 export interface TwoDArcDatum extends ArcGeometryPreset {
@@ -57,6 +63,13 @@ interface ResolvedArcFlow extends ArcGeometryPreset {
   sourcePosition: [number, number];
   targetPosition: [number, number];
   visualLevel: ThreatVisualLevel;
+}
+
+export function resolveArcStageSettings(
+  settings: AttackArcLengthPresetSettings,
+  stage: AttackArcStagePreset,
+): AttackArcStageSettings {
+  return settings.stages[stage];
 }
 
 function getBearing(source: [number, number], target: [number, number]): number {
@@ -105,7 +118,7 @@ export function resolveArcLengthPreset(
   return 'long';
 }
 
-function resolveBundleEndpointOffset(
+function resolveBundleLateralOffset(
   source: [number, number],
   target: [number, number],
   bundleOffset: number,
@@ -130,13 +143,12 @@ function resolveBundleEndpointOffset(
 export function resolveBundledArcEndpoints(
   source: [number, number],
   target: [number, number],
-  bundleOffset: number,
-  bundleSpreadRatio: number,
+  _bundleOffset: number,
+  _bundleSpreadRatio: number,
 ): { source: [number, number]; target: [number, number] } {
-  const [offsetX, offsetY] = resolveBundleEndpointOffset(source, target, bundleOffset, bundleSpreadRatio);
   return {
-    source: [source[0] + offsetX, source[1] + offsetY],
-    target: [target[0] + offsetX, target[1] + offsetY],
+    source,
+    target,
   };
 }
 
@@ -146,8 +158,9 @@ function resolveBundleArrowPosition(
   bundleOffset: number,
   bundleSpreadRatio: number,
 ): [number, number] {
-  const endpoints = resolveBundledArcEndpoints(source, target, bundleOffset, bundleSpreadRatio);
-  return interpolatePosition(endpoints.source, endpoints.target, 0.975);
+  const basePoint = interpolatePosition(source, target, 0.975);
+  const [offsetX, offsetY] = resolveBundleLateralOffset(source, target, bundleOffset, bundleSpreadRatio);
+  return [basePoint[0] + offsetX, basePoint[1] + offsetY];
 }
 
 function createBundledArcMeta(bundleCount: number): ArcBundleMeta[] {
@@ -179,7 +192,8 @@ async function resolveBundledArcFlows(
     const targetPosition: [number, number] = [target.lon, target.lat];
     const distance = resolveFlowDistance(sourcePosition, targetPosition);
     const lengthPreset = resolveArcLengthPreset(distance, arcSettings.lengthThresholds);
-    const geometryPreset: AttackArcLengthPresetSettings = arcSettings.lengthPresets[lengthPreset];
+    const geometryPreset: AttackArcLengthPresetSettings = arcSettings.presets[lengthPreset];
+    const activeStageSettings = resolveArcStageSettings(geometryPreset, 'stage1');
 
     return {
       flowKey: getFlowKey(flow.attackerCountry, flow.victimCountry),
@@ -187,10 +201,18 @@ async function resolveBundledArcFlows(
       targetPosition,
       distance,
       lengthPreset,
-      bundleSpreadRatio: geometryPreset.bundleSpreadRatio,
-      curvatureRatio: geometryPreset.curvatureRatio,
-      lineWidth: geometryPreset.lineWidth,
-      segmentCount: geometryPreset.segmentCount,
+      bundleCount: geometryPreset.bundleCount,
+      flightDuration: geometryPreset.flightDuration,
+      holdDuration: geometryPreset.holdDuration,
+      fadeoutDuration: geometryPreset.fadeoutDuration,
+      replayDelayMs: geometryPreset.replayDelayMs,
+      bundleIntervalMs: geometryPreset.bundleIntervalMs,
+      maxConcurrentStarts: geometryPreset.maxConcurrentStarts,
+      stages: geometryPreset.stages,
+      bundleSpreadRatio: activeStageSettings.bundleSpreadRatio,
+      curvatureRatio: activeStageSettings.curvatureRatio,
+      lineWidth: activeStageSettings.lineWidth,
+      segmentCount: activeStageSettings.segmentCount,
       visualLevel: resolveThreatVisualLevel(
         threatData?.countries.find((country) => country.country === flow.victimCountry)?.eventLevel ?? 'low',
         flow.victimCountry,
@@ -203,7 +225,6 @@ async function resolveBundledArcFlows(
 function expandBundledArcData<T>(
   resolvedFlows: Array<ResolvedArcFlow | null>,
   flowData: FlowArcSource,
-  bundleCount: number,
   buildDatum: (args: {
     flow: HoverFlow;
     resolvedFlow: ResolvedArcFlow;
@@ -213,13 +234,13 @@ function expandBundledArcData<T>(
     bundledEndpoints: { source: [number, number]; target: [number, number] };
   }) => T,
 ): T[] {
-  const bundledMeta = createBundledArcMeta(bundleCount);
   const rows = resolvedFlows.map((resolvedFlow, flowIndex) => {
     const flow = flowData.flows[flowIndex];
     if (!resolvedFlow || !flow) {
       return null;
     }
 
+    const bundledMeta = createBundledArcMeta(resolvedFlow.bundleCount);
     return bundledMeta.map(({ bundleIndex, bundleCount: nextBundleCount, bundleOffset }) => {
       const bundledEndpoints = resolveBundledArcEndpoints(
         resolvedFlow.sourcePosition,
@@ -259,7 +280,7 @@ export async function buildTwoDArcData(
     arcSettings,
   );
 
-  return expandBundledArcData(resolvedFlows, data, arcSettings.bundleCount, ({
+  return expandBundledArcData(resolvedFlows, data, ({
     flow,
     resolvedFlow,
     bundleIndex,
@@ -279,10 +300,17 @@ export async function buildTwoDArcData(
     ),
     label: `${flow.attackerCountry} → ${flow.victimCountry}`,
     count: flow.count,
-    angle: getBearing(bundledEndpoints.source, bundledEndpoints.target),
+    angle: getBearing(resolvedFlow.sourcePosition, resolvedFlow.targetPosition),
     visualLevel: resolvedFlow.visualLevel,
     distance: resolvedFlow.distance,
     lengthPreset: resolvedFlow.lengthPreset,
+    flightDuration: resolvedFlow.flightDuration,
+    holdDuration: resolvedFlow.holdDuration,
+    fadeoutDuration: resolvedFlow.fadeoutDuration,
+    replayDelayMs: resolvedFlow.replayDelayMs,
+    bundleIntervalMs: resolvedFlow.bundleIntervalMs,
+    maxConcurrentStarts: resolvedFlow.maxConcurrentStarts,
+    stages: resolvedFlow.stages,
     bundleSpreadRatio: resolvedFlow.bundleSpreadRatio,
     curvatureRatio: resolvedFlow.curvatureRatio,
     lineWidth: resolvedFlow.lineWidth,
@@ -310,7 +338,7 @@ export async function buildCanvasArcData(
     arcSettings,
   );
 
-  return expandBundledArcData(resolvedFlows, data, arcSettings.bundleCount, ({
+  return expandBundledArcData(resolvedFlows, data, ({
     flow,
     resolvedFlow,
     bundleIndex,
@@ -329,6 +357,13 @@ export async function buildCanvasArcData(
     lastDate: flow.lastDate ?? null,
     distance: resolvedFlow.distance,
     lengthPreset: resolvedFlow.lengthPreset,
+    flightDuration: resolvedFlow.flightDuration,
+    holdDuration: resolvedFlow.holdDuration,
+    fadeoutDuration: resolvedFlow.fadeoutDuration,
+    replayDelayMs: resolvedFlow.replayDelayMs,
+    bundleIntervalMs: resolvedFlow.bundleIntervalMs,
+    maxConcurrentStarts: resolvedFlow.maxConcurrentStarts,
+    stages: resolvedFlow.stages,
     bundleSpreadRatio: resolvedFlow.bundleSpreadRatio,
     curvatureRatio: resolvedFlow.curvatureRatio,
     lineWidth: resolvedFlow.lineWidth,

@@ -85,19 +85,22 @@ export function createInitialFlowSchedule(
   data: CanvasArcDatum[],
   mode: FlowPlaybackMode,
   now = performance.now(),
-  settings: FlowPlaybackSettings = DEFAULT_FLOW_PLAYBACK_SETTINGS,
 ): ScheduledFlowDatum[] {
   const ordered = sortFlowPlaybackData(data, mode);
   const scheduled: ScheduledFlowDatum[] = [];
+  const groupCounts = new Map<string, number>();
 
-  for (let index = 0, groupIndex = 0; index < ordered.length; groupIndex += 1) {
+  for (let index = 0; index < ordered.length; index += 0) {
     const datum = ordered[index];
     if (!datum) {
       break;
     }
 
     const groupKey = resolveFlowKey(datum);
-    const startAt = now + (Math.floor(groupIndex / settings.maxConcurrentStarts) * settings.flowStartSpacingMs);
+    const scheduleKey = datum.lengthPreset;
+    const groupIndex = groupCounts.get(scheduleKey) ?? 0;
+    const startAt = now + (Math.floor(groupIndex / datum.maxConcurrentStarts) * datum.bundleIntervalMs);
+    groupCounts.set(scheduleKey, groupIndex + 1);
 
     let offset = 0;
     while (index + offset < ordered.length) {
@@ -128,6 +131,6 @@ export function resetFlowSchedule(
 ): ScheduledFlowDatum {
   return {
     ...datum,
-    startAt: now + settings.replayDelayMs,
+    startAt: now + (settings.replayDelayMs ?? datum.replayDelayMs),
   };
 }

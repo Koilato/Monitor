@@ -4,6 +4,7 @@ import type { ThreatMapResponse } from '@shared/types';
 
 import {
   buildCanvasArcData,
+  resolveArcStageSettings,
   type ArcBundleMeta,
   type BundledCanvasArcDatum,
   type FlowArcSource,
@@ -18,7 +19,11 @@ import {
 import { type ThreatVisualLevel } from 'map/layers/tokens';
 import { normalizeCssColor } from 'shared/styles/color-utils';
 import type { FlowPlaybackMode } from 'map/state/map-state';
-import type { MapDebugSettings } from 'map/state/map-types';
+import type {
+  AttackArcStagePreset,
+  AttackArcStageSettings,
+  MapDebugSettings,
+} from 'map/state/map-types';
 
 interface AttackArcCanvasProps {
   mapRef: RefObject<maplibregl.Map | null>;
@@ -41,7 +46,7 @@ type BundledScheduledFlowDatum = ScheduledFlowDatum & ArcBundleMeta;
 
 type CanvasAttackRuntime = BundledScheduledFlowDatum & {
   colorRgb: string;
-  flight: number;
+  flightMs: number;
   groupKey: string;
 };
 
@@ -229,6 +234,29 @@ function clearCanvas(canvas: HTMLCanvasElement | null) {
   context.clearRect(0, 0, rect.width, rect.height);
 }
 
+function resolvePhaseStage(phase: 'flight' | 'hold' | 'fade'): AttackArcStagePreset {
+  if (phase === 'flight') {
+    return 'stage1';
+  }
+
+  if (phase === 'hold') {
+    return 'stage2';
+  }
+
+  return 'stage3';
+}
+
+function countActiveGroupsByLength(
+  attacks: CanvasAttackRuntime[],
+  lengthPreset: BundledCanvasArcDatum['lengthPreset'],
+): number {
+  return new Set(
+    attacks
+      .filter((attack) => attack.lengthPreset === lengthPreset)
+      .map((attack) => attack.groupKey),
+  ).size;
+}
+
 export function AttackArcCanvas({
   mapRef,
   mapReady,
@@ -292,19 +320,14 @@ export function AttackArcCanvas({
     }
 
     const now = performance.now();
-    const pending: CanvasAttackRuntime[] = (createInitialFlowSchedule(arcData, playbackMode, now, {
-      maxConcurrentStarts: attackArcSettings.maxConcurrentStarts,
-      flowStartSpacingMs: attackArcSettings.bundleIntervalMs,
-      replayDelayMs: attackArcSettings.replayDelayMs,
-    }) as BundledScheduledFlowDatum[]).map((datum) => ({
+    const pending: CanvasAttackRuntime[] = (createInitialFlowSchedule(arcData, playbackMode, now) as BundledScheduledFlowDatum[]).map((datum) => ({
       ...datum,
       colorRgb: resolveCanvasArcColor(datum.visualLevel),
-      flight: attackArcSettings.flightDuration + ((datum.bundleIndex % 2 === 0 ? -1 : 1) * 100),
+      flightMs: datum.flightDuration + ((datum.bundleIndex % 2 === 0 ? -1 : 1) * 100),
       startAt: datum.startAt,
-      groupKey: `${datum.attackerCountry}-${datum.victimCountry}-${datum.startAt}`,
+      groupKey: `${datum.flowKey}-${datum.startAt}`,
     }));
     const activeAttacks: CanvasAttackRuntime[] = [];
-    const activeGroupKeys = new Set<string>();
     let frameId = 0;
 
     const render = (now: number) => {
@@ -320,26 +343,27 @@ export function AttackArcCanvas({
       const { width, height } = syncCanvasSize(canvasRef.current, activeContext);
       activeContext.clearRect(0, 0, width, height);
 
-      while (activeGroupKeys.size < attackArcSettings.maxConcurrentStarts) {
-        const nextIndex = pending.findIndex((attack) => attack.startAt <= now);
+      while (true) {
+        const nextIndex = pending.findIndex((attack) => (
+          attack.startAt <= now
+          && countActiveGroupsByLength(activeAttacks, attack.lengthPreset) < attack.maxConcurrentStarts
+        ));
         if (nextIndex < 0) {
           break;
         }
 
-        const [nextAttack] = pending.splice(nextIndex, 1);
-        if (!nextAttack) {
+        const [scheduledAttack] = pending.splice(nextIndex, 1);
+        if (!scheduledAttack) {
           break;
         }
 
         activeAttacks.push({
-          ...nextAttack,
+          ...scheduledAttack,
           startAt: now,
         });
-        activeGroupKeys.add(nextAttack.groupKey);
       }
 
       const nextActiveAttacks: CanvasAttackRuntime[] = [];
-      const nextActiveGroupKeys = new Set<string>();
 
       for (let index = 0; index < activeAttacks.length; index += 1) {
         const attack = activeAttacks[index];
@@ -349,26 +373,29 @@ export function AttackArcCanvas({
 
         const elapsed = now - attack.startAt;
 
-        const total = attack.flight + attackArcSettings.holdDuration + attackArcSettings.fadeoutDuration;
+        const total = attack.flightMs + attack.holdDuration + attack.fadeoutDuration;
         if (elapsed > total) {
           pending.push({
             ...attack,
-            startAt: now + attackArcSettings.replayDelayMs,
+            startAt: now + attack.replayDelayMs,
           });
           continue;
         }
 
+        const frameWindow = resolveAttackArcFrameWindow(
+          elapsed,
+          attack.flightMs,
+          attack.holdDuration,
+          attack.fadeoutDuration,
+        );
+        const stageSettings: AttackArcStageSettings = resolveArcStageSettings(
+          attack,
+          resolvePhaseStage(frameWindow.phase),
+        );
         const sourcePoint = mapRef.current.project(attack.source);
         const targetPoint = mapRef.current.project(attack.target);
         const start = { x: sourcePoint.x, y: sourcePoint.y };
         const end = { x: targetPoint.x, y: targetPoint.y };
-
-        const frameWindow = resolveAttackArcFrameWindow(
-          elapsed,
-          attack.flight,
-          attackArcSettings.holdDuration,
-          attackArcSettings.fadeoutDuration,
-        );
 
         activeContext.save();
         drawArc(
@@ -379,9 +406,9 @@ export function AttackArcCanvas({
           frameWindow.alpha,
           start,
           end,
-          attack.lineWidth,
-          attack.segmentCount,
-          attack.curvatureRatio,
+          stageSettings.lineWidth,
+          stageSettings.segmentCount,
+          stageSettings.curvatureRatio,
         );
         activeContext.restore();
 
@@ -391,22 +418,19 @@ export function AttackArcCanvas({
             end,
             frameWindow.alpha,
             attack.colorRgb,
-            attackArcSettings.ringRadius,
-            attackArcSettings.ringCount,
-            attackArcSettings.ringSpacing,
-            attackArcSettings.ringLineWidth,
-            attackArcSettings.ringDotRadius,
+            stageSettings.ringRadius,
+            stageSettings.ringCount,
+            stageSettings.ringSpacing,
+            stageSettings.ringLineWidth,
+            stageSettings.ringDotRadius,
           );
         }
 
         nextActiveAttacks.push(attack);
-        nextActiveGroupKeys.add(attack.groupKey);
       }
 
       activeAttacks.length = 0;
       activeAttacks.push(...nextActiveAttacks);
-      activeGroupKeys.clear();
-      nextActiveGroupKeys.forEach((groupKey) => activeGroupKeys.add(groupKey));
       pending.sort((left, right) => {
         if (left.startAt !== right.startAt) {
           return left.startAt - right.startAt;
@@ -429,17 +453,6 @@ export function AttackArcCanvas({
     };
   }, [
     arcData,
-    attackArcSettings.bundleIntervalMs,
-    attackArcSettings.fadeoutDuration,
-    attackArcSettings.flightDuration,
-    attackArcSettings.holdDuration,
-    attackArcSettings.maxConcurrentStarts,
-    attackArcSettings.ringCount,
-    attackArcSettings.ringDotRadius,
-    attackArcSettings.ringLineWidth,
-    attackArcSettings.ringRadius,
-    attackArcSettings.ringSpacing,
-    attackArcSettings.replayDelayMs,
     isEnabled,
     mapReady,
     mapRef,

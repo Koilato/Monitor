@@ -4,43 +4,51 @@ import assert from 'node:assert/strict';
 import { buildCanvasArcData, buildTwoDArcData } from '../../src/map/lib/arc-data';
 import type { AttackArcDebugSettings } from '../../src/map/state/map-types';
 
+function createPreset(
+  bundleSpreadRatio: number,
+  curvatureRatio: number,
+  lineWidth: number,
+  segmentCount: number,
+  bundleCount = 4,
+) {
+  const stage = {
+    bundleSpreadRatio,
+    curvatureRatio,
+    lineWidth,
+    segmentCount,
+    ringRadius: 15,
+    ringCount: 2,
+    ringSpacing: 5,
+    ringLineWidth: 2.5,
+    ringDotRadius: 6,
+  };
+
+  return {
+    bundleCount,
+    flightDuration: 1300,
+    holdDuration: 2000,
+    fadeoutDuration: 700,
+    replayDelayMs: 5000,
+    bundleIntervalMs: 220,
+    maxConcurrentStarts: 4,
+    stages: {
+      stage1: { ...stage },
+      stage2: { ...stage },
+      stage3: { ...stage },
+    },
+  };
+}
+
 const ARC_SETTINGS: AttackArcDebugSettings = {
-  bundleCount: 4,
   lengthThresholds: {
     shortMax: 18,
     mediumMax: 55,
   },
-  lengthPresets: {
-    short: {
-      bundleSpreadRatio: 0.05,
-      curvatureRatio: 0.08,
-      lineWidth: 1.5,
-      segmentCount: 64,
-    },
-    medium: {
-      bundleSpreadRatio: 0.08,
-      curvatureRatio: 0.16,
-      lineWidth: 1.8,
-      segmentCount: 100,
-    },
-    long: {
-      bundleSpreadRatio: 0.12,
-      curvatureRatio: 0.24,
-      lineWidth: 2.2,
-      segmentCount: 140,
-    },
+  presets: {
+    short: createPreset(0.05, 0.08, 1.5, 64),
+    medium: createPreset(0.08, 0.16, 1.8, 100),
+    long: createPreset(0.12, 0.24, 2.2, 140),
   },
-  flightDuration: 1300,
-  holdDuration: 2000,
-  fadeoutDuration: 700,
-  replayDelayMs: 5000,
-  bundleIntervalMs: 220,
-  maxConcurrentStarts: 4,
-  ringRadius: 15,
-  ringCount: 2,
-  ringSpacing: 5,
-  ringLineWidth: 2.5,
-  ringDotRadius: 6,
 };
 
 const GEOJSON_RESPONSE = {
@@ -126,6 +134,8 @@ test('builds bundled 2d arc data from the static country center dictionary', asy
   assert.equal(data[0]?.lineWidth, 2.2);
   assert.equal(data[0]?.segmentCount, 140);
   assert.notDeepEqual(data[0]?.arrowPosition, data[3]?.arrowPosition);
+  assert.deepEqual(new Set(data.map((datum) => datum.source.map((value) => value.toFixed(6)).join(','))).size, 1);
+  assert.deepEqual(new Set(data.map((datum) => datum.target.map((value) => value.toFixed(6)).join(','))).size, 1);
 });
 
 test('applies short, medium, and long presets from euclidean distance thresholds', async () => {
@@ -189,7 +199,10 @@ test('supports single-line and wider bundle counts with the new settings shape',
     ],
   }, null, [], {
     ...ARC_SETTINGS,
-    bundleCount: 1,
+    presets: {
+      ...ARC_SETTINGS.presets,
+      long: createPreset(0.12, 0.24, 2.2, 140, 1),
+    },
   });
 
   assert.equal(singleLine.length, 1);
@@ -211,11 +224,15 @@ test('supports single-line and wider bundle counts with the new settings shape',
     ],
   }, null, [], {
     ...ARC_SETTINGS,
-    bundleCount: 6,
+    presets: {
+      ...ARC_SETTINGS.presets,
+      long: createPreset(0.12, 0.24, 2.2, 140, 6),
+    },
   });
 
   assert.equal(sixLine.length, 6);
   assert.deepEqual(sixLine.map((datum) => datum.bundleOffset), [-2.5, -1.5, -0.5, 0.5, 1.5, 2.5]);
+  assert.deepEqual(new Set(sixLine.map((datum) => datum.target.map((value) => value.toFixed(6)).join(','))).size, 1);
 });
 
 test('returns no arcs when a country center cannot be resolved', async () => {

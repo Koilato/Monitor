@@ -6,6 +6,40 @@ import {
   parseActiveCountryCodesInput,
 } from '../../src/map/hooks/useMapDebugSettings';
 
+function createExpectedPreset(
+  bundleSpreadRatio: number,
+  curvatureRatio: number,
+  lineWidth: number,
+  segmentCount: number,
+) {
+  const stage = {
+    bundleSpreadRatio,
+    curvatureRatio,
+    lineWidth,
+    segmentCount,
+    ringRadius: 18,
+    ringCount: 3,
+    ringSpacing: 4,
+    ringLineWidth: 2.8,
+    ringDotRadius: 7,
+  };
+
+  return {
+    bundleCount: 6,
+    flightDuration: 1500,
+    holdDuration: 2100,
+    fadeoutDuration: 900,
+    replayDelayMs: 6000,
+    bundleIntervalMs: 260,
+    maxConcurrentStarts: 5,
+    stages: {
+      stage1: { ...stage },
+      stage2: { ...stage },
+      stage3: { ...stage },
+    },
+  };
+}
+
 test('parseActiveCountryCodesInput normalizes iso2 entries', () => {
   assert.deepEqual(
     parseActiveCountryCodesInput(' cn, us, cn, jp , invalid, a, br1, de '),
@@ -27,42 +61,15 @@ test('coerceMapDebugSettings keeps normalized active country codes', () => {
     threatOutlineVisible: false,
     threatOutlineWidth: 2.4,
     attackArc: {
-      bundleCount: 6,
       lengthThresholds: {
         shortMax: 22,
         mediumMax: 68,
       },
-      lengthPresets: {
-        short: {
-          bundleSpreadRatio: 0.07,
-          curvatureRatio: 0.11,
-          lineWidth: 1.4,
-          segmentCount: 72,
-        },
-        medium: {
-          bundleSpreadRatio: 0.12,
-          curvatureRatio: 0.22,
-          lineWidth: 2.1,
-          segmentCount: 120,
-        },
-        long: {
-          bundleSpreadRatio: 0.17,
-          curvatureRatio: 0.28,
-          lineWidth: 2.6,
-          segmentCount: 160,
-        },
+      presets: {
+        short: createExpectedPreset(0.07, 0.11, 1.4, 72),
+        medium: createExpectedPreset(0.12, 0.22, 2.1, 120),
+        long: createExpectedPreset(0.17, 0.28, 2.6, 160),
       },
-      flightDuration: 1500,
-      holdDuration: 2100,
-      fadeoutDuration: 900,
-      replayDelayMs: 6000,
-      bundleIntervalMs: 260,
-      maxConcurrentStarts: 5,
-      ringRadius: 18,
-      ringCount: 3,
-      ringSpacing: 4,
-      ringLineWidth: 2.8,
-      ringDotRadius: 7,
     },
   });
 
@@ -78,42 +85,15 @@ test('coerceMapDebugSettings keeps normalized active country codes', () => {
     threatOutlineVisible: false,
     threatOutlineWidth: 2.4,
     attackArc: {
-      bundleCount: 6,
       lengthThresholds: {
         shortMax: 22,
         mediumMax: 68,
       },
-      lengthPresets: {
-        short: {
-          bundleSpreadRatio: 0.07,
-          curvatureRatio: 0.11,
-          lineWidth: 1.4,
-          segmentCount: 72,
-        },
-        medium: {
-          bundleSpreadRatio: 0.12,
-          curvatureRatio: 0.22,
-          lineWidth: 2.1,
-          segmentCount: 120,
-        },
-        long: {
-          bundleSpreadRatio: 0.17,
-          curvatureRatio: 0.28,
-          lineWidth: 2.6,
-          segmentCount: 160,
-        },
+      presets: {
+        short: createExpectedPreset(0.07, 0.11, 1.4, 72),
+        medium: createExpectedPreset(0.12, 0.22, 2.1, 120),
+        long: createExpectedPreset(0.17, 0.28, 2.6, 160),
       },
-      flightDuration: 1500,
-      holdDuration: 2100,
-      fadeoutDuration: 900,
-      replayDelayMs: 6000,
-      bundleIntervalMs: 260,
-      maxConcurrentStarts: 5,
-      ringRadius: 18,
-      ringCount: 3,
-      ringSpacing: 4,
-      ringLineWidth: 2.8,
-      ringDotRadius: 7,
     },
   });
 });

@@ -14,6 +14,35 @@ import {
   resolveThreatVisualLevel,
 } from '../../src/map/layers/tokens';
 
+function createPreset(bundleSpreadRatio: number, curvatureRatio: number, lineWidth: number, segmentCount: number) {
+  const stage = {
+    bundleSpreadRatio,
+    curvatureRatio,
+    lineWidth,
+    segmentCount,
+    ringRadius: 15,
+    ringCount: 2,
+    ringSpacing: 5,
+    ringLineWidth: 2.5,
+    ringDotRadius: 6,
+  };
+
+  return {
+    bundleCount: 4,
+    flightDuration: 1300,
+    holdDuration: 2000,
+    fadeoutDuration: 700,
+    replayDelayMs: 5000,
+    bundleIntervalMs: 220,
+    maxConcurrentStarts: 4,
+    stages: {
+      stage1: { ...stage },
+      stage2: { ...stage },
+      stage3: { ...stage },
+    },
+  };
+}
+
 test('builds a maplibre match expression from threat data', () => {
   assert.deepEqual(buildThreatColorExpression({
     startDate: '2026-04-01',
@@ -189,42 +218,15 @@ test('applies threat outline width and visibility state', async () => {
       threatOutlineVisible: false,
       threatOutlineWidth: 2.75,
       attackArc: {
-        bundleCount: 4,
         lengthThresholds: {
           shortMax: 18,
           mediumMax: 55,
         },
-        lengthPresets: {
-          short: {
-            bundleSpreadRatio: 0.05,
-            curvatureRatio: 0.08,
-            lineWidth: 1.5,
-            segmentCount: 64,
-          },
-          medium: {
-            bundleSpreadRatio: 0.08,
-            curvatureRatio: 0.16,
-            lineWidth: 1.8,
-            segmentCount: 100,
-          },
-          long: {
-            bundleSpreadRatio: 0.12,
-            curvatureRatio: 0.24,
-            lineWidth: 2.2,
-            segmentCount: 140,
-          },
+        presets: {
+          short: createPreset(0.05, 0.08, 1.5, 64),
+          medium: createPreset(0.08, 0.16, 1.8, 100),
+          long: createPreset(0.12, 0.24, 2.2, 140),
         },
-        flightDuration: 1300,
-        holdDuration: 2000,
-        fadeoutDuration: 700,
-        replayDelayMs: 5000,
-        bundleIntervalMs: 220,
-        maxConcurrentStarts: 4,
-        ringRadius: 15,
-        ringCount: 2,
-        ringSpacing: 5,
-        ringLineWidth: 2.5,
-        ringDotRadius: 6,
       },
     },
     hoverData: null,
