@@ -38,6 +38,7 @@ export interface MapDebugSettings {
 export interface MapViewProps {
   viewMode: MapViewMode;
   mapState: MapState;
+  themeRevision: number;
   hoveredCountryCode: string | null;
   data: CountryHoverResponse | null;
   threatData: ThreatMapResponse | null;

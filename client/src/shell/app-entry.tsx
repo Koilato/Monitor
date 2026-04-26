@@ -1,5 +1,5 @@
 import { AppShell } from 'shell/AppShell';
-import 'shared/styles/theme.css';
+import 'shared/styles/theme';
 import 'shell/styles/app-shell.css';
 import 'shell/styles/toolbar.css';
 import 'shell/styles/debug-panel.css';

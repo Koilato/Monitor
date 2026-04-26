@@ -1,17 +1,16 @@
 import type { EventLevel } from '@shared/types';
 
 import type { LayerLegendDefinition } from 'map/layers/registry';
+import {
+  getThreatVisualToken as getThemeThreatVisualToken,
+  type ThreatVisualLayerToken,
+} from 'shared/styles/theme';
+import { rgbaStringToDeckColor, scaleDeckColorAlpha, type DeckColor } from 'shared/styles/color-utils';
+
+export type { DeckColor } from 'shared/styles/color-utils';
+export { rgbaStringToDeckColor, scaleDeckColorAlpha } from 'shared/styles/color-utils';
 
 export type ThreatVisualLevel = 'none' | 'low' | 'medium' | 'high' | 'critical' | 'active';
-
-export interface ThreatVisualLayerToken {
-  fill: string;
-  stroke: string;
-  glow: string;
-  arc: string;
-}
-
-export type DeckColor = [number, number, number, number];
 
 const NONE_TOKEN: ThreatVisualLayerToken = {
   fill: 'rgba(0,0,0,0)',
@@ -22,24 +21,6 @@ const NONE_TOKEN: ThreatVisualLayerToken = {
 
 export const THREAT_VISUAL_LEVEL_TOKENS: Record<ThreatVisualLevel, ThreatVisualLayerToken> = {
   none: NONE_TOKEN,
-  low: {
-    fill: 'rgba(52,200,255,0.16)',
-    stroke: 'rgba(82,214,255,0.76)',
-    glow: 'rgba(52,200,255,0.14)',
-    arc: 'rgba(82,214,255,0.72)',
-  },
-  medium: {
-    fill: 'rgba(255,200,87,0.20)',
-    stroke: 'rgba(255,215,120,0.84)',
-    glow: 'rgba(255,200,87,0.20)',
-    arc: 'rgba(255,215,120,0.76)',
-  },
-  high: {
-    fill: 'rgba(255,122,69,0.24)',
-    stroke: 'rgba(255,150,110,0.90)',
-    glow: 'rgba(255,122,69,0.26)',
-    arc: 'rgba(255,140,90,0.82)',
-  },
   critical: {
     fill: 'rgba(255,61,87,0.28)',
     stroke: 'rgba(255,95,116,0.96)',
@@ -51,6 +32,15 @@ export const THREAT_VISUAL_LEVEL_TOKENS: Record<ThreatVisualLevel, ThreatVisualL
     stroke: 'rgba(220,120,255,0.98)',
     glow: 'rgba(201,60,255,0.40)',
     arc: 'rgba(220,120,255,0.92)',
+  },
+  get low() {
+    return getThemeThreatVisualToken('low');
+  },
+  get medium() {
+    return getThemeThreatVisualToken('medium');
+  },
+  get high() {
+    return getThemeThreatVisualToken('high');
   },
 };
 
@@ -99,38 +89,23 @@ export function resolveThreatVisualLevel(
 }
 
 export function getThreatVisualToken(level: ThreatVisualLevel): ThreatVisualLayerToken {
-  return THREAT_VISUAL_LEVEL_TOKENS[level];
-}
-
-const RGBA_COLOR_PATTERN = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*((?:\d+\.?\d*)|(?:\d*\.\d+))\s*\)$/i;
-
-export function rgbaStringToDeckColor(color: string): DeckColor {
-  const match = color.match(RGBA_COLOR_PATTERN);
-  if (!match) {
-    return [255, 255, 255, 255];
+  if (level === 'low' || level === 'medium' || level === 'high') {
+    return getThemeThreatVisualToken(level);
   }
 
-  const red = Math.min(255, Math.max(0, Number(match[1])));
-  const green = Math.min(255, Math.max(0, Number(match[2])));
-  const blue = Math.min(255, Math.max(0, Number(match[3])));
-  const alpha = Math.min(1, Math.max(0, Number(match[4])));
-
-  return [red, green, blue, Math.round(alpha * 255)];
-}
-
-export function scaleDeckColorAlpha(color: DeckColor, factor: number): DeckColor {
-  const alpha = Math.round(Math.min(255, Math.max(0, color[3] * factor)));
-  return [color[0], color[1], color[2], alpha];
+  return THREAT_VISUAL_LEVEL_TOKENS[level];
 }
 
 export const THREAT_LEGEND: LayerLegendDefinition = {
   label: 'Threat',
-  items: [
-    { label: 'LOW', color: THREAT_VISUAL_LEVEL_TOKENS.low.stroke },
-    { label: 'MED', color: THREAT_VISUAL_LEVEL_TOKENS.medium.stroke },
-    { label: 'HIGH', color: THREAT_VISUAL_LEVEL_TOKENS.critical.stroke },
-    { label: 'ACTIVE', color: THREAT_VISUAL_LEVEL_TOKENS.active.stroke },
-  ],
+  get items() {
+    return [
+      { label: 'LOW', color: THREAT_VISUAL_LEVEL_TOKENS.low.stroke },
+      { label: 'MED', color: THREAT_VISUAL_LEVEL_TOKENS.medium.stroke },
+      { label: 'HIGH', color: THREAT_VISUAL_LEVEL_TOKENS.critical.stroke },
+      { label: 'ACTIVE', color: THREAT_VISUAL_LEVEL_TOKENS.active.stroke },
+    ];
+  },
 };
 
 export const COUNTRY_BASE_FILL_COLOR = '#141414';

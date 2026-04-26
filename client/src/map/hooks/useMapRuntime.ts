@@ -22,6 +22,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
   const {
     viewMode,
     mapState,
+    themeRevision,
     hoveredCountryCode,
     data,
     threatData,
@@ -200,6 +201,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
     threatData,
     viewMode,
     debugSettings.activeCountryCodes,
+    themeRevision,
   ]);
 
   return {

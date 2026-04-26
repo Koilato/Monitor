@@ -4,6 +4,7 @@ import type { MapCameraState, MapState } from 'map/state/map-state';
 import { LAYER_MODULES } from 'map/layers/modules';
 import { IncidentPopup } from 'map/components/IncidentPopup';
 import { MapRenderer } from 'map/components/MapRenderer';
+import { useThemeRevision } from 'shared/styles/theme';
 
 interface MapViewportProps {
   viewMode: '2d' | '3d';
@@ -35,6 +36,7 @@ export function MapViewport(props: MapViewportProps) {
     onActiveLayerIdsChange,
     debugSettings,
   } = props;
+  const themeRevision = useThemeRevision();
 
   const visibleModules = LAYER_MODULES.filter(
     (module) => module.supportsView.includes(viewMode) && module.showInLayerControls !== false,
@@ -47,6 +49,7 @@ export function MapViewport(props: MapViewportProps) {
         <MapRenderer
           viewMode={viewMode}
           mapState={mapState}
+          themeRevision={themeRevision}
           hoveredCountryCode={hoveredCountry?.code ?? null}
           data={data}
           threatData={threatData}
