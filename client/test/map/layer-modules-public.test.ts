@@ -104,7 +104,8 @@ test('threat highlight initializes its country source when countries base is dis
       modules: LAYER_MODULES,
       activeLayerIds: ['threat-highlight'],
       activeThreatCountryCodes: [],
-      data: null,
+      hoverData: null,
+      flowData: null,
       threatData: null,
       hoveredCountryCode: null,
     });
@@ -136,12 +137,12 @@ test('attack-arcs builds arc and arrowhead overlays together', async () => {
     const layers = await attackArcsModule.buildOverlayLayers({
       map: {} as never,
       deckOverlay: null,
-      view: '2d',
+      view: '3d',
       activeLayerIds: ['attack-arcs'],
       activeThreatCountryCodes: [],
       threatData: null,
       hoveredCountryCode: null,
-      data: {
+      hoverData: {
         victimCountry: 'CN',
         startDate: '2026-04-01',
         endDate: '2026-04-22',
@@ -156,6 +157,7 @@ test('attack-arcs builds arc and arrowhead overlays together', async () => {
           },
         ],
       },
+      flowData: null,
     });
 
     assert.deepEqual(layers.map((layer) => layer.id), [

@@ -4,7 +4,16 @@ import { DEFAULT_MAP_STATE } from 'map/state/map-state';
 import type { MapViewProps } from 'map/state/map-types';
 
 export function MapRenderer(props: MapViewProps) {
-  const { viewMode, onCameraChange, mapState, data, threatData, debugSettings, themeRevision } = props;
+  const {
+    viewMode,
+    onCameraChange,
+    mapState,
+    flowData,
+    threatData,
+    flowPlaybackMode,
+    debugSettings,
+    themeRevision,
+  } = props;
   const { containerRef, mapRef, mapReady } = useMapRuntime(props);
 
   return (
@@ -15,9 +24,10 @@ export function MapRenderer(props: MapViewProps) {
         mapReady={mapReady}
         viewMode={viewMode}
         isEnabled={mapState.activeLayerIds.includes('attack-arcs')}
-        data={data}
+        flowData={flowData}
         threatData={threatData}
         activeThreatCountryCodes={debugSettings.activeCountryCodes}
+        playbackMode={flowPlaybackMode}
         themeRevision={themeRevision}
       />
       <div className="deckgl-controls">

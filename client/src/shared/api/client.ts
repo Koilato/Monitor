@@ -1,4 +1,5 @@
 import type {
+  AllFlowResponse,
   CountryHoverResponse,
   DateRange,
   LatestContentResponse,
@@ -36,6 +37,31 @@ export async function fetchCountryHover(
   }
 
   return response.json() as Promise<CountryHoverResponse>;
+}
+
+export function buildAllFlowsUrl(range: DateRange): string {
+  const url = new URL('/api/map/all-flows', API_BASE_URL);
+  if (range.startDate) {
+    url.searchParams.set('startDate', range.startDate);
+  }
+  if (range.endDate) {
+    url.searchParams.set('endDate', range.endDate);
+  }
+  return url.toString();
+}
+
+export async function fetchAllFlows(
+  range: DateRange,
+  signal?: AbortSignal,
+): Promise<AllFlowResponse> {
+  const response = await fetch(buildAllFlowsUrl(range), { signal });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(payload.error || 'Request failed');
+  }
+
+  return response.json() as Promise<AllFlowResponse>;
 }
 
 export function buildLatestContentUrl(

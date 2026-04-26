@@ -1,17 +1,20 @@
 import type { Layer } from '@deck.gl/core';
 import { ArcLayer, IconLayer } from '@deck.gl/layers';
 import type { IconLayerProps } from '@deck.gl/layers';
-import type { EventLevel } from '@shared/types';
 
-import { buildTwoDArcData, type TwoDArcDatum } from 'map/lib/arc-data';
+import {
+  buildTwoDArcData,
+  resolveBundledArcEndpoints,
+  type BundledTwoDArcDatum,
+} from 'map/lib/arc-data';
 import type { LayerRenderContext } from 'map/layers/registry';
 import {
   ARROW_ICON_ATLAS,
   getThreatVisualToken,
   rgbaStringToDeckColor,
-  resolveThreatVisualLevel,
   scaleDeckColorAlpha,
   type DeckColor,
+  type ThreatVisualLevel,
 } from 'map/layers/tokens';
 import { THREAT_LABEL_LAYER_ID } from 'map/layers/threat-labels';
 
@@ -23,10 +26,12 @@ interface ThreatArcPalette {
   arrow: DeckColor;
 }
 
-function getIconLayerProps(getArrowColor: (datum: TwoDArcDatum) => DeckColor): IconLayerProps<TwoDArcDatum> {
-  const props: IconLayerProps<TwoDArcDatum> & { beforeId: string } = {
+function getIconLayerProps(
+  getArrowColor: (datum: BundledTwoDArcDatum) => DeckColor,
+): IconLayerProps<BundledTwoDArcDatum> {
+  const props: IconLayerProps<BundledTwoDArcDatum> & { beforeId: string } = {
     id: 'attack-arrowheads-base',
-    data: [] as TwoDArcDatum[],
+    data: [] as BundledTwoDArcDatum[],
     iconAtlas: ARROW_ICON_ATLAS,
     iconMapping: {
       arrow: { x: 0, y: 0, width: 64, height: 64, mask: true },
@@ -44,28 +49,9 @@ function getIconLayerProps(getArrowColor: (datum: TwoDArcDatum) => DeckColor): I
   return props;
 }
 
-function resolveThreatLevelForVictimCountry(
-  context: LayerRenderContext,
-): { level: EventLevel; countryCode: string | null } {
-  const countryCode = context.data?.victimCountry ?? null;
-  if (!countryCode) {
-    return { level: 'low', countryCode: null };
-  }
-
-  const countryStat = context.threatData?.countries.find((country) => country.country === countryCode);
-  if (!countryStat) {
-    return { level: 'low', countryCode };
-  }
-
-  return { level: countryStat.eventLevel, countryCode };
-}
-
 export function buildThreatArcPalette(
-  level: EventLevel,
-  activeThreatCountryCodes: readonly string[],
-  countryCode: string | null = null,
+  visualLevel: ThreatVisualLevel,
 ): ThreatArcPalette {
-  const visualLevel = resolveThreatVisualLevel(level, countryCode, activeThreatCountryCodes);
   const base = rgbaStringToDeckColor(getThreatVisualToken(visualLevel).arc);
 
   return {
@@ -82,17 +68,19 @@ export async function buildAttackArcLayers(context: LayerRenderContext): Promise
     return [];
   }
 
-  const data = await buildTwoDArcData(context.data);
-  const { level, countryCode } = resolveThreatLevelForVictimCountry(context);
-  const palette = buildThreatArcPalette(level, context.activeThreatCountryCodes, countryCode);
+  const data = await buildTwoDArcData(
+    context.flowData ?? context.hoverData,
+    context.threatData,
+    context.activeThreatCountryCodes,
+  );
   const glowLayerProps = {
     id: 'attack-arcs-glow',
     data,
-    getSourcePosition: (datum: TwoDArcDatum) => datum.source,
-    getTargetPosition: (datum: TwoDArcDatum) => datum.target,
-    getSourceColor: () => palette.glowSource,
-    getTargetColor: () => palette.glowTarget,
-    getWidth: (datum: TwoDArcDatum) => Math.max(3.2, datum.count * 1.8),
+    getSourcePosition: (datum: BundledTwoDArcDatum) => resolveBundledArcEndpoints(datum.source, datum.target, datum.bundleOffset).source,
+    getTargetPosition: (datum: BundledTwoDArcDatum) => resolveBundledArcEndpoints(datum.source, datum.target, datum.bundleOffset).target,
+    getSourceColor: (datum: BundledTwoDArcDatum) => buildThreatArcPalette(datum.visualLevel).glowSource,
+    getTargetColor: (datum: BundledTwoDArcDatum) => buildThreatArcPalette(datum.visualLevel).glowTarget,
+    getWidth: (datum: BundledTwoDArcDatum) => Math.max(3.2, datum.count * 1.8),
     widthUnits: 'pixels' as const,
     pickable: false,
     beforeId: THREAT_LABEL_LAYER_ID,
@@ -100,19 +88,19 @@ export async function buildAttackArcLayers(context: LayerRenderContext): Promise
   const arcLayerProps = {
     id: 'attack-arcs',
     data,
-    getSourcePosition: (datum: TwoDArcDatum) => datum.source,
-    getTargetPosition: (datum: TwoDArcDatum) => datum.target,
-    getSourceColor: () => palette.source,
-    getTargetColor: () => palette.target,
-    getWidth: (datum: TwoDArcDatum) => Math.max(1.6, datum.count * 1.05),
+    getSourcePosition: (datum: BundledTwoDArcDatum) => resolveBundledArcEndpoints(datum.source, datum.target, datum.bundleOffset).source,
+    getTargetPosition: (datum: BundledTwoDArcDatum) => resolveBundledArcEndpoints(datum.source, datum.target, datum.bundleOffset).target,
+    getSourceColor: (datum: BundledTwoDArcDatum) => buildThreatArcPalette(datum.visualLevel).source,
+    getTargetColor: (datum: BundledTwoDArcDatum) => buildThreatArcPalette(datum.visualLevel).target,
+    getWidth: (datum: BundledTwoDArcDatum) => Math.max(1.6, datum.count * 1.05),
     widthUnits: 'pixels' as const,
     pickable: false,
     beforeId: THREAT_LABEL_LAYER_ID,
   };
 
   return [
-    new ArcLayer<TwoDArcDatum>(glowLayerProps),
-    new ArcLayer<TwoDArcDatum>(arcLayerProps),
+    new ArcLayer<BundledTwoDArcDatum>(glowLayerProps),
+    new ArcLayer<BundledTwoDArcDatum>(arcLayerProps),
   ];
 }
 
@@ -121,12 +109,14 @@ export async function buildAttackArrowheadLayers(context: LayerRenderContext): P
     return [];
   }
 
-  const data = await buildTwoDArcData(context.data);
-  const { level, countryCode } = resolveThreatLevelForVictimCountry(context);
-  const palette = buildThreatArcPalette(level, context.activeThreatCountryCodes, countryCode);
+  const data = await buildTwoDArcData(
+    context.flowData ?? context.hoverData,
+    context.threatData,
+    context.activeThreatCountryCodes,
+  );
   return [
-    new IconLayer<TwoDArcDatum>({
-      ...getIconLayerProps(() => palette.arrow),
+    new IconLayer<BundledTwoDArcDatum>({
+      ...getIconLayerProps((datum) => buildThreatArcPalette(datum.visualLevel).arrow),
       id: 'attack-arrowheads',
       data,
     }),

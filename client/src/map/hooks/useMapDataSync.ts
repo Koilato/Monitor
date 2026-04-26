@@ -1,20 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CountryHoverResponse, DateRange, ThreatMapResponse } from '@shared/types';
-import { fetchCountryHover, fetchThreatMap } from 'shared/api/client';
+import { fetchAllFlows, fetchCountryHover, fetchThreatMap } from 'shared/api/client';
 import { createRequestTracker } from 'map/lib/request-tracker';
 import { timeFilterToDateRange, type TimeFilterState } from 'map/state/map-state';
 import type { CountryHoverEvent, HoverCountryState, PopupAnchor } from 'map/state/map-types';
+import type { FlowMode } from 'map/state/map-state';
 
 export interface MapDataSyncState {
   dateRange: DateRange;
   hoveredCountry: HoverCountryState | null;
   popupAnchor: PopupAnchor | null;
   hoverData: CountryHoverResponse | null;
+  allFlowData: Awaited<ReturnType<typeof fetchAllFlows>> | null;
   threatData: ThreatMapResponse | null;
   loading: boolean;
   threatLoading: boolean;
+  allFlowLoading: boolean;
   error: string | null;
   threatError: string | null;
+  allFlowError: string | null;
   panelCount: number;
   statusTone: 'error' | 'warning' | 'live';
   statusLabel: string;
@@ -23,6 +27,7 @@ export interface MapDataSyncState {
 
 interface UseMapDataSyncInput {
   timeFilter: TimeFilterState;
+  flowMode: FlowMode;
 }
 
 export function serializeDateRange(range: DateRange): string {
@@ -42,13 +47,17 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
   const [hoveredCountry, setHoveredCountry] = useState<HoverCountryState | null>(null);
   const [popupAnchor, setPopupAnchor] = useState<PopupAnchor | null>(null);
   const [hoverData, setHoverData] = useState<CountryHoverResponse | null>(null);
+  const [allFlowData, setAllFlowData] = useState<Awaited<ReturnType<typeof fetchAllFlows>> | null>(null);
   const [threatData, setThreatData] = useState<ThreatMapResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [threatLoading, setThreatLoading] = useState(false);
+  const [allFlowLoading, setAllFlowLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [threatError, setThreatError] = useState<string | null>(null);
+  const [allFlowError, setAllFlowError] = useState<string | null>(null);
   const hoverRequestTrackerRef = useRef(createRequestTracker());
   const threatRequestTrackerRef = useRef(createRequestTracker());
+  const allFlowRequestTrackerRef = useRef(createRequestTracker());
   const activeCountryRef = useRef<string | null>(null);
   const activeRangeRef = useRef(serializeDateRange(dateRange));
   const latestRangeRef = useRef<DateRange>(dateRange);
@@ -116,6 +125,31 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
     }
   }, []);
 
+  const startAllFlowRequest = useCallback(async (range: DateRange) => {
+    const requestTicket = allFlowRequestTrackerRef.current.next();
+
+    setAllFlowLoading(true);
+    setAllFlowError(null);
+
+    try {
+      const response = await fetchAllFlows(range, requestTicket.signal);
+      if (requestTicket.signal.aborted || !allFlowRequestTrackerRef.current.isCurrent(requestTicket.id)) {
+        return;
+      }
+      setAllFlowData(response);
+    } catch (fetchError) {
+      if (isAbortError(fetchError) || requestTicket.signal.aborted || !allFlowRequestTrackerRef.current.isCurrent(requestTicket.id)) {
+        return;
+      }
+      setAllFlowData(null);
+      setAllFlowError((fetchError as Error).message);
+    } finally {
+      if (!requestTicket.signal.aborted && allFlowRequestTrackerRef.current.isCurrent(requestTicket.id)) {
+        setAllFlowLoading(false);
+      }
+    }
+  }, []);
+
   const handleCountryHover = useCallback((event: CountryHoverEvent) => {
     setPopupAnchor(event.anchor);
 
@@ -137,29 +171,50 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
   useEffect(() => {
     latestRangeRef.current = dateRange;
     void startThreatRequest(dateRange);
+    if (input.flowMode === 'allflow') {
+      void startAllFlowRequest(dateRange);
+    } else {
+      allFlowRequestTrackerRef.current.abort();
+      setAllFlowLoading(false);
+    }
     if (!hoveredCountry || dateRangeKey === activeRangeRef.current) {
       return;
     }
 
     void startHoverRequest(hoveredCountry, dateRange, true);
-  }, [dateRangeKey, hoveredCountry, startHoverRequest, startThreatRequest]);
+  }, [dateRangeKey, hoveredCountry, input.flowMode, startHoverRequest, startThreatRequest, startAllFlowRequest]);
 
   useEffect(() => () => {
     hoverRequestTrackerRef.current.abort();
     threatRequestTrackerRef.current.abort();
+    allFlowRequestTrackerRef.current.abort();
   }, []);
 
-  const panelCount = hoveredCountry ? hoverData?.total ?? 0 : 0;
-  const statusTone = error || threatError ? 'error' : loading || threatLoading ? 'warning' : 'live';
+  const panelCount = input.flowMode === 'allflow'
+    ? allFlowData?.total ?? 0
+    : hoveredCountry
+      ? hoverData?.total ?? 0
+      : 0;
+  const statusTone = error || threatError || (input.flowMode === 'allflow' && allFlowError)
+    ? 'error'
+    : loading || threatLoading || (input.flowMode === 'allflow' && allFlowLoading)
+      ? 'warning'
+      : 'live';
   const statusLabel = error
     ? 'QUERY ERROR'
     : threatError
       ? 'MAP ERROR'
+      : input.flowMode === 'allflow' && allFlowError
+        ? 'FLOW ERROR'
       : loading
         ? 'QUERYING'
         : threatLoading
           ? 'FILTERING MAP'
-          : hoveredCountry
+          : input.flowMode === 'allflow' && allFlowLoading
+            ? 'PREPARING ALLFLOW'
+            : input.flowMode === 'allflow'
+              ? `ALLFLOW ${allFlowData?.total ?? 0}`
+              : hoveredCountry
             ? `TRACKING ${hoveredCountry.code}`
             : 'LIVE MAP FEED';
 
@@ -168,11 +223,14 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
     hoveredCountry,
     popupAnchor,
     hoverData,
+    allFlowData,
     threatData,
     loading,
     threatLoading,
+    allFlowLoading,
     error,
     threatError,
+    allFlowError,
     panelCount,
     statusTone,
     statusLabel,

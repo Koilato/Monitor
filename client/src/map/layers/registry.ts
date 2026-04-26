@@ -3,6 +3,7 @@ import type { Layer } from '@deck.gl/core';
 import type { MapboxOverlay } from '@deck.gl/mapbox';
 import type maplibregl from 'maplibre-gl';
 
+import type { FlowArcSource } from 'map/lib/arc-data';
 import type { MapViewMode } from 'map/state/map-state';
 
 export interface LayerLegendDefinition {
@@ -16,7 +17,8 @@ export interface LayerRenderContext {
   view: MapViewMode;
   activeLayerIds: string[];
   activeThreatCountryCodes: string[];
-  data: CountryHoverResponse | null;
+  hoverData: CountryHoverResponse | null;
+  flowData: FlowArcSource | null;
   threatData: ThreatMapResponse | null;
   hoveredCountryCode?: string | null;
 }

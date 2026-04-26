@@ -1,15 +1,25 @@
-import type { TimeFilterState, TimePreset } from 'map/state/map-state';
+import type { FlowMode, FlowPlaybackMode, TimeFilterState, TimePreset } from 'map/state/map-state';
 
 interface AppToolbarProps {
   viewMode: '2d' | '3d';
   timeFilter: TimeFilterState;
+  flowMode: FlowMode;
+  flowPlaybackMode: FlowPlaybackMode;
   debugModeEnabled: boolean;
   statusTone: 'live' | 'warning' | 'error';
   statusLabel: string;
   onViewModeChange: (mode: '2d' | '3d') => void;
   onTimeFilterChange: (filter: TimeFilterState) => void;
+  onFlowModeChange: (mode: FlowMode) => void;
+  onFlowPlaybackModeChange: (mode: FlowPlaybackMode) => void;
   onDebugModeToggle: () => void;
 }
+
+const FLOW_PLAYBACK_MODES: Array<{ label: string; value: FlowPlaybackMode; title: string }> = [
+  { label: 'FIFO', value: 'fifo', title: 'First in, first out' },
+  { label: 'CNTRY', value: 'country', title: 'Group by attacker country' },
+  { label: 'TIME', value: 'time', title: 'Sort by incident time' },
+];
 
 const TIME_PRESETS: TimePreset[] = ['1d', '2d', '7d'];
 
@@ -17,11 +27,15 @@ export function AppToolbar(props: AppToolbarProps) {
   const {
     viewMode,
     timeFilter,
+    flowMode,
+    flowPlaybackMode,
     debugModeEnabled,
     statusTone,
     statusLabel,
     onViewModeChange,
     onTimeFilterChange,
+    onFlowModeChange,
+    onFlowPlaybackModeChange,
     onDebugModeToggle,
   } = props;
 
@@ -58,6 +72,30 @@ export function AppToolbar(props: AppToolbarProps) {
             })}
           >
             {preset.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      <div className="map-dimension-toggle" role="group" aria-label="Flow playback mode">
+        <button
+          type="button"
+          className={`map-dim-btn ${flowMode === 'allflow' ? 'active' : ''}`}
+          aria-pressed={flowMode === 'allflow'}
+          onClick={() => onFlowModeChange(flowMode === 'allflow' ? 'hover' : 'allflow')}
+          title="Show all flows in the current date range"
+        >
+          ALLFLOW
+        </button>
+        {FLOW_PLAYBACK_MODES.map((mode) => (
+          <button
+            key={mode.value}
+            type="button"
+            className={`map-dim-btn ${flowPlaybackMode === mode.value ? 'active' : ''}`}
+            aria-pressed={flowPlaybackMode === mode.value}
+            onClick={() => onFlowPlaybackModeChange(mode.value)}
+            title={mode.title}
+          >
+            {mode.label}
           </button>
         ))}
       </div>

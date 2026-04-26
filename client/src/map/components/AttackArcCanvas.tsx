@@ -1,19 +1,32 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import type maplibregl from 'maplibre-gl';
-import type { CountryHoverResponse, ThreatMapResponse } from '@shared/types';
+import type { ThreatMapResponse } from '@shared/types';
 
-import { buildCanvasArcData, type CanvasArcDatum } from 'map/lib/arc-data';
-import { resolveThreatVisualLevel, type ThreatVisualLevel } from 'map/layers/tokens';
+import {
+  buildCanvasArcData,
+  type ArcBundleMeta,
+  type BundledCanvasArcDatum,
+  type FlowArcSource,
+} from 'map/lib/arc-data';
+import {
+  createInitialFlowSchedule,
+  FLOW_REPLAY_DELAY_MS,
+  type ScheduledFlowDatum,
+  MAX_CONCURRENT_FLOW_STARTS,
+} from 'map/lib/flow-playback';
+import { type ThreatVisualLevel } from 'map/layers/tokens';
 import { normalizeCssColor } from 'shared/styles/color-utils';
+import type { FlowPlaybackMode } from 'map/state/map-state';
 
 interface AttackArcCanvasProps {
   mapRef: RefObject<maplibregl.Map | null>;
   mapReady: boolean;
   viewMode: '2d' | '3d';
   isEnabled: boolean;
-  data: CountryHoverResponse | null;
+  flowData: FlowArcSource | null;
   threatData: ThreatMapResponse | null;
   activeThreatCountryCodes: string[];
+  playbackMode: FlowPlaybackMode;
   themeRevision: number;
 }
 
@@ -22,16 +35,12 @@ interface ScreenPoint {
   y: number;
 }
 
-interface CanvasAttackRuntime {
-  id: string;
-  source: [number, number];
-  target: [number, number];
-  count: number;
+type BundledScheduledFlowDatum = ScheduledFlowDatum & ArcBundleMeta;
+
+type CanvasAttackRuntime = BundledScheduledFlowDatum & {
   colorRgb: string;
-  start: number;
   flight: number;
-  bundleOffset: number;
-}
+};
 
 const FLIGHT_DURATION = 1300;
 const HOLD_DURATION = 2000;
@@ -39,9 +48,7 @@ const FADEOUT_DURATION = 700;
 const LIFT_RATIO = 0.16;
 const LINE_WIDTH = 1.8;
 const SEGMENTS = 100;
-const BUNDLE_SIZE = 4;
 const BUNDLE_INTERVAL = 220;
-const JITTER_SCALE = 0.3;
 const RING_OUTER = { r: 15, lw: 2.5 };
 const RING_MIDDLE = { r: 10, lw: 2.0 };
 const CENTER_DOT = { r: 6, color: '245,197,66' };
@@ -124,8 +131,7 @@ function resolveControlPoint(start: ScreenPoint, end: ScreenPoint, bundleOffset:
   }
 
   const liftBase = length * LIFT_RATIO;
-  const jitter = bundleOffset * (liftBase * JITTER_SCALE);
-  const lift = liftBase + jitter;
+  const lift = liftBase + (bundleOffset * liftBase * 0.3);
 
   return {
     x: midX + (normalX * lift),
@@ -195,48 +201,22 @@ function clearCanvas(canvas: HTMLCanvasElement | null) {
   context.clearRect(0, 0, rect.width, rect.height);
 }
 
-function createAttackRuntime(data: CanvasArcDatum[]): CanvasAttackRuntime[] {
-  const now = performance.now();
-
-  return data.flatMap((datum) => {
-    const bundleColor = resolveCanvasArcColor(datum.visualLevel);
-    return Array.from({ length: BUNDLE_SIZE }, (_, index) => ({
-      id: `${datum.id}-${index}`,
-      source: datum.source,
-      target: datum.target,
-      count: datum.count,
-      colorRgb: bundleColor,
-      start: now + (index * BUNDLE_INTERVAL),
-      flight: FLIGHT_DURATION + ((index % 2 === 0 ? -1 : 1) * 100),
-      bundleOffset: index - ((BUNDLE_SIZE - 1) / 2),
-    }));
-  });
-}
-
 export function AttackArcCanvas({
   mapRef,
   mapReady,
   viewMode,
   isEnabled,
-  data,
+  flowData,
   threatData,
   activeThreatCountryCodes,
+  playbackMode,
   themeRevision,
 }: AttackArcCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [arcData, setArcData] = useState<CanvasArcDatum[]>([]);
-
-  const visualLevel = useMemo<ThreatVisualLevel>(() => {
-    const countryCode = data?.victimCountry ?? null;
-    const countryStat = countryCode
-      ? threatData?.countries.find((country) => country.country === countryCode)
-      : null;
-    const eventLevel = countryStat?.eventLevel ?? 'low';
-    return resolveThreatVisualLevel(eventLevel, countryCode, activeThreatCountryCodes);
-  }, [activeThreatCountryCodes, data?.victimCountry, threatData]);
+  const [arcData, setArcData] = useState<BundledCanvasArcDatum[]>([]);
 
   useEffect(() => {
-    if (!isEnabled || viewMode !== '2d' || !data) {
+    if (!isEnabled || viewMode !== '2d' || !flowData) {
       setArcData([]);
       return;
     }
@@ -244,7 +224,7 @@ export function AttackArcCanvas({
     let cancelled = false;
 
     async function loadArcData() {
-      const nextData = await buildCanvasArcData(data, visualLevel);
+      const nextData = await buildCanvasArcData(flowData, threatData, activeThreatCountryCodes);
       if (!cancelled) {
         setArcData(nextData);
       }
@@ -260,7 +240,7 @@ export function AttackArcCanvas({
     return () => {
       cancelled = true;
     };
-  }, [data, isEnabled, viewMode, visualLevel]);
+  }, [activeThreatCountryCodes, flowData, isEnabled, threatData, viewMode]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -276,7 +256,14 @@ export function AttackArcCanvas({
       return;
     }
 
-    const attacks = createAttackRuntime(arcData);
+    const now = performance.now();
+    const pending: CanvasAttackRuntime[] = (createInitialFlowSchedule(arcData, playbackMode, now) as BundledScheduledFlowDatum[]).map((datum) => ({
+      ...datum,
+      colorRgb: resolveCanvasArcColor(datum.visualLevel),
+      flight: FLIGHT_DURATION + ((datum.bundleIndex % 2 === 0 ? -1 : 1) * 100),
+      startAt: datum.startAt + (datum.bundleIndex * BUNDLE_INTERVAL),
+    }));
+    const activeAttacks: CanvasAttackRuntime[] = [];
     let frameId = 0;
 
     const render = (now: number) => {
@@ -292,22 +279,39 @@ export function AttackArcCanvas({
       const { width, height } = syncCanvasSize(canvasRef.current, activeContext);
       activeContext.clearRect(0, 0, width, height);
 
-      const liveAttacks: CanvasAttackRuntime[] = [];
+      while (activeAttacks.length < MAX_CONCURRENT_FLOW_STARTS) {
+        const nextIndex = pending.findIndex((attack) => attack.startAt <= now);
+        if (nextIndex < 0) {
+          break;
+        }
 
-      for (let index = 0; index < attacks.length; index += 1) {
-        const attack = attacks[index];
+        const [nextAttack] = pending.splice(nextIndex, 1);
+        if (!nextAttack) {
+          break;
+        }
+
+        activeAttacks.push({
+          ...nextAttack,
+          startAt: now,
+        });
+      }
+
+      const nextActiveAttacks: CanvasAttackRuntime[] = [];
+
+      for (let index = 0; index < activeAttacks.length; index += 1) {
+        const attack = activeAttacks[index];
         if (!attack) {
           continue;
         }
 
-        const elapsed = now - attack.start;
-        if (elapsed < 0) {
-          liveAttacks.push(attack);
-          continue;
-        }
+        const elapsed = now - attack.startAt;
 
         const total = attack.flight + HOLD_DURATION + FADEOUT_DURATION;
         if (elapsed > total) {
+          pending.push({
+            ...attack,
+            startAt: now + FLOW_REPLAY_DELAY_MS,
+          });
           continue;
         }
 
@@ -342,13 +346,19 @@ export function AttackArcCanvas({
           drawTargetRings(activeContext, end, finalRingAlpha, attack.colorRgb);
         }
 
-        liveAttacks.push(attack);
+        nextActiveAttacks.push(attack);
       }
 
-      attacks.length = 0;
-      attacks.push(...liveAttacks);
+      activeAttacks.length = 0;
+      activeAttacks.push(...nextActiveAttacks);
+      pending.sort((left, right) => {
+        if (left.startAt !== right.startAt) {
+          return left.startAt - right.startAt;
+        }
+        return left.sourceIndex - right.sourceIndex;
+      });
 
-      if (attacks.length > 0) {
+      if (activeAttacks.length > 0 || pending.length > 0) {
         frameId = window.requestAnimationFrame(render);
       } else {
         activeContext.clearRect(0, 0, width, height);
@@ -361,7 +371,7 @@ export function AttackArcCanvas({
       window.cancelAnimationFrame(frameId);
       clearCanvas(canvas);
     };
-  }, [arcData, isEnabled, mapReady, mapRef, themeRevision, viewMode]);
+  }, [arcData, isEnabled, mapReady, mapRef, playbackMode, themeRevision, viewMode]);
 
   return <canvas ref={canvasRef} className="attack-arc-canvas" aria-hidden="true" />;
 }

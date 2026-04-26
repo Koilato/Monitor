@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { buildCountryHoverResponse } from '../src/service.js';
+import { buildAllFlowResponse } from '../src/service.js';
 import { buildLatestContentResponse } from '../src/service.js';
 import { buildThreatMapResponse } from '../src/service.js';
 import { MOCK_INCIDENTS } from '../src/mock-incidents.js';
@@ -82,6 +83,23 @@ test('today hover range returns the China mock incidents', () => {
     result.incidents.map((incident) => incident.uuid),
     ['mock-019a', 'mock-019b', 'mock-019c'],
   );
+});
+
+test('all-flow response returns distinct lines with date metadata', () => {
+  const result = buildAllFlowResponse(MOCK_INCIDENTS, {
+    startDate: '2026-04-01',
+    endDate: '2026-04-22',
+  });
+
+  assert.equal(result.total, result.flows.length);
+  assert.ok(result.flows.length > 0);
+  assert.equal(result.flows[0]?.attackerCountry, 'JP');
+  assert.equal(result.flows[0]?.victimCountry, 'CN');
+  assert.equal(result.flows[0]?.count, 5);
+  assert.equal(result.flows[0]?.firstDate, '2026-04-01');
+  assert.equal(result.flows[0]?.lastDate, '2026-04-19');
+  assert.equal(result.flows.find((flow) => flow.attackerCountry === 'US' && flow.victimCountry === 'CN')?.count, 5);
+  assert.equal(result.flows.find((flow) => flow.attackerCountry === 'CN' && flow.victimCountry === 'US')?.count, 2);
 });
 
 test('threat map uses the highest incident severity as country event level', () => {
@@ -202,6 +220,31 @@ test('HTTP API returns threat map data for the selected date range', async () =>
       body.countries.map((country: { country: string; eventLevel: string; incidentCount: number }) => `${country.country}:${country.eventLevel}:${country.incidentCount}`),
       ['CN:high:8'],
     );
+  } finally {
+    server.close();
+    await once(server, 'close');
+  }
+});
+
+test('HTTP API returns all-flow data for the selected date range', async () => {
+  const server = createServer(createApp());
+  server.listen(0);
+  await once(server, 'listening');
+
+  const address = server.address();
+  if (!address || typeof address === 'string') {
+    throw new Error('Failed to get dynamic port');
+  }
+
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/map/all-flows?startDate=2026-04-01&endDate=2026-04-22`,
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.total, body.flows.length);
+    assert.ok(body.flows.length > 0);
   } finally {
     server.close();
     await once(server, 'close');

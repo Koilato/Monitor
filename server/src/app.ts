@@ -3,6 +3,7 @@ import { MOCK_INCIDENTS } from './mock-incidents.js';
 import { MOCK_LATEST_CONTENT } from './mock-feed.js';
 import { validateMockFeed, validateMockIncidents } from './mock-validation.js';
 import {
+  buildAllFlowResponse,
   buildCountryHoverResponse,
   buildLatestContentResponse,
   buildThreatMapResponse,
@@ -76,6 +77,19 @@ export function createApp() {
 
     res.json(
       buildThreatMapResponse(MOCK_INCIDENTS, {
+        startDate,
+        endDate,
+      }),
+    );
+  });
+
+  app.get('/api/map/all-flows', (req: Request, res: Response) => {
+    const startDate = normalizeDate(req.query.startDate, 'startDate');
+    const endDate = normalizeDate(req.query.endDate, 'endDate');
+    assertDateRange(startDate, endDate);
+
+    res.json(
+      buildAllFlowResponse(MOCK_INCIDENTS, {
         startDate,
         endDate,
       }),

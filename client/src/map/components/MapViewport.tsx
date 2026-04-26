@@ -1,5 +1,6 @@
 import type { CountryHoverResponse, ThreatMapResponse } from '@shared/types';
 import type { CountryHoverEvent, HoverCountryState, MapDebugSettings, PopupAnchor } from 'map/state/map-types';
+import type { FlowArcSource } from 'map/lib/arc-data';
 import type { MapCameraState, MapState } from 'map/state/map-state';
 import { LAYER_MODULES } from 'map/layers/modules';
 import { IncidentPopup } from 'map/components/IncidentPopup';
@@ -10,7 +11,8 @@ interface MapViewportProps {
   viewMode: '2d' | '3d';
   mapState: MapState;
   hoveredCountry: HoverCountryState | null;
-  data: CountryHoverResponse | null;
+  hoverData: CountryHoverResponse | null;
+  flowData: FlowArcSource | null;
   threatData: ThreatMapResponse | null;
   loading: boolean;
   error: string | null;
@@ -26,7 +28,8 @@ export function MapViewport(props: MapViewportProps) {
     viewMode,
     mapState,
     hoveredCountry,
-    data,
+    hoverData,
+    flowData,
     threatData,
     loading,
     error,
@@ -51,8 +54,11 @@ export function MapViewport(props: MapViewportProps) {
           mapState={mapState}
           themeRevision={themeRevision}
           hoveredCountryCode={hoveredCountry?.code ?? null}
-          data={data}
+          hoverData={hoverData}
+          flowData={flowData}
           threatData={threatData}
+          flowMode={mapState.flowMode}
+          flowPlaybackMode={mapState.flowPlaybackMode}
           onCountryHover={onCountryHover}
           onCameraChange={onCameraChange}
           debugSettings={debugSettings}
@@ -87,13 +93,13 @@ export function MapViewport(props: MapViewportProps) {
         ))}
       </div>
 
-      <IncidentPopup
-        country={hoveredCountry}
-        data={data}
-        anchor={anchor}
-        loading={loading}
-        error={error}
-      />
+        <IncidentPopup
+          country={hoveredCountry}
+          data={hoverData}
+          anchor={anchor}
+          loading={loading}
+          error={error}
+        />
     </div>
   );
 }

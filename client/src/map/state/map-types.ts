@@ -1,6 +1,8 @@
 import type { CountryHoverResponse, ThreatMapResponse } from '@shared/types';
 
+import type { FlowArcSource } from 'map/lib/arc-data';
 import type { MapCameraState, MapState, MapViewMode } from './map-state';
+import type { FlowMode, FlowPlaybackMode } from './map-state';
 
 export interface HoverCountryState {
   code: string;
@@ -40,8 +42,11 @@ export interface MapViewProps {
   mapState: MapState;
   themeRevision: number;
   hoveredCountryCode: string | null;
-  data: CountryHoverResponse | null;
+  hoverData: CountryHoverResponse | null;
+  flowData: FlowArcSource | null;
   threatData: ThreatMapResponse | null;
+  flowMode: FlowMode;
+  flowPlaybackMode: FlowPlaybackMode;
   onCountryHover: (event: CountryHoverEvent) => void;
   onCameraChange: (camera: Partial<MapCameraState>) => void;
   debugSettings: MapDebugSettings;

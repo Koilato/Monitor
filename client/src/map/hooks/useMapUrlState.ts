@@ -5,6 +5,8 @@ import {
   parseMapStateFromSearch,
   serializeMapStateToSearch,
   switchMapStateView,
+  type FlowMode,
+  type FlowPlaybackMode,
   type MapCameraState,
   type MapState,
   type MapViewMode,
@@ -64,6 +66,18 @@ export function useMapUrlState() {
       setState((current) => normalizeMapState({
         ...current,
         timeFilter,
+      }));
+    },
+    setFlowMode(flowMode: FlowMode) {
+      setState((current) => normalizeMapState({
+        ...current,
+        flowMode,
+      }));
+    },
+    setFlowPlaybackMode(flowPlaybackMode: FlowPlaybackMode) {
+      setState((current) => normalizeMapState({
+        ...current,
+        flowPlaybackMode,
       }));
     },
     setActiveLayerIds(activeLayerIds: string[]) {

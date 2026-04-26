@@ -1,4 +1,5 @@
 import type {
+  AllFlowResponse,
   CountryHoverQuery,
   CountryHoverResponse,
   EventLevel,
@@ -37,7 +38,10 @@ export function filterIncidents(
   });
 }
 
-export function buildFlows(incidents: HoverIncident[]): HoverFlow[] {
+function aggregateFlows(
+  incidents: HoverIncident[],
+  includeDateRange = false,
+): HoverFlow[] {
   const byAttacker = new Map<string, HoverFlow>();
 
   for (const incident of incidents) {
@@ -47,18 +51,52 @@ export function buildFlows(incidents: HoverIncident[]): HoverFlow[] {
     if (existing) {
       existing.count += 1;
       existing.uuids.push(incident.uuid);
+      if (includeDateRange) {
+        existing.firstDate = existing.firstDate && existing.firstDate < incident.date
+          ? existing.firstDate
+          : incident.date;
+        existing.lastDate = existing.lastDate && existing.lastDate > incident.date
+          ? existing.lastDate
+          : incident.date;
+      }
       continue;
     }
 
-    byAttacker.set(key, {
+    const entry: HoverFlow = {
       attackerCountry: incident.attackerCountry,
       victimCountry: incident.victimCountry,
       count: 1,
       uuids: [incident.uuid],
-    });
+    };
+
+    if (includeDateRange) {
+      entry.firstDate = incident.date;
+      entry.lastDate = incident.date;
+    }
+
+    byAttacker.set(key, entry);
   }
 
-  return [...byAttacker.values()].sort((left, right) => right.count - left.count);
+  return [...byAttacker.values()].sort((left, right) => {
+    if (right.count !== left.count) {
+      return right.count - left.count;
+    }
+
+    const attackerDelta = left.attackerCountry.localeCompare(right.attackerCountry);
+    if (attackerDelta !== 0) {
+      return attackerDelta;
+    }
+
+    return left.victimCountry.localeCompare(right.victimCountry);
+  });
+}
+
+export function buildFlows(incidents: HoverIncident[]): HoverFlow[] {
+  return aggregateFlows(incidents);
+}
+
+export function buildAllFlows(incidents: HoverIncident[]): HoverFlow[] {
+  return aggregateFlows(incidents, true);
 }
 
 export function buildCountryHoverResponse(
@@ -74,6 +112,21 @@ export function buildCountryHoverResponse(
     total: matched.length,
     incidents: matched,
     flows: buildFlows(matched),
+  };
+}
+
+export function buildAllFlowResponse(
+  incidents: HoverIncident[],
+  query: ThreatMapQuery,
+): AllFlowResponse {
+  const matched = filterIncidentsByDate(incidents, query);
+  const flows = buildAllFlows(matched);
+
+  return {
+    startDate: query.startDate,
+    endDate: query.endDate,
+    total: flows.length,
+    flows,
   };
 }
 

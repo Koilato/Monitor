@@ -1,7 +1,10 @@
-import type { CountryHoverResponse } from '@shared/types';
+import type { ThreatMapResponse, HoverFlow } from '@shared/types';
 
 import { getCountryCentroid } from 'map/lib/country-geometry';
-import type { ThreatVisualLevel } from 'map/layers/tokens';
+import { resolveThreatVisualLevel, type ThreatVisualLevel } from 'map/layers/tokens';
+
+const ARC_BUNDLE_COUNT = 4;
+const ARC_BUNDLE_SPREAD_RATIO = 0.08;
 
 export interface TwoDArcDatum {
   id: string;
@@ -11,7 +14,21 @@ export interface TwoDArcDatum {
   label: string;
   count: number;
   angle: number;
+  visualLevel: ThreatVisualLevel;
 }
+
+export interface FlowArcSource {
+  flows: HoverFlow[];
+}
+
+export interface ArcBundleMeta {
+  bundleIndex: number;
+  bundleCount: number;
+  bundleOffset: number;
+}
+
+export type BundledTwoDArcDatum = TwoDArcDatum & ArcBundleMeta;
+export type BundledCanvasArcDatum = CanvasArcDatum & ArcBundleMeta;
 
 export interface CanvasArcDatum {
   id: string;
@@ -19,6 +36,10 @@ export interface CanvasArcDatum {
   target: [number, number];
   count: number;
   visualLevel: ThreatVisualLevel;
+  attackerCountry: string;
+  victimCountry: string;
+  firstDate: string | null;
+  lastDate: string | null;
 }
 
 function getBearing(source: [number, number], target: [number, number]): number {
@@ -38,66 +59,161 @@ function interpolatePosition(
   ];
 }
 
-export async function buildTwoDArcData(data: CountryHoverResponse | null): Promise<TwoDArcDatum[]> {
+function getBundleOffsets(bundleCount: number): number[] {
+  return Array.from({ length: bundleCount }, (_, index) => index - ((bundleCount - 1) / 2));
+}
+
+function resolveBundleEndpointOffset(
+  source: [number, number],
+  target: [number, number],
+  bundleOffset: number,
+): [number, number] {
+  const dx = target[0] - source[0];
+  const dy = target[1] - source[1];
+  const length = Math.hypot(dx, dy) || 1;
+
+  let normalX = -dy / length;
+  let normalY = dx / length;
+  if (normalY > 0) {
+    normalX = -normalX;
+    normalY = -normalY;
+  }
+
+  const spread = Math.max(0.35, Math.min(4, length * ARC_BUNDLE_SPREAD_RATIO));
+  const offset = spread * bundleOffset;
+  return [
+    normalX * offset,
+    normalY * offset,
+  ];
+}
+
+export function resolveBundledArcEndpoints(
+  source: [number, number],
+  target: [number, number],
+  bundleOffset: number,
+): {
+  source: [number, number];
+  target: [number, number];
+} {
+  const [offsetX, offsetY] = resolveBundleEndpointOffset(source, target, bundleOffset);
+  return {
+    source: [source[0] + offsetX, source[1] + offsetY],
+    target: [target[0] + offsetX, target[1] + offsetY],
+  };
+}
+
+function resolveBundleArrowPosition(
+  source: [number, number],
+  target: [number, number],
+  bundleOffset: number,
+): [number, number] {
+  const endpoints = resolveBundledArcEndpoints(source, target, bundleOffset);
+  return interpolatePosition(endpoints.source, endpoints.target, 0.975);
+}
+
+function createBundledArcMeta(bundleCount = ARC_BUNDLE_COUNT): ArcBundleMeta[] {
+  return getBundleOffsets(bundleCount).map((bundleOffset, bundleIndex) => ({
+    bundleIndex,
+    bundleCount,
+    bundleOffset,
+  }));
+}
+
+export async function buildTwoDArcData(
+  data: FlowArcSource | null,
+  threatData: ThreatMapResponse | null,
+  activeThreatCountryCodes: readonly string[],
+): Promise<BundledTwoDArcDatum[]> {
   if (!data) {
     return [];
   }
 
-  const target = await getCountryCentroid(data.victimCountry);
-  if (!target) {
-    return [];
-  }
+  const bundledMeta = createBundledArcMeta();
 
   const rows = await Promise.all(data.flows.map(async (flow) => {
     const source = await getCountryCentroid(flow.attackerCountry);
+    const target = await getCountryCentroid(flow.victimCountry);
     if (!source) {
+      return null;
+    }
+    if (!target) {
       return null;
     }
 
     const sourcePosition: [number, number] = [source.lon, source.lat];
     const targetPosition: [number, number] = [target.lon, target.lat];
+    const visualLevel = resolveThreatVisualLevel(
+      threatData?.countries.find((country) => country.country === flow.victimCountry)?.eventLevel ?? 'low',
+      flow.victimCountry,
+      activeThreatCountryCodes,
+    );
 
-    return {
-      id: `${flow.attackerCountry}-${flow.victimCountry}`,
-      source: sourcePosition,
-      target: targetPosition,
-      arrowPosition: interpolatePosition(sourcePosition, targetPosition, 0.975),
-      label: `${flow.attackerCountry} → ${flow.victimCountry}`,
-      count: flow.count,
-      angle: getBearing(sourcePosition, targetPosition),
-    };
+    return bundledMeta.map(({ bundleIndex, bundleCount, bundleOffset }) => {
+      const bundledEndpoints = resolveBundledArcEndpoints(sourcePosition, targetPosition, bundleOffset);
+
+      return {
+        id: `${flow.attackerCountry}-${flow.victimCountry}-${bundleIndex}`,
+        source: sourcePosition,
+        target: targetPosition,
+        arrowPosition: resolveBundleArrowPosition(sourcePosition, targetPosition, bundleOffset),
+        label: `${flow.attackerCountry} → ${flow.victimCountry}`,
+        count: flow.count,
+        angle: getBearing(bundledEndpoints.source, bundledEndpoints.target),
+        visualLevel,
+        bundleIndex,
+        bundleCount,
+        bundleOffset,
+      };
+    });
   }));
 
-  return rows.filter((row): row is TwoDArcDatum => row !== null);
+  return rows.flatMap((row): BundledTwoDArcDatum[] => row ?? []);
 }
 
 export async function buildCanvasArcData(
-  data: CountryHoverResponse | null,
-  visualLevel: ThreatVisualLevel,
-): Promise<CanvasArcDatum[]> {
+  data: FlowArcSource | null,
+  threatData: ThreatMapResponse | null,
+  activeThreatCountryCodes: readonly string[],
+): Promise<BundledCanvasArcDatum[]> {
   if (!data) {
     return [];
   }
 
-  const target = await getCountryCentroid(data.victimCountry);
-  if (!target) {
-    return [];
-  }
+  const bundledMeta = createBundledArcMeta();
 
   const rows = await Promise.all(data.flows.map(async (flow) => {
     const source = await getCountryCentroid(flow.attackerCountry);
+    const target = await getCountryCentroid(flow.victimCountry);
     if (!source) {
       return null;
     }
+    if (!target) {
+      return null;
+    }
 
-    return {
-      id: `${flow.attackerCountry}-${flow.victimCountry}`,
-      source: [source.lon, source.lat] as [number, number],
-      target: [target.lon, target.lat] as [number, number],
+    const sourcePosition: [number, number] = [source.lon, source.lat];
+    const targetPosition: [number, number] = [target.lon, target.lat];
+    const visualLevel = resolveThreatVisualLevel(
+      threatData?.countries.find((country) => country.country === flow.victimCountry)?.eventLevel ?? 'low',
+      flow.victimCountry,
+      activeThreatCountryCodes,
+    );
+
+    return bundledMeta.map(({ bundleIndex, bundleCount, bundleOffset }) => ({
+      id: `${flow.attackerCountry}-${flow.victimCountry}-${bundleIndex}`,
+      source: sourcePosition,
+      target: targetPosition,
       count: flow.count,
       visualLevel,
-    };
+      attackerCountry: flow.attackerCountry,
+      victimCountry: flow.victimCountry,
+      firstDate: flow.firstDate ?? null,
+      lastDate: flow.lastDate ?? null,
+      bundleIndex,
+      bundleCount,
+      bundleOffset,
+    }));
   }));
 
-  return rows.filter((row): row is CanvasArcDatum => row !== null);
+  return rows.flatMap((row): BundledCanvasArcDatum[] => row ?? []);
 }

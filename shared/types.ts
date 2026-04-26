@@ -39,6 +39,8 @@ export interface HoverFlow {
   victimCountry: CountryCode;
   count: number;
   uuids: string[];
+  firstDate?: string;
+  lastDate?: string;
 }
 
 export interface CountryHoverResponse {
@@ -47,6 +49,13 @@ export interface CountryHoverResponse {
   endDate: string | null;
   total: number;
   incidents: HoverIncident[];
+  flows: HoverFlow[];
+}
+
+export interface AllFlowResponse {
+  startDate: string | null;
+  endDate: string | null;
+  total: number;
   flows: HoverFlow[];
 }
 

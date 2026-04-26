@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildTwoDArcData } from '../../src/map/lib/arc-data';
+import { buildCanvasArcData, buildTwoDArcData } from '../../src/map/lib/arc-data';
 
 const GEOJSON_RESPONSE = {
   type: 'FeatureCollection',
@@ -43,7 +43,7 @@ const GEOJSON_RESPONSE = {
   ],
 };
 
-test('builds 2d arc data from hover response country centroids', async () => {
+function installGeojsonFetchMock() {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (input: string | URL | Request) => {
     assert.equal(String(input), '/data/countries.geojson');
@@ -54,6 +54,12 @@ test('builds 2d arc data from hover response country centroids', async () => {
       },
     });
   }) as typeof fetch;
+
+  return originalFetch;
+}
+
+test('builds bundled 2d arc data from hover response country centroids', async () => {
+  const originalFetch = installGeojsonFetchMock();
 
   try {
     const data = await buildTwoDArcData({
@@ -70,18 +76,75 @@ test('builds 2d arc data from hover response country centroids', async () => {
           uuids: ['a', 'b'],
         },
       ],
-    });
+    }, null, []);
 
-    assert.deepEqual(data, [
-      {
-        id: 'US-CN',
-        source: [5, 5],
-        target: [35, 35],
-        arrowPosition: [34.25, 34.25],
-        label: 'US → CN',
-        count: 2,
-        angle: 45,
-      },
+    assert.equal(data.length, 4);
+    assert.deepEqual(data.map((datum) => datum.id), [
+      'US-CN-0',
+      'US-CN-1',
+      'US-CN-2',
+      'US-CN-3',
+    ]);
+    assert.deepEqual(data.map((datum) => datum.bundleIndex), [0, 1, 2, 3]);
+    assert.deepEqual(data.map((datum) => datum.bundleCount), [4, 4, 4, 4]);
+    assert.deepEqual(data.map((datum) => datum.bundleOffset), [-1.5, -0.5, 0.5, 1.5]);
+    assert.deepEqual(data.map((datum) => datum.source), [
+      [5, 5],
+      [5, 5],
+      [5, 5],
+      [5, 5],
+    ]);
+    assert.deepEqual(data.map((datum) => datum.target), [
+      [35, 35],
+      [35, 35],
+      [35, 35],
+      [35, 35],
+    ]);
+    assert.deepEqual(data.map((datum) => datum.label), [
+      'US → CN',
+      'US → CN',
+      'US → CN',
+      'US → CN',
+    ]);
+    assert.notDeepEqual(data[0]?.arrowPosition, data[3]?.arrowPosition);
+    assert.equal(data[0]?.visualLevel, 'low');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('builds bundled canvas arc data with replay metadata', async () => {
+  const originalFetch = installGeojsonFetchMock();
+
+  try {
+    const data = await buildCanvasArcData({
+      flows: [
+        {
+          attackerCountry: 'US',
+          victimCountry: 'CN',
+          count: 2,
+          uuids: ['a', 'b'],
+          firstDate: '2026-04-01',
+          lastDate: '2026-04-02',
+        },
+      ],
+    }, null, []);
+
+    assert.equal(data.length, 4);
+    assert.deepEqual(data.map((datum) => datum.bundleIndex), [0, 1, 2, 3]);
+    assert.deepEqual(data.map((datum) => datum.bundleCount), [4, 4, 4, 4]);
+    assert.deepEqual(data.map((datum) => datum.bundleOffset), [-1.5, -0.5, 0.5, 1.5]);
+    assert.deepEqual(data.map((datum) => datum.firstDate), [
+      '2026-04-01',
+      '2026-04-01',
+      '2026-04-01',
+      '2026-04-01',
+    ]);
+    assert.deepEqual(data.map((datum) => datum.lastDate), [
+      '2026-04-02',
+      '2026-04-02',
+      '2026-04-02',
+      '2026-04-02',
     ]);
   } finally {
     globalThis.fetch = originalFetch;

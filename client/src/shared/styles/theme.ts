@@ -1,5 +1,3 @@
-import './theme.css';
-
 import { useSyncExternalStore } from 'react';
 
 import {

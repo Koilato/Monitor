@@ -53,6 +53,8 @@ test('initializes supported modules and disables a failed module without abortin
     modules,
     activeLayerIds: ['ok-a', 'bad', 'ok-b'],
     activeThreatCountryCodes: [],
+    hoverData: null,
+    flowData: null,
   });
 
   assert.deepEqual(result.activeModuleIds, ['ok-a', 'ok-b']);

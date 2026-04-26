@@ -29,6 +29,8 @@ test('serializes and parses preset URL state', () => {
       startDate: null,
       endDate: null,
     },
+    flowMode: 'allflow',
+    flowPlaybackMode: 'time',
   };
 
   const search = serializeMapStateToSearch(state);
@@ -45,6 +47,8 @@ test('serializes and parses preset URL state', () => {
     startDate: null,
     endDate: null,
   });
+  assert.equal(parsed.flowMode, 'allflow');
+  assert.equal(parsed.flowPlaybackMode, 'time');
 });
 
 test('normalizes legacy hour presets to day presets', () => {
@@ -62,6 +66,17 @@ test('falls back to defaults for invalid URL state', () => {
   const parsed = parseMapStateFromSearch('?view=x&lat=999&lon=nope&zoom=nan&layers=&timeMode=weird');
 
   assert.deepEqual(parsed, DEFAULT_MAP_STATE);
+});
+
+test('serializes flow mode and playback mode in the URL state', () => {
+  const search = serializeMapStateToSearch({
+    ...DEFAULT_MAP_STATE,
+    flowMode: 'allflow',
+    flowPlaybackMode: 'country',
+  });
+
+  assert.match(search, /flowMode=allflow/);
+  assert.match(search, /flowPlaybackMode=country/);
 });
 
 test('preserves 2d pitch when normalizing camera updates from map gestures', () => {

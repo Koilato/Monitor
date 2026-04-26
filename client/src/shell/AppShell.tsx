@@ -54,12 +54,15 @@ export function AppShell() {
     setView,
     setCamera,
     setTimeFilter,
+    setFlowMode,
+    setFlowPlaybackMode,
     setActiveLayerIds,
   } = useMapUrlState();
   const {
     hoveredCountry,
     popupAnchor,
     hoverData,
+    allFlowData,
     threatData,
     loading,
     error,
@@ -69,6 +72,7 @@ export function AppShell() {
     handleCountryHover,
   } = useMapDataSync({
     timeFilter: mapState.timeFilter,
+    flowMode: mapState.flowMode,
   });
 
   useEffect(() => {
@@ -88,16 +92,20 @@ export function AppShell() {
             <span className="panel-count">{panelCount}</span>
           </div>
           <div className="header-clock">{clock} UTC</div>
-          <AppToolbar
-            viewMode={mapState.view}
-            timeFilter={mapState.timeFilter}
-            debugModeEnabled={debugModeEnabled}
-            statusTone={statusTone}
-            statusLabel={statusLabel}
-            onViewModeChange={setView}
-            onTimeFilterChange={setTimeFilter}
-            onDebugModeToggle={() => setDebugModeEnabled(!debugModeEnabled)}
-          />
+            <AppToolbar
+              viewMode={mapState.view}
+              timeFilter={mapState.timeFilter}
+              flowMode={mapState.flowMode}
+              flowPlaybackMode={mapState.flowPlaybackMode}
+              debugModeEnabled={debugModeEnabled}
+              statusTone={statusTone}
+              statusLabel={statusLabel}
+              onViewModeChange={setView}
+              onTimeFilterChange={setTimeFilter}
+              onFlowModeChange={setFlowMode}
+              onFlowPlaybackModeChange={setFlowPlaybackMode}
+              onDebugModeToggle={() => setDebugModeEnabled(!debugModeEnabled)}
+            />
         </div>
 
         <div className="workspace-grid" ref={workspaceRef}>
@@ -135,7 +143,8 @@ export function AppShell() {
                 viewMode={mapState.view}
                 mapState={mapState}
                 hoveredCountry={hoveredCountry}
-                data={hoverData}
+                hoverData={hoverData}
+                flowData={mapState.flowMode === 'allflow' ? allFlowData : hoverData}
                 threatData={threatData}
                 loading={loading}
                 error={error}
