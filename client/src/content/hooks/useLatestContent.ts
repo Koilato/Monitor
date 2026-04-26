@@ -43,7 +43,7 @@ export function useLatestContent(
           return;
         }
         setData(null);
-        setError(fetchError instanceof Error ? fetchError.message : 'Request failed');
+        setError(fetchError instanceof Error ? fetchError.message : '请求失败');
       })
       .finally(() => {
         if (!controller.signal.aborted && requestIdRef.current === requestId) {

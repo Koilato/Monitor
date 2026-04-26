@@ -10,6 +10,9 @@ import {
   THREAT_OUTLINE_LAYER_ID,
 } from 'map/layers/maplibre';
 import {
+  COUNTRY_BASE_FILL_COLOR,
+  COUNTRY_BASE_GLOW_COLOR,
+  COUNTRY_BASE_LINE_COLOR,
   createActiveCountryCodeSet,
   getThreatVisualToken,
   HOVER_BORDER_DEFAULT_COLOR,
@@ -37,14 +40,23 @@ export function getThreatLevelForCountry(
 export function buildThreatColorExpression(
   threatData: ThreatMapResponse | null,
   activeCountryCodes: readonly string[] = [],
+  threatColorsEnabled = true,
 ): ExpressionSpecification | string {
-  return buildThreatExpression(threatData, activeCountryCodes, (level) => getThreatVisualToken(level).fill);
+  return buildThreatExpression(
+    threatData,
+    activeCountryCodes,
+    threatColorsEnabled,
+    (level) => getThreatVisualToken(level).fill,
+    COUNTRY_BASE_FILL_COLOR,
+  );
 }
 
 function buildThreatExpression(
   threatData: ThreatMapResponse | null,
   activeCountryCodes: readonly string[],
+  threatColorsEnabled: boolean,
   getColor: (level: ThreatVisualLevel) => string,
+  fallbackColor: string,
 ): ExpressionSpecification | string {
   const countries = threatData?.countries ?? [];
   if (countries.length === 0) {
@@ -64,7 +76,7 @@ function buildThreatExpression(
       activeCountryCodes,
       activeCountryCodeSet,
     );
-    expression.push(country.country, getColor(visualLevel));
+    expression.push(country.country, threatColorsEnabled ? getColor(visualLevel) : fallbackColor);
   }
 
   expression.push('rgba(0,0,0,0)');
@@ -74,15 +86,29 @@ function buildThreatExpression(
 export function buildThreatOutlineColorExpression(
   threatData: ThreatMapResponse | null,
   activeCountryCodes: readonly string[] = [],
+  threatColorsEnabled = true,
 ): ExpressionSpecification | string {
-  return buildThreatExpression(threatData, activeCountryCodes, (level) => getThreatVisualToken(level).stroke);
+  return buildThreatExpression(
+    threatData,
+    activeCountryCodes,
+    threatColorsEnabled,
+    (level) => getThreatVisualToken(level).stroke,
+    COUNTRY_BASE_LINE_COLOR,
+  );
 }
 
 export function buildThreatGlowColorExpression(
   threatData: ThreatMapResponse | null,
   activeCountryCodes: readonly string[] = [],
+  threatColorsEnabled = true,
 ): ExpressionSpecification | string {
-  return buildThreatExpression(threatData, activeCountryCodes, (level) => getThreatVisualToken(level).glow);
+  return buildThreatExpression(
+    threatData,
+    activeCountryCodes,
+    threatColorsEnabled,
+    (level) => getThreatVisualToken(level).glow,
+    COUNTRY_BASE_GLOW_COLOR,
+  );
 }
 
 export function applyThreatFillState(context: LayerRenderContext) {
@@ -90,17 +116,35 @@ export function applyThreatFillState(context: LayerRenderContext) {
     context.map.setPaintProperty(
       THREAT_FILL_LAYER_ID,
       'fill-color',
-      buildThreatColorExpression(context.threatData, context.activeThreatCountryCodes),
+      buildThreatColorExpression(
+        context.threatData,
+        context.activeThreatCountryCodes,
+        context.debugSettings.threatColorsEnabled,
+      ),
     );
   }
 }
 
 export function applyThreatOutlineState(context: LayerRenderContext) {
   if (context.map.getLayer(THREAT_OUTLINE_LAYER_ID)) {
+    context.map.setLayoutProperty(
+      THREAT_OUTLINE_LAYER_ID,
+      'visibility',
+      context.debugSettings.threatOutlineVisible ? 'visible' : 'none',
+    );
     context.map.setPaintProperty(
       THREAT_OUTLINE_LAYER_ID,
       'line-color',
-      buildThreatOutlineColorExpression(context.threatData, context.activeThreatCountryCodes),
+      buildThreatOutlineColorExpression(
+        context.threatData,
+        context.activeThreatCountryCodes,
+        context.debugSettings.threatColorsEnabled,
+      ),
+    );
+    context.map.setPaintProperty(
+      THREAT_OUTLINE_LAYER_ID,
+      'line-width',
+      context.debugSettings.threatOutlineWidth,
     );
   }
 }
@@ -110,7 +154,11 @@ export function applyThreatGlowState(context: LayerRenderContext) {
     context.map.setPaintProperty(
       THREAT_GLOW_LAYER_ID,
       'line-color',
-      buildThreatGlowColorExpression(context.threatData, context.activeThreatCountryCodes),
+      buildThreatGlowColorExpression(
+        context.threatData,
+        context.activeThreatCountryCodes,
+        context.debugSettings.threatColorsEnabled,
+      ),
     );
   }
 }

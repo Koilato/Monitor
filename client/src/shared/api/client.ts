@@ -33,7 +33,7 @@ export async function fetchCountryHover(
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(payload.error || 'Request failed');
+    throw new Error(payload.error || '请求失败');
   }
 
   return response.json() as Promise<CountryHoverResponse>;
@@ -58,7 +58,7 @@ export async function fetchAllFlows(
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(payload.error || 'Request failed');
+    throw new Error(payload.error || '请求失败');
   }
 
   return response.json() as Promise<AllFlowResponse>;
@@ -86,7 +86,7 @@ export async function fetchLatestContent(
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(payload.error || 'Request failed');
+    throw new Error(payload.error || '请求失败');
   }
 
   return response.json() as Promise<LatestContentResponse>;
@@ -111,7 +111,7 @@ export async function fetchThreatMap(
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(payload.error || 'Request failed');
+    throw new Error(payload.error || '请求失败');
   }
 
   return response.json() as Promise<ThreatMapResponse>;

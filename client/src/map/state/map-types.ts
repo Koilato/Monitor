@@ -35,6 +35,31 @@ export interface MapDebugSettings {
   minZoom: number;
   maxZoom: number;
   activeCountryCodes: string[];
+  threatColorsEnabled: boolean;
+  threatOutlineVisible: boolean;
+  threatOutlineWidth: number;
+  attackArc: AttackArcDebugSettings;
+}
+
+export interface AttackArcDebugSettings {
+  bundleCount: number;
+  bundleSpreadRatio: number;
+  curvatureRatio: number;
+  lineWidth: number;
+  segmentCount: number;
+  flightDuration: number;
+  holdDuration: number;
+  fadeoutDuration: number;
+  replayDelayMs: number;
+  bundleIntervalMs: number;
+  maxConcurrentStarts: number;
+  ringRadius: number;
+  ringCount: number;
+  ringSpacing: number;
+  ringLineWidth: number;
+  ringDotRadius: number;
+  arcWidthScale3d: number;
+  arrowSizeScale3d: number;
 }
 
 export interface MapViewProps {

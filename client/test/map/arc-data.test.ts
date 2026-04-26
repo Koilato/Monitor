@@ -113,6 +113,40 @@ test('builds bundled 2d arc data from hover response country centroids', async (
   }
 });
 
+test('uses custom bundle settings when building arc data', async () => {
+  const originalFetch = installGeojsonFetchMock();
+
+  try {
+    const data = await buildTwoDArcData({
+      victimCountry: 'CN',
+      startDate: '2026-04-01',
+      endDate: '2026-04-22',
+      total: 1,
+      incidents: [],
+      flows: [
+        {
+          attackerCountry: 'US',
+          victimCountry: 'CN',
+          count: 1,
+          uuids: ['a'],
+        },
+      ],
+    }, null, [], {
+      bundleCount: 2,
+      bundleSpreadRatio: 0.2,
+    });
+
+    assert.equal(data.length, 2);
+    assert.deepEqual(data.map((datum) => datum.bundleIndex), [0, 1]);
+    assert.deepEqual(data.map((datum) => datum.bundleCount), [2, 2]);
+    assert.deepEqual(data.map((datum) => datum.bundleOffset), [-0.5, 0.5]);
+    assert.notDeepEqual(data[0]?.arrowPosition, data[1]?.arrowPosition);
+    assert.notEqual(data[0]?.angle, data[1]?.angle);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('builds bundled canvas arc data with replay metadata', async () => {
   const originalFetch = installGeojsonFetchMock();
 

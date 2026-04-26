@@ -97,13 +97,13 @@ export function getThreatVisualToken(level: ThreatVisualLevel): ThreatVisualLaye
 }
 
 export const THREAT_LEGEND: LayerLegendDefinition = {
-  label: 'Threat',
+  label: '威胁',
   get items() {
     return [
-      { label: 'LOW', color: THREAT_VISUAL_LEVEL_TOKENS.low.stroke },
-      { label: 'MED', color: THREAT_VISUAL_LEVEL_TOKENS.medium.stroke },
-      { label: 'HIGH', color: THREAT_VISUAL_LEVEL_TOKENS.critical.stroke },
-      { label: 'ACTIVE', color: THREAT_VISUAL_LEVEL_TOKENS.active.stroke },
+      { label: '低', color: THREAT_VISUAL_LEVEL_TOKENS.low.stroke },
+      { label: '中', color: THREAT_VISUAL_LEVEL_TOKENS.medium.stroke },
+      { label: '高', color: THREAT_VISUAL_LEVEL_TOKENS.critical.stroke },
+      { label: '激活', color: THREAT_VISUAL_LEVEL_TOKENS.active.stroke },
     ];
   },
 };

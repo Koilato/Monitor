@@ -11,7 +11,7 @@ import { MapDebugPanel } from 'shell/panels/MapDebugPanel';
 import { AppToolbar } from 'shell/toolbar/AppToolbar';
 
 function formatUtcClock(date: Date): string {
-  return new Intl.DateTimeFormat('en-GB', {
+  return new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -88,10 +88,10 @@ export function AppShell() {
       <main className="main-content">
         <div className="panel-header">
           <div className="panel-header-left">
-            <span className="panel-title">Global Signal Map</span>
+            <span className="panel-title">全球信号地图</span>
             <span className="panel-count">{panelCount}</span>
           </div>
-          <div className="header-clock">{clock} UTC</div>
+          <div className="header-clock">{clock} 协调世界时</div>
             <AppToolbar
               viewMode={mapState.view}
               timeFilter={mapState.timeFilter}
@@ -117,7 +117,7 @@ export function AppShell() {
               className="split-divider split-divider--horizontal"
               role="separator"
               aria-orientation="horizontal"
-              aria-label="Resize left panels"
+              aria-label="调整左侧面板大小"
               onMouseDown={handleLeftDividerMouseDown}
             />
             <div
@@ -131,7 +131,7 @@ export function AppShell() {
             className="split-divider split-divider--vertical"
             role="separator"
             aria-orientation="vertical"
-            aria-label="Resize columns"
+            aria-label="调整左右栏大小"
             onMouseDown={handleOuterDividerMouseDown}
           />
 
@@ -174,7 +174,7 @@ export function AppShell() {
               className="split-divider split-divider--horizontal"
               role="separator"
               aria-orientation="horizontal"
-              aria-label="Resize map and latest feed"
+              aria-label="调整地图和最新信息流大小"
               onMouseDown={handleRightDividerMouseDown}
             />
 

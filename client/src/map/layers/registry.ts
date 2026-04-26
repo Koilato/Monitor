@@ -4,6 +4,7 @@ import type { MapboxOverlay } from '@deck.gl/mapbox';
 import type maplibregl from 'maplibre-gl';
 
 import type { FlowArcSource } from 'map/lib/arc-data';
+import type { MapDebugSettings } from 'map/state/map-types';
 import type { MapViewMode } from 'map/state/map-state';
 
 export interface LayerLegendDefinition {
@@ -17,6 +18,7 @@ export interface LayerRenderContext {
   view: MapViewMode;
   activeLayerIds: string[];
   activeThreatCountryCodes: string[];
+  debugSettings: MapDebugSettings;
   hoverData: CountryHoverResponse | null;
   flowData: FlowArcSource | null;
   threatData: ThreatMapResponse | null;

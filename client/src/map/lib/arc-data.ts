@@ -3,8 +3,15 @@ import type { ThreatMapResponse, HoverFlow } from '@shared/types';
 import { getCountryCentroid } from 'map/lib/country-geometry';
 import { resolveThreatVisualLevel, type ThreatVisualLevel } from 'map/layers/tokens';
 
-const ARC_BUNDLE_COUNT = 4;
-const ARC_BUNDLE_SPREAD_RATIO = 0.08;
+export interface ArcBundleSettings {
+  bundleCount: number;
+  bundleSpreadRatio: number;
+}
+
+export const DEFAULT_ARC_BUNDLE_SETTINGS: ArcBundleSettings = {
+  bundleCount: 4,
+  bundleSpreadRatio: 0.08,
+};
 
 export interface TwoDArcDatum {
   id: string;
@@ -67,6 +74,7 @@ function resolveBundleEndpointOffset(
   source: [number, number],
   target: [number, number],
   bundleOffset: number,
+  bundleSpreadRatio: number,
 ): [number, number] {
   const dx = target[0] - source[0];
   const dy = target[1] - source[1];
@@ -79,7 +87,7 @@ function resolveBundleEndpointOffset(
     normalY = -normalY;
   }
 
-  const spread = Math.max(0.35, Math.min(4, length * ARC_BUNDLE_SPREAD_RATIO));
+  const spread = Math.max(0.35, Math.min(4, length * bundleSpreadRatio));
   const offset = spread * bundleOffset;
   return [
     normalX * offset,
@@ -91,11 +99,12 @@ export function resolveBundledArcEndpoints(
   source: [number, number],
   target: [number, number],
   bundleOffset: number,
+  bundleSpreadRatio = DEFAULT_ARC_BUNDLE_SETTINGS.bundleSpreadRatio,
 ): {
   source: [number, number];
   target: [number, number];
 } {
-  const [offsetX, offsetY] = resolveBundleEndpointOffset(source, target, bundleOffset);
+  const [offsetX, offsetY] = resolveBundleEndpointOffset(source, target, bundleOffset, bundleSpreadRatio);
   return {
     source: [source[0] + offsetX, source[1] + offsetY],
     target: [target[0] + offsetX, target[1] + offsetY],
@@ -106,12 +115,13 @@ function resolveBundleArrowPosition(
   source: [number, number],
   target: [number, number],
   bundleOffset: number,
+  bundleSpreadRatio: number,
 ): [number, number] {
-  const endpoints = resolveBundledArcEndpoints(source, target, bundleOffset);
+  const endpoints = resolveBundledArcEndpoints(source, target, bundleOffset, bundleSpreadRatio);
   return interpolatePosition(endpoints.source, endpoints.target, 0.975);
 }
 
-function createBundledArcMeta(bundleCount = ARC_BUNDLE_COUNT): ArcBundleMeta[] {
+function createBundledArcMeta(bundleCount = DEFAULT_ARC_BUNDLE_SETTINGS.bundleCount): ArcBundleMeta[] {
   return getBundleOffsets(bundleCount).map((bundleOffset, bundleIndex) => ({
     bundleIndex,
     bundleCount,
@@ -123,12 +133,13 @@ export async function buildTwoDArcData(
   data: FlowArcSource | null,
   threatData: ThreatMapResponse | null,
   activeThreatCountryCodes: readonly string[],
+  bundleSettings: ArcBundleSettings = DEFAULT_ARC_BUNDLE_SETTINGS,
 ): Promise<BundledTwoDArcDatum[]> {
   if (!data) {
     return [];
   }
 
-  const bundledMeta = createBundledArcMeta();
+  const bundledMeta = createBundledArcMeta(bundleSettings.bundleCount);
 
   const rows = await Promise.all(data.flows.map(async (flow) => {
     const source = await getCountryCentroid(flow.attackerCountry);
@@ -149,13 +160,23 @@ export async function buildTwoDArcData(
     );
 
     return bundledMeta.map(({ bundleIndex, bundleCount, bundleOffset }) => {
-      const bundledEndpoints = resolveBundledArcEndpoints(sourcePosition, targetPosition, bundleOffset);
+      const bundledEndpoints = resolveBundledArcEndpoints(
+        sourcePosition,
+        targetPosition,
+        bundleOffset,
+        bundleSettings.bundleSpreadRatio,
+      );
 
       return {
         id: `${flow.attackerCountry}-${flow.victimCountry}-${bundleIndex}`,
         source: sourcePosition,
         target: targetPosition,
-        arrowPosition: resolveBundleArrowPosition(sourcePosition, targetPosition, bundleOffset),
+        arrowPosition: resolveBundleArrowPosition(
+          sourcePosition,
+          targetPosition,
+          bundleOffset,
+          bundleSettings.bundleSpreadRatio,
+        ),
         label: `${flow.attackerCountry} → ${flow.victimCountry}`,
         count: flow.count,
         angle: getBearing(bundledEndpoints.source, bundledEndpoints.target),
@@ -174,12 +195,13 @@ export async function buildCanvasArcData(
   data: FlowArcSource | null,
   threatData: ThreatMapResponse | null,
   activeThreatCountryCodes: readonly string[],
+  bundleSettings: ArcBundleSettings = DEFAULT_ARC_BUNDLE_SETTINGS,
 ): Promise<BundledCanvasArcDatum[]> {
   if (!data) {
     return [];
   }
 
-  const bundledMeta = createBundledArcMeta();
+  const bundledMeta = createBundledArcMeta(bundleSettings.bundleCount);
 
   const rows = await Promise.all(data.flows.map(async (flow) => {
     const source = await getCountryCentroid(flow.attackerCountry);

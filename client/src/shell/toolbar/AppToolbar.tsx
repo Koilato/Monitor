@@ -16,12 +16,17 @@ interface AppToolbarProps {
 }
 
 const FLOW_PLAYBACK_MODES: Array<{ label: string; value: FlowPlaybackMode; title: string }> = [
-  { label: 'FIFO', value: 'fifo', title: 'First in, first out' },
-  { label: 'CNTRY', value: 'country', title: 'Group by attacker country' },
-  { label: 'TIME', value: 'time', title: 'Sort by incident time' },
+  { label: '先进先出', value: 'fifo', title: '按进入顺序播放' },
+  { label: '按国家', value: 'country', title: '按攻击方国家分组' },
+  { label: '按时间', value: 'time', title: '按事件时间排序' },
 ];
 
 const TIME_PRESETS: TimePreset[] = ['1d', '2d', '7d'];
+const TIME_PRESET_LABELS: Record<TimePreset, string> = {
+  '1d': '1天',
+  '2d': '2天',
+  '7d': '7天',
+};
 
 export function AppToolbar(props: AppToolbarProps) {
   const {
@@ -41,7 +46,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
   return (
     <div className="map-header-actions">
-      <div className="map-dimension-toggle" role="tablist" aria-label="Map mode">
+      <div className="map-dimension-toggle" role="tablist" aria-label="地图模式">
         <button
           type="button"
           className={`map-dim-btn ${viewMode === '2d' ? 'active' : ''}`}
@@ -58,7 +63,7 @@ export function AppToolbar(props: AppToolbarProps) {
         </button>
       </div>
 
-      <div className="map-dimension-toggle" role="group" aria-label="Time presets">
+      <div className="map-dimension-toggle" role="group" aria-label="时间预设">
         {TIME_PRESETS.map((preset) => (
           <button
             key={preset}
@@ -71,20 +76,20 @@ export function AppToolbar(props: AppToolbarProps) {
               endDate: null,
             })}
           >
-            {preset.toUpperCase()}
+            {TIME_PRESET_LABELS[preset]}
           </button>
         ))}
       </div>
 
-      <div className="map-dimension-toggle" role="group" aria-label="Flow playback mode">
+      <div className="map-dimension-toggle" role="group" aria-label="流向播放模式">
         <button
           type="button"
           className={`map-dim-btn ${flowMode === 'allflow' ? 'active' : ''}`}
           aria-pressed={flowMode === 'allflow'}
           onClick={() => onFlowModeChange(flowMode === 'allflow' ? 'hover' : 'allflow')}
-          title="Show all flows in the current date range"
+          title="显示当前日期范围内的全部流向"
         >
-          ALLFLOW
+          全部流量
         </button>
         {FLOW_PLAYBACK_MODES.map((mode) => (
           <button
@@ -101,7 +106,7 @@ export function AppToolbar(props: AppToolbarProps) {
       </div>
 
       <label className="map-filter-field">
-        <span className="map-filter-label">START</span>
+        <span className="map-filter-label">开始</span>
         <input
           type="date"
           value={timeFilter.mode === 'custom' ? timeFilter.startDate ?? '' : ''}
@@ -115,7 +120,7 @@ export function AppToolbar(props: AppToolbarProps) {
       </label>
 
       <label className="map-filter-field">
-        <span className="map-filter-label">END</span>
+        <span className="map-filter-label">结束</span>
         <input
           type="date"
           value={timeFilter.mode === 'custom' ? timeFilter.endDate ?? '' : ''}
@@ -134,24 +139,24 @@ export function AppToolbar(props: AppToolbarProps) {
         aria-pressed={debugModeEnabled}
         onClick={onDebugModeToggle}
       >
-        {debugModeEnabled ? 'Debug On' : 'Debug Mode'}
+        {debugModeEnabled ? '调试开启' : '调试模式'}
       </button>
 
       <div
         className="map-brand-panel"
         role="status"
-        aria-label={`SIGNAL CONSOLE ${statusLabel} GLOBAL MAP LIVE MAPLIBRE URL STATE`}
+        aria-label={`信号控制台 ${statusLabel} 全球地图 实时 地图引擎 状态`}
       >
         <div className="map-brand-panel-top">
-          <span className="map-brand-title">SIGNAL CONSOLE</span>
+          <span className="map-brand-title">信号控制台</span>
           <span className={`map-brand-status ${statusTone}`}>
             <span className="status-dot" />
             <span className="map-brand-status-label">{statusLabel}</span>
           </span>
         </div>
         <div className="map-brand-panel-bottom">
-          <span className="map-brand-banner">GLOBAL MAP</span>
-          <span className="map-brand-meta">LIVE / MAPLIBRE / URL</span>
+          <span className="map-brand-banner">全球地图</span>
+          <span className="map-brand-meta">实时 / 地图引擎 / 状态</span>
         </div>
       </div>
     </div>

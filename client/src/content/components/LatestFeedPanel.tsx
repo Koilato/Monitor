@@ -7,7 +7,7 @@ interface LatestFeedPanelProps {
 }
 
 function formatUtcTimestamp(value: string): string {
-  return `${new Intl.DateTimeFormat('en-GB', {
+  return `${new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -15,7 +15,20 @@ function formatUtcTimestamp(value: string): string {
     minute: '2-digit',
     hour12: false,
     timeZone: 'UTC',
-  }).format(new Date(value))} UTC`;
+  }).format(new Date(value))} 协调世界时`;
+}
+
+function formatCategoryLabel(category: string): string {
+  if (category === 'sql') {
+    return 'SQL';
+  }
+  if (category === 'ops') {
+    return '运维';
+  }
+  if (category === 'research') {
+    return '研究';
+  }
+  return category;
 }
 
 export function LatestFeedPanel(props: LatestFeedPanelProps) {
@@ -25,17 +38,17 @@ export function LatestFeedPanel(props: LatestFeedPanelProps) {
     <>
       <div className="latest-header">
         <div className="latest-header-left">
-          <span className="latest-title">Latest Feed</span>
-          <span className="latest-subtitle">category / newest rows</span>
+          <span className="latest-title">最新信息流</span>
+          <span className="latest-subtitle">分类 / 最新记录</span>
         </div>
         <div className="latest-header-right">
-          {data ? `${data.total} rows` : 'LIVE FEED'}
+          {data ? `${data.total} 条` : '实时信息流'}
         </div>
       </div>
 
       <div className="latest-list">
         {loading ? (
-          <div className="latest-empty">Loading latest content...</div>
+          <div className="latest-empty">正在加载最新内容...</div>
         ) : error ? (
           <div className="latest-empty latest-empty--error">{error}</div>
         ) : data && data.items.length > 0 ? (
@@ -46,7 +59,7 @@ export function LatestFeedPanel(props: LatestFeedPanelProps) {
               <article key={item.id} className="latest-card">
                 <div className="latest-card-top">
                   <span className="latest-rank">#{rank}</span>
-                  <span className="latest-pill">{item.category}</span>
+                  <span className="latest-pill">{formatCategoryLabel(item.category)}</span>
                   <span className="latest-time">{formatUtcTimestamp(item.createdAt)}</span>
                 </div>
                 <h3 className="latest-card-title">{item.title}</h3>
@@ -55,7 +68,7 @@ export function LatestFeedPanel(props: LatestFeedPanelProps) {
             );
           })
         ) : (
-          <div className="latest-empty">No content matched the current category.</div>
+          <div className="latest-empty">当前分类没有匹配内容。</div>
         )}
       </div>
     </>

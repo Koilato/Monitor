@@ -201,22 +201,22 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
       ? 'warning'
       : 'live';
   const statusLabel = error
-    ? 'QUERY ERROR'
+    ? '查询错误'
     : threatError
-      ? 'MAP ERROR'
+      ? '地图错误'
       : input.flowMode === 'allflow' && allFlowError
-        ? 'FLOW ERROR'
+        ? '流量错误'
       : loading
-        ? 'QUERYING'
+        ? '查询中'
         : threatLoading
-          ? 'FILTERING MAP'
+          ? '筛选地图中'
           : input.flowMode === 'allflow' && allFlowLoading
-            ? 'PREPARING ALLFLOW'
+            ? '正在准备全部流量'
             : input.flowMode === 'allflow'
-              ? `ALLFLOW ${allFlowData?.total ?? 0}`
+              ? `全部流量 ${allFlowData?.total ?? 0}`
               : hoveredCountry
-            ? `TRACKING ${hoveredCountry.code}`
-            : 'LIVE MAP FEED';
+            ? `追踪 ${hoveredCountry.code}`
+            : '实时地图信息流';
 
   return {
     dateRange,

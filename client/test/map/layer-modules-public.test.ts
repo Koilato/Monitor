@@ -61,10 +61,10 @@ test('threat module legend includes active level swatch', () => {
   const threatModule = LAYER_MODULES.find((module) => module.id === 'threat-highlight');
   assert.ok(threatModule?.legend);
   assert.deepEqual(threatModule.legend?.items.map((item) => item.label), [
-    'LOW',
-    'MED',
-    'HIGH',
-    'ACTIVE',
+    '低',
+    '中',
+    '高',
+    '激活',
   ]);
 });
 

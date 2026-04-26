@@ -5,6 +5,18 @@ export const MAX_CONCURRENT_FLOW_STARTS = 4;
 export const FLOW_START_SPACING_MS = 220;
 export const FLOW_REPLAY_DELAY_MS = 5000;
 
+export interface FlowPlaybackSettings {
+  maxConcurrentStarts: number;
+  flowStartSpacingMs: number;
+  replayDelayMs: number;
+}
+
+export const DEFAULT_FLOW_PLAYBACK_SETTINGS: FlowPlaybackSettings = {
+  maxConcurrentStarts: MAX_CONCURRENT_FLOW_STARTS,
+  flowStartSpacingMs: FLOW_START_SPACING_MS,
+  replayDelayMs: FLOW_REPLAY_DELAY_MS,
+};
+
 export interface ScheduledFlowDatum extends CanvasArcDatum {
   sourceIndex: number;
   startAt: number;
@@ -69,22 +81,44 @@ export function createInitialFlowSchedule(
   data: CanvasArcDatum[],
   mode: FlowPlaybackMode,
   now = performance.now(),
+  settings: FlowPlaybackSettings = DEFAULT_FLOW_PLAYBACK_SETTINGS,
 ): ScheduledFlowDatum[] {
   const ordered = sortFlowPlaybackData(data, mode);
+  const scheduled: ScheduledFlowDatum[] = [];
 
-  return ordered.map((datum, index) => ({
-    ...datum,
-    sourceIndex: index,
-    startAt: now + (Math.floor(index / MAX_CONCURRENT_FLOW_STARTS) * FLOW_START_SPACING_MS),
-  }));
+  for (let index = 0, groupIndex = 0; index < ordered.length; groupIndex += 1) {
+    const datum = ordered[index] as (CanvasArcDatum & { bundleCount?: number }) | undefined;
+    const groupSize = typeof datum?.bundleCount === 'number' && datum.bundleCount > 0
+      ? datum.bundleCount
+      : 1;
+    const startAt = now + (Math.floor(groupIndex / settings.maxConcurrentStarts) * settings.flowStartSpacingMs);
+
+    for (let offset = 0; offset < groupSize && index + offset < ordered.length; offset += 1) {
+      const bundledDatum = ordered[index + offset];
+      if (!bundledDatum) {
+        continue;
+      }
+
+      scheduled.push({
+        ...bundledDatum,
+        sourceIndex: index + offset,
+        startAt,
+      });
+    }
+
+    index += groupSize;
+  }
+
+  return scheduled;
 }
 
 export function resetFlowSchedule(
   datum: ScheduledFlowDatum,
   now: number,
+  settings: Pick<FlowPlaybackSettings, 'replayDelayMs'> = DEFAULT_FLOW_PLAYBACK_SETTINGS,
 ): ScheduledFlowDatum {
   return {
     ...datum,
-    startAt: now + FLOW_REPLAY_DELAY_MS,
+    startAt: now + settings.replayDelayMs,
   };
 }

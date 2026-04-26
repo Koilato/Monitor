@@ -10,14 +10,14 @@ const INCIDENT_SEVERITIES = new Set<HoverIncident['details']['severity']>([
 function assertNonEmptyString(value: unknown, fieldName: string): string {
   const normalized = String(value ?? '').trim();
   if (!normalized) {
-    throw new ValidationError(`${fieldName} must be a non-empty string`);
+    throw new ValidationError('必须是非空字符串');
   }
   return normalized;
 }
 
 function assertIncident(incident: unknown, index: number): void {
   if (typeof incident !== 'object' || incident === null) {
-    throw new ValidationError(`incident[${index}] must be an object`);
+    throw new ValidationError(`第 ${index + 1} 条事件必须是对象`);
   }
 
   const row = incident as Partial<HoverIncident>;
@@ -29,7 +29,7 @@ function assertIncident(incident: unknown, index: number): void {
   normalizeCountryCode(row.victimCountry, `${prefix}.victimCountry`);
 
   if (typeof row.details !== 'object' || row.details === null) {
-    throw new ValidationError(`${prefix}.details must be an object`);
+    throw new ValidationError(`第 ${index + 1} 条事件的详情必须是对象`);
   }
 
   const details = row.details as Partial<HoverIncident['details']>;
@@ -37,13 +37,13 @@ function assertIncident(incident: unknown, index: number): void {
   assertNonEmptyString(details.summary, `${prefix}.details.summary`);
 
   if (!INCIDENT_SEVERITIES.has(details.severity as HoverIncident['details']['severity'])) {
-    throw new ValidationError(`${prefix}.details.severity must be low, medium, or high`);
+    throw new ValidationError(`第 ${index + 1} 条事件的严重级别必须是低、中或高`);
   }
 }
 
 function assertLatestContentItem(item: unknown, index: number): void {
   if (typeof item !== 'object' || item === null) {
-    throw new ValidationError(`latestContent[${index}] must be an object`);
+    throw new ValidationError(`第 ${index + 1} 条内容必须是对象`);
   }
 
   const row = item as Partial<LatestContentItem>;
@@ -56,13 +56,13 @@ function assertLatestContentItem(item: unknown, index: number): void {
 
   const createdAt = assertNonEmptyString(row.createdAt, `${prefix}.createdAt`);
   if (Number.isNaN(Date.parse(createdAt))) {
-    throw new ValidationError(`${prefix}.createdAt must be a valid ISO timestamp`);
+    throw new ValidationError(`第 ${index + 1} 条内容的创建时间必须是有效的时间戳`);
   }
 }
 
 export function validateMockIncidents(incidents: HoverIncident[]): void {
   if (!Array.isArray(incidents) || incidents.length === 0) {
-    throw new ValidationError('mock incidents must be a non-empty array');
+    throw new ValidationError('模拟事件数据必须是非空数组');
   }
 
   const uuids = new Set<string>();
@@ -71,7 +71,7 @@ export function validateMockIncidents(incidents: HoverIncident[]): void {
     assertIncident(incident, index);
 
     if (uuids.has(incident.uuid)) {
-      throw new ValidationError(`incident[${index}].uuid must be unique`);
+      throw new ValidationError(`第 ${index + 1} 条事件的编号必须唯一`);
     }
 
     uuids.add(incident.uuid);
@@ -80,7 +80,7 @@ export function validateMockIncidents(incidents: HoverIncident[]): void {
 
 export function validateMockFeed(items: LatestContentItem[]): void {
   if (!Array.isArray(items) || items.length === 0) {
-    throw new ValidationError('mock feed must be a non-empty array');
+    throw new ValidationError('模拟内容数据必须是非空数组');
   }
 
   const ids = new Set<string>();
@@ -89,7 +89,7 @@ export function validateMockFeed(items: LatestContentItem[]): void {
     assertLatestContentItem(item, index);
 
     if (ids.has(item.id)) {
-      throw new ValidationError(`latestContent[${index}].id must be unique`);
+      throw new ValidationError(`第 ${index + 1} 条内容的编号必须唯一`);
     }
 
     ids.add(item.id);

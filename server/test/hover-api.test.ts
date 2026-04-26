@@ -130,7 +130,7 @@ test('HTTP API returns 400 for invalid country code', async () => {
   const body = await response.json();
 
   assert.equal(response.status, 400);
-  assert.equal(body.error, 'victimCountry must be an ISO2 country code');
+  assert.equal(body.error, '必须是有效的两位国家代码');
 
   server.close();
   await once(server, 'close');
@@ -267,7 +267,7 @@ test('HTTP API rejects invalid threat map date ranges', async () => {
   const body = await response.json();
 
   assert.equal(response.status, 400);
-  assert.equal(body.error, 'startDate must be earlier than or equal to endDate');
+  assert.equal(body.error, '开始日期必须早于或等于结束日期');
 
   server.close();
   await once(server, 'close');
@@ -290,7 +290,7 @@ test('HTTP API rejects impossible calendar dates', async () => {
     const body = await response.json();
 
     assert.equal(response.status, 400);
-    assert.equal(body.error, 'startDate must be a valid YYYY-MM-DD date');
+    assert.equal(body.error, '必须是有效的日期');
   } finally {
     server.close();
     await once(server, 'close');

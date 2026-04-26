@@ -30,7 +30,7 @@ import { THREAT_LEGEND } from 'map/layers/tokens';
 
 const countriesBaseModule: LayerModule = {
   id: 'countries-base',
-  label: 'Countries',
+  label: '国家',
   defaultEnabled: true,
   supportsView: ['2d', '3d'],
   styleLayerIds: [...COUNTRIES_BASE_LAYER_IDS],
@@ -40,7 +40,7 @@ const countriesBaseModule: LayerModule = {
 
 const threatHighlightModule: LayerModule = {
   id: 'threat-highlight',
-  label: 'Threat Highlight',
+  label: '威胁高亮',
   defaultEnabled: true,
   supportsView: ['2d', '3d'],
   styleLayerIds: [THREAT_FILL_LAYER_ID, THREAT_OUTLINE_LAYER_ID, THREAT_GLOW_LAYER_ID],
@@ -56,7 +56,7 @@ const threatHighlightModule: LayerModule = {
 
 const threatLabelsModule: LayerModule = {
   id: 'threat-labels',
-  label: 'Threat Labels',
+  label: '威胁标签',
   defaultEnabled: true,
   supportsView: ['2d', '3d'],
   styleLayerIds: [THREAT_LABEL_LAYER_ID],
@@ -67,7 +67,7 @@ const threatLabelsModule: LayerModule = {
 
 const hoverHighlightModule: LayerModule = {
   id: 'hover-highlight',
-  label: 'Hover Highlight',
+  label: '悬停高亮',
   defaultEnabled: true,
   showInLayerControls: false,
   supportsView: ['2d', '3d'],
@@ -79,7 +79,7 @@ const hoverHighlightModule: LayerModule = {
 
 const attackArcsModule: LayerModule = {
   id: 'attack-arcs',
-  label: 'Attack Arcs',
+  label: '攻击弧线',
   defaultEnabled: true,
   supportsView: ['2d', '3d'],
   async buildOverlayLayers(context) {

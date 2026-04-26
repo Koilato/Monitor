@@ -44,9 +44,9 @@ async function bootShell(page: Page, viewport: { width: number; height: number }
   await page.addInitScript(getFreezeClockScript());
   await page.goto('/');
 
-  await expect(page.getByText('Global Signal Map')).toBeVisible();
-  await expect(page.getByText('Latest Feed', { exact: true })).toBeVisible();
-  await expect(page.getByText('SQL inventory sync completed')).toBeVisible();
+  await expect(page.getByText('全球信号地图')).toBeVisible();
+  await expect(page.getByText('最新信息流', { exact: true })).toBeVisible();
+  await expect(page.getByText('SQL 库存同步完成')).toBeVisible();
   await expect(page.locator('.map-surface canvas')).toHaveCount(1);
 }
 
@@ -76,7 +76,7 @@ async function assertDeadSelectorsAbsent(page: Page, stateName: string) {
 }
 
 async function openPopup(page: Page) {
-  const zoomIn = page.getByRole('button', { name: 'Zoom in' });
+  const zoomIn = page.getByRole('button', { name: '放大' });
   await zoomIn.click();
   await zoomIn.click();
 
@@ -118,8 +118,8 @@ test('dead map selectors stay absent across the main interaction states', async 
   await page.waitForTimeout(200);
   await assertDeadSelectorsAbsent(page, 'desktop 3d');
 
-  await page.getByRole('button', { name: 'Debug Mode' }).click();
-  await expect(page.getByText('Map Debug')).toBeVisible();
+  await page.getByRole('button', { name: '调试模式' }).click();
+  await expect(page.getByText('地图调试')).toBeVisible();
   await assertDeadSelectorsAbsent(page, 'desktop debug-open');
 
   await openPopup(page);
@@ -152,8 +152,8 @@ test('desktop 3d shell snapshot', async ({ page }) => {
 
 test('desktop debug-open shell snapshot', async ({ page }) => {
   await bootShell(page, DESKTOP_VIEWPORT);
-  await page.getByRole('button', { name: 'Debug Mode' }).click();
-  await expect(page.getByText('Map Debug')).toBeVisible();
+  await page.getByRole('button', { name: '调试模式' }).click();
+  await expect(page.getByText('地图调试')).toBeVisible();
 
   await expect(page).toHaveScreenshot({
     animations: 'disabled',

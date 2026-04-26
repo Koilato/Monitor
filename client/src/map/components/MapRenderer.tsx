@@ -24,18 +24,19 @@ export function MapRenderer(props: MapViewProps) {
         mapReady={mapReady}
         viewMode={viewMode}
         isEnabled={mapState.activeLayerIds.includes('attack-arcs')}
-        flowData={flowData}
-        threatData={threatData}
-        activeThreatCountryCodes={debugSettings.activeCountryCodes}
-        playbackMode={flowPlaybackMode}
-        themeRevision={themeRevision}
-      />
+      flowData={flowData}
+      threatData={threatData}
+      activeThreatCountryCodes={debugSettings.activeCountryCodes}
+      playbackMode={flowPlaybackMode}
+      themeRevision={themeRevision}
+      debugSettings={debugSettings}
+    />
       <div className="deckgl-controls">
         <div className="zoom-controls">
           <button
             type="button"
             className="map-btn"
-            aria-label="Zoom in"
+            aria-label="放大"
             onClick={() => mapRef.current?.zoomIn({ duration: 250 })}
           >
             +
@@ -43,7 +44,7 @@ export function MapRenderer(props: MapViewProps) {
           <button
             type="button"
             className="map-btn"
-            aria-label="Zoom out"
+            aria-label="缩小"
             onClick={() => mapRef.current?.zoomOut({ duration: 250 })}
           >
             -
@@ -51,7 +52,7 @@ export function MapRenderer(props: MapViewProps) {
           <button
             type="button"
             className="map-btn"
-            aria-label="Reset view"
+            aria-label="重置视图"
             onClick={() => {
               const defaults = viewMode === '3d'
                 ? {

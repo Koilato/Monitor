@@ -6,10 +6,10 @@ const tickerItems = threatIntelMockData.map((item) => ({
   id: item.id,
   tone: item.tone,
   label: item.tone === 'critical'
-    ? '警告'
+    ? '严重'
     : item.tone === 'warning'
-      ? '情报'
-      : '新闻',
+      ? '告警'
+      : '提示',
   text: `${item.victim} / ${item.attacker} / ${item.source}`,
   timestamp: item.timestamp,
 }));
@@ -25,8 +25,8 @@ export function ThreatTickerPanel(props: ThreatTickerPanelProps) {
     <section className="ticker-panel">
       <header className="ticker-panel-header">
         <div>
-          <span className="ticker-panel-title">Signal Ticker</span>
-          <span className="ticker-panel-subtitle">vertical incident stream</span>
+          <span className="ticker-panel-title">信号滚动栏</span>
+          <span className="ticker-panel-subtitle">纵向事件流</span>
         </div>
       </header>
 

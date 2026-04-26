@@ -14,7 +14,7 @@ export class ValidationError extends Error {
 export function normalizeCountryCode(value: unknown, fieldName: string): string {
   const normalized = String(value ?? '').trim().toUpperCase();
   if (!ISO2_PATTERN.test(normalized)) {
-    throw new ValidationError(`${fieldName} must be an ISO2 country code`);
+    throw new ValidationError('必须是有效的两位国家代码');
   }
   return normalized;
 }
@@ -27,7 +27,7 @@ export function normalizeDate(value: unknown, fieldName: string): string | null 
   const normalized = String(value).trim();
   const match = DATE_PATTERN.exec(normalized);
   if (!match) {
-    throw new ValidationError(`${fieldName} must be a valid YYYY-MM-DD date`);
+    throw new ValidationError('必须是有效的日期');
   }
 
   const year = Number(match[1]);
@@ -49,14 +49,14 @@ export function normalizeDate(value: unknown, fieldName: string): string | null 
   ];
 
   if (month < 1 || month > 12 || day < 1 || day > daysInMonth[month - 1]) {
-    throw new ValidationError(`${fieldName} must be a valid YYYY-MM-DD date`);
+    throw new ValidationError('必须是有效的日期');
   }
   return normalized;
 }
 
 export function assertDateRange(startDate: string | null, endDate: string | null): void {
   if (startDate && endDate && startDate > endDate) {
-    throw new ValidationError('startDate must be earlier than or equal to endDate');
+    throw new ValidationError('开始日期必须早于或等于结束日期');
   }
 }
 
@@ -66,7 +66,7 @@ export function normalizeQueryText(value: unknown, fieldName: string, fallback?:
     if (fallback !== undefined) {
       return fallback;
     }
-    throw new ValidationError(`${fieldName} is required`);
+    throw new ValidationError('必须提供必填内容');
   }
   return normalized;
 }
@@ -85,12 +85,12 @@ export function normalizePositiveInt(
     if (fallback !== undefined) {
       return fallback;
     }
-    throw new ValidationError(`${fieldName} is required`);
+    throw new ValidationError('必须提供整数值');
   }
 
   const normalized = Number(value);
   if (!Number.isInteger(normalized) || normalized < min || normalized > max) {
-    throw new ValidationError(`${fieldName} must be an integer between ${min} and ${max}`);
+    throw new ValidationError(`必须是 ${min} 到 ${max} 之间的整数`);
   }
 
   return normalized;

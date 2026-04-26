@@ -1,7 +1,7 @@
 import { threatIntelMockData, type ThreatIntelItem, type ThreatTone } from 'shell/lib/mock-threat-intel';
 
 const toneLabelMap: Record<ThreatTone, string> = {
-  critical: '高危',
+  critical: '严重',
   warning: '告警',
   info: '情报',
 };
@@ -18,22 +18,22 @@ function ThreatIntelCard(props: { item: ThreatIntelItem }) {
 
       <div className="intel-meta">
         <div className="intel-block">
-          <span className="intel-label">受害者 (VICTIM)</span>
+          <span className="intel-label">受害者</span>
           <strong className="intel-value">{item.victim}</strong>
         </div>
 
         <div className="intel-block">
-          <span className="intel-label">攻击组织 (ATTACKER)</span>
+          <span className="intel-label">攻击方</span>
           <strong className={`intel-value intel-value--${item.tone}`}>{item.attacker}</strong>
         </div>
 
         <div className="intel-block">
-          <span className="intel-label">攻击源 (SOURCE)</span>
+          <span className="intel-label">来源</span>
           <strong className="intel-value">{item.source}</strong>
         </div>
 
         <div className="intel-block">
-          <span className="intel-label">受害者地址 (ADDRESS)</span>
+          <span className="intel-label">目标地址</span>
           <strong className="intel-value">{item.address}</strong>
         </div>
       </div>
@@ -46,10 +46,10 @@ export function ThreatIntelPanel() {
     <section className="intel-panel">
       <header className="intel-panel-header">
         <div>
-          <span className="intel-panel-title">Threat Watchlist</span>
-          <span className="intel-panel-subtitle">mock incident queue / left-top panel</span>
+          <span className="intel-panel-title">威胁观察列表</span>
+          <span className="intel-panel-subtitle">模拟事件队列 / 左上面板</span>
         </div>
-        <span className="intel-panel-status">{threatIntelMockData.length} queued</span>
+        <span className="intel-panel-status">已排队 {threatIntelMockData.length} 条</span>
       </header>
 
       <div className="intel-list">

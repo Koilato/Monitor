@@ -153,6 +153,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
         view: viewMode,
         activeLayerIds: mapState.activeLayerIds,
         activeThreatCountryCodes: debugSettings.activeCountryCodes,
+        debugSettings,
         hoverData,
         flowData,
         threatData,
@@ -173,6 +174,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
         view: viewMode,
         activeLayerIds: mapState.activeLayerIds,
         activeThreatCountryCodes: debugSettings.activeCountryCodes,
+        debugSettings,
         hoverData,
         flowData,
         threatData,
@@ -205,7 +207,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
     styleReady,
     threatData,
     viewMode,
-    debugSettings.activeCountryCodes,
+    debugSettings,
     themeRevision,
   ]);
 

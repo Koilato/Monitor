@@ -1,45 +1,45 @@
-# World Map App
+# 全球态势图应用
 
-Minimal standalone attack-flow map project.
+一个面向中文用户的独立攻击态势图项目。
 
 ## Structure
 
-- `client/`: Vite + React + TypeScript UI
-- `server/`: Express + TypeScript mock API
-- `shared/`: shared response/query types
+- `client/`：Vite + React + TypeScript 前端界面
+- `server/`：Express + TypeScript 模拟 API
+- `shared/`：共享的响应与查询类型
 
 ## Run
 
-Install dependencies only from the repository root:
+只需要在仓库根目录安装依赖：
 
 ```bash
 npm install
 ```
 
-Do not run `npm install` inside `client/` or `server/`; the root `package-lock.json` is the only supported lockfile.
+不要在 `client/` 或 `server/` 目录中单独执行 `npm install`，仓库根目录的 `package-lock.json` 是唯一受支持的锁文件。
 
-Start the mock API:
+启动模拟 API：
 
 ```bash
 npm run dev:server
 ```
 
-Start the UI in another shell:
+在另一个终端启动前端界面：
 
 ```bash
 npm run dev:client
 ```
 
-Build both apps:
+构建前后端：
 
 ```bash
 npm run build
 ```
 
-Run tests:
+运行测试：
 
 ```bash
 npm run test
 ```
 
-The UI expects the API at `http://localhost:8787` by default.
+前端默认连接 `http://localhost:8787`。

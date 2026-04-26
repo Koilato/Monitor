@@ -9,14 +9,16 @@ import {
   type FlowArcSource,
 } from 'map/lib/arc-data';
 import {
+  resolveAttackArcFrameWindow,
+} from 'map/lib/attack-arc-animation';
+import {
   createInitialFlowSchedule,
-  FLOW_REPLAY_DELAY_MS,
   type ScheduledFlowDatum,
-  MAX_CONCURRENT_FLOW_STARTS,
 } from 'map/lib/flow-playback';
 import { type ThreatVisualLevel } from 'map/layers/tokens';
 import { normalizeCssColor } from 'shared/styles/color-utils';
 import type { FlowPlaybackMode } from 'map/state/map-state';
+import type { MapDebugSettings } from 'map/state/map-types';
 
 interface AttackArcCanvasProps {
   mapRef: RefObject<maplibregl.Map | null>;
@@ -28,6 +30,7 @@ interface AttackArcCanvasProps {
   activeThreatCountryCodes: string[];
   playbackMode: FlowPlaybackMode;
   themeRevision: number;
+  debugSettings: MapDebugSettings;
 }
 
 interface ScreenPoint {
@@ -40,18 +43,8 @@ type BundledScheduledFlowDatum = ScheduledFlowDatum & ArcBundleMeta;
 type CanvasAttackRuntime = BundledScheduledFlowDatum & {
   colorRgb: string;
   flight: number;
+  groupKey: string;
 };
-
-const FLIGHT_DURATION = 1300;
-const HOLD_DURATION = 2000;
-const FADEOUT_DURATION = 700;
-const LIFT_RATIO = 0.16;
-const LINE_WIDTH = 1.8;
-const SEGMENTS = 100;
-const BUNDLE_INTERVAL = 220;
-const RING_OUTER = { r: 15, lw: 2.5 };
-const RING_MIDDLE = { r: 10, lw: 2.0 };
-const CENTER_DOT = { r: 6, color: '245,197,66' };
 
 const ARC_COLOR_BY_LEVEL: Record<'low' | 'medium' | 'high', string> = {
   low: '245,166,35',
@@ -108,6 +101,18 @@ function syncCanvasSize(canvas: HTMLCanvasElement, context: CanvasRenderingConte
   return { width, height };
 }
 
+function resolveRingSpacing(ringRadius: number, ringCount: number, ringSpacing: number): number {
+  if (ringCount <= 1) {
+    return ringRadius;
+  }
+
+  if (ringSpacing > 0) {
+    return ringSpacing;
+  }
+
+  return Math.max(1, ringRadius / (ringCount + 1));
+}
+
 function bezierPoint(t: number, start: ScreenPoint, control: ScreenPoint, end: ScreenPoint): ScreenPoint {
   const k = 1 - t;
   return {
@@ -116,7 +121,12 @@ function bezierPoint(t: number, start: ScreenPoint, control: ScreenPoint, end: S
   };
 }
 
-function resolveControlPoint(start: ScreenPoint, end: ScreenPoint, bundleOffset: number): ScreenPoint {
+function resolveControlPoint(
+  start: ScreenPoint,
+  end: ScreenPoint,
+  bundleOffset: number,
+  curvatureRatio: number,
+): ScreenPoint {
   const midX = (start.x + end.x) / 2;
   const midY = (start.y + end.y) / 2;
   const dx = end.x - start.x;
@@ -130,7 +140,7 @@ function resolveControlPoint(start: ScreenPoint, end: ScreenPoint, bundleOffset:
     normalY = -normalY;
   }
 
-  const liftBase = length * LIFT_RATIO;
+  const liftBase = length * curvatureRatio;
   const lift = liftBase + (bundleOffset * liftBase * 0.3);
 
   return {
@@ -142,24 +152,35 @@ function resolveControlPoint(start: ScreenPoint, end: ScreenPoint, bundleOffset:
 function drawArc(
   context: CanvasRenderingContext2D,
   attack: CanvasAttackRuntime,
-  progress: number,
+  startT: number,
+  endT: number,
+  alpha: number,
   start: ScreenPoint,
   end: ScreenPoint,
+  lineWidth: number,
+  segmentCount: number,
+  curvatureRatio: number,
 ) {
-  const control = resolveControlPoint(start, end, attack.bundleOffset);
+  const control = resolveControlPoint(start, end, attack.bundleOffset, curvatureRatio);
   const widthBoost = Math.min(0.8, Math.max(0, attack.count - 1) * 0.08);
+  const clampedStartT = Math.min(Math.max(startT, 0), 1);
+  const clampedEndT = Math.min(Math.max(endT, 0), 1);
+  const windowLength = Math.max(0, clampedEndT - clampedStartT);
+  if (windowLength <= 0) {
+    return;
+  }
 
-  context.strokeStyle = `rgba(${attack.colorRgb},1)`;
-  context.lineWidth = LINE_WIDTH + widthBoost;
+  context.strokeStyle = `rgba(${attack.colorRgb},${Math.max(0, Math.min(alpha, 1))})`;
+  context.lineWidth = lineWidth + widthBoost;
   context.lineCap = 'round';
   context.beginPath();
 
-  const origin = bezierPoint(0, start, control, end);
+  const origin = bezierPoint(clampedStartT, start, control, end);
   context.moveTo(origin.x, origin.y);
 
-  const steps = Math.max(2, Math.ceil(SEGMENTS * progress));
+  const steps = Math.max(2, Math.ceil(segmentCount * windowLength));
   for (let index = 1; index <= steps; index += 1) {
-    const t = progress * (index / steps);
+    const t = clampedStartT + (windowLength * (index / steps));
     const point = bezierPoint(t, start, control, end);
     context.lineTo(point.x, point.y);
   }
@@ -172,22 +193,30 @@ function drawTargetRings(
   point: ScreenPoint,
   alpha: number,
   ringColorRgb: string,
+  ringRadius: number,
+  ringCount: number,
+  ringSpacing: number,
+  ringLineWidth: number,
+  ringDotRadius: number,
 ) {
-  context.strokeStyle = `rgba(${ringColorRgb},${alpha})`;
-  context.lineWidth = RING_OUTER.lw;
-  context.beginPath();
-  context.arc(point.x, point.y, RING_OUTER.r, 0, Math.PI * 2);
-  context.stroke();
+  const spacing = resolveRingSpacing(ringRadius, ringCount, ringSpacing);
+  for (let index = 0; index < ringCount; index += 1) {
+    const radius = Math.max(0, ringRadius - (index * spacing));
+    if (radius <= 0) {
+      continue;
+    }
 
-  context.strokeStyle = `rgba(${ringColorRgb},${alpha})`;
-  context.lineWidth = RING_MIDDLE.lw;
-  context.beginPath();
-  context.arc(point.x, point.y, RING_MIDDLE.r, 0, Math.PI * 2);
-  context.stroke();
+    const ringAlpha = Math.max(0, alpha * (1 - (index / Math.max(1, ringCount + 0.5))));
+    context.strokeStyle = `rgba(${ringColorRgb},${ringAlpha})`;
+    context.lineWidth = ringLineWidth;
+    context.beginPath();
+    context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+    context.stroke();
+  }
 
-  context.fillStyle = `rgba(${CENTER_DOT.color},${alpha})`;
+  context.fillStyle = `rgba(${ringColorRgb},${alpha})`;
   context.beginPath();
-  context.arc(point.x, point.y, CENTER_DOT.r, 0, Math.PI * 2);
+  context.arc(point.x, point.y, ringDotRadius, 0, Math.PI * 2);
   context.fill();
 }
 
@@ -211,9 +240,11 @@ export function AttackArcCanvas({
   activeThreatCountryCodes,
   playbackMode,
   themeRevision,
+  debugSettings,
 }: AttackArcCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [arcData, setArcData] = useState<BundledCanvasArcDatum[]>([]);
+  const attackArcSettings = debugSettings.attackArc;
 
   useEffect(() => {
     if (!isEnabled || viewMode !== '2d' || !flowData) {
@@ -224,7 +255,10 @@ export function AttackArcCanvas({
     let cancelled = false;
 
     async function loadArcData() {
-      const nextData = await buildCanvasArcData(flowData, threatData, activeThreatCountryCodes);
+      const nextData = await buildCanvasArcData(flowData, threatData, activeThreatCountryCodes, {
+        bundleCount: attackArcSettings.bundleCount,
+        bundleSpreadRatio: attackArcSettings.bundleSpreadRatio,
+      });
       if (!cancelled) {
         setArcData(nextData);
       }
@@ -240,7 +274,15 @@ export function AttackArcCanvas({
     return () => {
       cancelled = true;
     };
-  }, [activeThreatCountryCodes, flowData, isEnabled, threatData, viewMode]);
+  }, [
+    activeThreatCountryCodes,
+    attackArcSettings.bundleCount,
+    attackArcSettings.bundleSpreadRatio,
+    flowData,
+    isEnabled,
+    threatData,
+    viewMode,
+  ]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -257,13 +299,19 @@ export function AttackArcCanvas({
     }
 
     const now = performance.now();
-    const pending: CanvasAttackRuntime[] = (createInitialFlowSchedule(arcData, playbackMode, now) as BundledScheduledFlowDatum[]).map((datum) => ({
+    const pending: CanvasAttackRuntime[] = (createInitialFlowSchedule(arcData, playbackMode, now, {
+      maxConcurrentStarts: attackArcSettings.maxConcurrentStarts,
+      flowStartSpacingMs: attackArcSettings.bundleIntervalMs,
+      replayDelayMs: attackArcSettings.replayDelayMs,
+    }) as BundledScheduledFlowDatum[]).map((datum) => ({
       ...datum,
       colorRgb: resolveCanvasArcColor(datum.visualLevel),
-      flight: FLIGHT_DURATION + ((datum.bundleIndex % 2 === 0 ? -1 : 1) * 100),
-      startAt: datum.startAt + (datum.bundleIndex * BUNDLE_INTERVAL),
+      flight: attackArcSettings.flightDuration + ((datum.bundleIndex % 2 === 0 ? -1 : 1) * 100),
+      startAt: datum.startAt,
+      groupKey: `${datum.attackerCountry}-${datum.victimCountry}-${datum.startAt}`,
     }));
     const activeAttacks: CanvasAttackRuntime[] = [];
+    const activeGroupKeys = new Set<string>();
     let frameId = 0;
 
     const render = (now: number) => {
@@ -279,7 +327,7 @@ export function AttackArcCanvas({
       const { width, height } = syncCanvasSize(canvasRef.current, activeContext);
       activeContext.clearRect(0, 0, width, height);
 
-      while (activeAttacks.length < MAX_CONCURRENT_FLOW_STARTS) {
+      while (activeGroupKeys.size < attackArcSettings.maxConcurrentStarts) {
         const nextIndex = pending.findIndex((attack) => attack.startAt <= now);
         if (nextIndex < 0) {
           break;
@@ -294,9 +342,11 @@ export function AttackArcCanvas({
           ...nextAttack,
           startAt: now,
         });
+        activeGroupKeys.add(nextAttack.groupKey);
       }
 
       const nextActiveAttacks: CanvasAttackRuntime[] = [];
+      const nextActiveGroupKeys = new Set<string>();
 
       for (let index = 0; index < activeAttacks.length; index += 1) {
         const attack = activeAttacks[index];
@@ -306,11 +356,11 @@ export function AttackArcCanvas({
 
         const elapsed = now - attack.startAt;
 
-        const total = attack.flight + HOLD_DURATION + FADEOUT_DURATION;
+        const total = attack.flight + attackArcSettings.holdDuration + attackArcSettings.fadeoutDuration;
         if (elapsed > total) {
           pending.push({
             ...attack,
-            startAt: now + FLOW_REPLAY_DELAY_MS,
+            startAt: now + attackArcSettings.replayDelayMs,
           });
           continue;
         }
@@ -320,37 +370,50 @@ export function AttackArcCanvas({
         const start = { x: sourcePoint.x, y: sourcePoint.y };
         const end = { x: targetPoint.x, y: targetPoint.y };
 
-        let progress = 1;
-        let groupAlpha = 1;
-        let phase: 'flight' | 'hold' | 'fade' = 'hold';
-
-        if (elapsed < attack.flight) {
-          phase = 'flight';
-          progress = elapsed / attack.flight;
-        } else if (elapsed < attack.flight + HOLD_DURATION) {
-          phase = 'hold';
-        } else {
-          phase = 'fade';
-          groupAlpha = 1 - ((elapsed - attack.flight - HOLD_DURATION) / FADEOUT_DURATION);
-        }
+        const frameWindow = resolveAttackArcFrameWindow(
+          elapsed,
+          attack.flight,
+          attackArcSettings.holdDuration,
+          attackArcSettings.fadeoutDuration,
+        );
 
         activeContext.save();
-        activeContext.globalAlpha = groupAlpha;
-        drawArc(activeContext, attack, progress, start, end);
+        drawArc(
+          activeContext,
+          attack,
+          frameWindow.startT,
+          frameWindow.endT,
+          frameWindow.alpha,
+          start,
+          end,
+          attackArcSettings.lineWidth,
+          attackArcSettings.segmentCount,
+          attackArcSettings.curvatureRatio,
+        );
         activeContext.restore();
 
-        if (phase !== 'flight') {
-          const ringElapsed = elapsed - attack.flight;
-          const ringAlpha = Math.max(0, 1 - (ringElapsed / HOLD_DURATION));
-          const finalRingAlpha = (phase === 'fade' ? groupAlpha : 1) * ringAlpha;
-          drawTargetRings(activeContext, end, finalRingAlpha, attack.colorRgb);
+        if (frameWindow.phase !== 'flight') {
+          drawTargetRings(
+            activeContext,
+            end,
+            frameWindow.alpha,
+            attack.colorRgb,
+            attackArcSettings.ringRadius,
+            attackArcSettings.ringCount,
+            attackArcSettings.ringSpacing,
+            attackArcSettings.ringLineWidth,
+            attackArcSettings.ringDotRadius,
+          );
         }
 
         nextActiveAttacks.push(attack);
+        nextActiveGroupKeys.add(attack.groupKey);
       }
 
       activeAttacks.length = 0;
       activeAttacks.push(...nextActiveAttacks);
+      activeGroupKeys.clear();
+      nextActiveGroupKeys.forEach((groupKey) => activeGroupKeys.add(groupKey));
       pending.sort((left, right) => {
         if (left.startAt !== right.startAt) {
           return left.startAt - right.startAt;
@@ -371,7 +434,29 @@ export function AttackArcCanvas({
       window.cancelAnimationFrame(frameId);
       clearCanvas(canvas);
     };
-  }, [arcData, isEnabled, mapReady, mapRef, playbackMode, themeRevision, viewMode]);
+  }, [
+    arcData,
+    attackArcSettings.bundleIntervalMs,
+    attackArcSettings.curvatureRatio,
+    attackArcSettings.fadeoutDuration,
+    attackArcSettings.flightDuration,
+    attackArcSettings.holdDuration,
+    attackArcSettings.lineWidth,
+    attackArcSettings.maxConcurrentStarts,
+    attackArcSettings.ringCount,
+    attackArcSettings.ringDotRadius,
+    attackArcSettings.ringLineWidth,
+    attackArcSettings.ringRadius,
+    attackArcSettings.ringSpacing,
+    attackArcSettings.replayDelayMs,
+    attackArcSettings.segmentCount,
+    isEnabled,
+    mapReady,
+    mapRef,
+    playbackMode,
+    themeRevision,
+    viewMode,
+  ]);
 
   return <canvas ref={canvasRef} className="attack-arc-canvas" aria-hidden="true" />;
 }

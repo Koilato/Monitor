@@ -65,8 +65,8 @@ export function MapViewport(props: MapViewportProps) {
         />
       </div>
 
-      <div className="threat-legend" aria-label="Threat level legend and layer controls">
-        <span className="threat-legend-label">LAYERS</span>
+      <div className="threat-legend" aria-label="威胁等级图例和图层控制">
+        <span className="threat-legend-label">图层</span>
         {visibleModules.map((module) => (
           <label className="threat-legend-item" key={module.id}>
             <input
@@ -81,7 +81,7 @@ export function MapViewport(props: MapViewportProps) {
             <span>{module.label}</span>
           </label>
         ))}
-        {legendItems.length > 0 ? <span className="threat-legend-label">THREAT</span> : null}
+        {legendItems.length > 0 ? <span className="threat-legend-label">威胁</span> : null}
         {legendItems.map((item) => (
           <span className="threat-legend-item" key={item.label}>
             <i

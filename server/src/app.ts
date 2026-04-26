@@ -103,7 +103,7 @@ export function createApp() {
     }
 
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: '服务器内部错误' });
   });
 
   return app;
