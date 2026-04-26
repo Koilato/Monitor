@@ -78,6 +78,10 @@ export function buildThreatArcPalette(
 }
 
 export async function buildAttackArcLayers(context: LayerRenderContext): Promise<Layer[]> {
+  if (context.view !== '3d') {
+    return [];
+  }
+
   const data = await buildTwoDArcData(context.data);
   const { level, countryCode } = resolveThreatLevelForVictimCountry(context);
   const palette = buildThreatArcPalette(level, context.activeThreatCountryCodes, countryCode);
@@ -113,6 +117,10 @@ export async function buildAttackArcLayers(context: LayerRenderContext): Promise
 }
 
 export async function buildAttackArrowheadLayers(context: LayerRenderContext): Promise<Layer[]> {
+  if (context.view !== '3d') {
+    return [];
+  }
+
   const data = await buildTwoDArcData(context.data);
   const { level, countryCode } = resolveThreatLevelForVictimCountry(context);
   const palette = buildThreatArcPalette(level, context.activeThreatCountryCodes, countryCode);

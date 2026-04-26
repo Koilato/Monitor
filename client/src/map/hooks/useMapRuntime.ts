@@ -16,6 +16,7 @@ import type { MapViewProps } from 'map/state/map-types';
 interface UseMapRuntimeResult {
   containerRef: RefObject<HTMLDivElement | null>;
   mapRef: RefObject<maplibregl.Map | null>;
+  mapReady: boolean;
 }
 
 export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
@@ -207,5 +208,6 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
   return {
     containerRef,
     mapRef,
+    mapReady: styleReady,
   };
 }

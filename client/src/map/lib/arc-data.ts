@@ -1,6 +1,7 @@
 import type { CountryHoverResponse } from '@shared/types';
 
 import { getCountryCentroid } from 'map/lib/country-geometry';
+import type { ThreatVisualLevel } from 'map/layers/tokens';
 
 export interface TwoDArcDatum {
   id: string;
@@ -10,6 +11,14 @@ export interface TwoDArcDatum {
   label: string;
   count: number;
   angle: number;
+}
+
+export interface CanvasArcDatum {
+  id: string;
+  source: [number, number];
+  target: [number, number];
+  count: number;
+  visualLevel: ThreatVisualLevel;
 }
 
 function getBearing(source: [number, number], target: [number, number]): number {
@@ -60,4 +69,35 @@ export async function buildTwoDArcData(data: CountryHoverResponse | null): Promi
   }));
 
   return rows.filter((row): row is TwoDArcDatum => row !== null);
+}
+
+export async function buildCanvasArcData(
+  data: CountryHoverResponse | null,
+  visualLevel: ThreatVisualLevel,
+): Promise<CanvasArcDatum[]> {
+  if (!data) {
+    return [];
+  }
+
+  const target = await getCountryCentroid(data.victimCountry);
+  if (!target) {
+    return [];
+  }
+
+  const rows = await Promise.all(data.flows.map(async (flow) => {
+    const source = await getCountryCentroid(flow.attackerCountry);
+    if (!source) {
+      return null;
+    }
+
+    return {
+      id: `${flow.attackerCountry}-${flow.victimCountry}`,
+      source: [source.lon, source.lat] as [number, number],
+      target: [target.lon, target.lat] as [number, number],
+      count: flow.count,
+      visualLevel,
+    };
+  }));
+
+  return rows.filter((row): row is CanvasArcDatum => row !== null);
 }

@@ -1,14 +1,25 @@
+import { AttackArcCanvas } from 'map/components/AttackArcCanvas';
 import { useMapRuntime } from 'map/hooks/useMapRuntime';
 import { DEFAULT_MAP_STATE } from 'map/state/map-state';
 import type { MapViewProps } from 'map/state/map-types';
 
 export function MapRenderer(props: MapViewProps) {
-  const { viewMode, onCameraChange } = props;
-  const { containerRef, mapRef } = useMapRuntime(props);
+  const { viewMode, onCameraChange, mapState, data, threatData, debugSettings, themeRevision } = props;
+  const { containerRef, mapRef, mapReady } = useMapRuntime(props);
 
   return (
     <div className="deckgl-map-wrapper">
       <div className="map-surface" id="deckgl-basemap" ref={containerRef} />
+      <AttackArcCanvas
+        mapRef={mapRef}
+        mapReady={mapReady}
+        viewMode={viewMode}
+        isEnabled={mapState.activeLayerIds.includes('attack-arcs')}
+        data={data}
+        threatData={threatData}
+        activeThreatCountryCodes={debugSettings.activeCountryCodes}
+        themeRevision={themeRevision}
+      />
       <div className="deckgl-controls">
         <div className="zoom-controls">
           <button
