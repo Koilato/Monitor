@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getCountryCenterSource, getStaticCountryCenter } from 'map/lib/country-geometry';
 import type {
   ArcLengthPreset,
+  AttackArcConfigState,
   AttackArcStagePreset,
   CountryCenterPoint,
   MapDebugSettings,
@@ -11,6 +12,7 @@ interface MapDebugPanelProps {
   open: boolean;
   persistEnabled: boolean;
   settings: MapDebugSettings;
+  attackArcConfigState: AttackArcConfigState;
   onToggleOpen: () => void;
   onPersistChange: (enabled: boolean) => void;
   onReset: () => void;
@@ -34,6 +36,12 @@ interface TextFieldProps {
   placeholder?: string;
   onChange: (value: string) => void;
   onCommit?: () => void;
+}
+
+interface ColorFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
 }
 
 const ARC_LENGTH_PRESETS: ArcLengthPreset[] = ['long', 'medium', 'short'];
@@ -79,6 +87,21 @@ function TextField(props: TextFieldProps) {
             onCommit?.();
           }
         }}
+      />
+    </label>
+  );
+}
+
+function ColorField(props: ColorFieldProps) {
+  const { label, value, onChange } = props;
+
+  return (
+    <label className="map-debug-field">
+      <span className="map-debug-field-label">{label}</span>
+      <input
+        type="color"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
       />
     </label>
   );
@@ -154,6 +177,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
     open,
     persistEnabled,
     settings,
+    attackArcConfigState,
     onToggleOpen,
     onPersistChange,
     onReset,
@@ -270,7 +294,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
           <div className="map-debug-header">
             <div className="map-debug-title-block">
               <span className="map-debug-title">地图调试</span>
-              <span className="map-debug-subtitle">布局、缩放范围、威胁覆盖、长度分档与国家中心点</span>
+              <span className="map-debug-subtitle">布局、底图内部边界、攻击国高亮、悬停高亮、AttackArc 样式与国家中心点</span>
             </div>
             <button
               type="button"
@@ -320,31 +344,225 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
           </section>
 
           <section className="map-debug-section">
+            <h3>底图样式</h3>
+            <ColorField
+              label="底图填充颜色"
+              value={settings.baseCountryFillColor}
+              onChange={(value) => onMapSettingsChange({ baseCountryFillColor: value })}
+            />
+            <NumberField
+              label="底图填充透明度"
+              value={settings.baseCountryFillOpacity}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(value) => onMapSettingsChange({ baseCountryFillOpacity: value })}
+            />
+            <ColorField
+              label="底图内部边界描线颜色"
+              value={settings.baseCountryOutlineColor}
+              onChange={(value) => onMapSettingsChange({ baseCountryOutlineColor: value })}
+            />
+            <NumberField
+              label="底图内部边界描线线宽"
+              value={settings.baseCountryOutlineWidth}
+              min={0}
+              max={8}
+              step={0.1}
+              onChange={(value) => onMapSettingsChange({ baseCountryOutlineWidth: value })}
+            />
+            <NumberField
+              label="底图内部边界描线透明度"
+              value={settings.baseCountryOutlineOpacity}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(value) => onMapSettingsChange({ baseCountryOutlineOpacity: value })}
+            />
+            <ColorField
+              label="底图内部边界 glow 颜色"
+              value={settings.baseCountryGlowColor}
+              onChange={(value) => onMapSettingsChange({ baseCountryGlowColor: value })}
+            />
+            <NumberField
+              label="底图内部边界 glow 线宽"
+              value={settings.baseCountryGlowWidth}
+              min={0}
+              max={24}
+              step={0.1}
+              onChange={(value) => onMapSettingsChange({ baseCountryGlowWidth: value })}
+            />
+            <NumberField
+              label="底图内部边界 glow 透明度"
+              value={settings.baseCountryGlowOpacity}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(value) => onMapSettingsChange({ baseCountryGlowOpacity: value })}
+            />
+          </section>
+
+          <section className="map-debug-section">
             <h3>威胁覆盖</h3>
             <CheckboxField
               label="威胁颜色显示"
               checked={settings.threatColorsEnabled}
               onChange={(value) => onMapSettingsChange({ threatColorsEnabled: value })}
             />
-            <CheckboxField
-              label="威胁外框显示"
-              checked={settings.threatOutlineVisible}
-              onChange={(value) => onMapSettingsChange({ threatOutlineVisible: value })}
-            />
-            <NumberField
-              label="威胁外框线宽"
-              value={settings.threatOutlineWidth}
-              min={0.5}
-              max={8}
-              step={0.1}
-              onChange={(value) => onMapSettingsChange({ threatOutlineWidth: value })}
-            />
+            <div className="map-debug-subsection">
+              <h4>威胁填充</h4>
+              <NumberField
+                label="威胁填充透明度"
+                value={settings.threatFillOpacity}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(value) => onMapSettingsChange({ threatFillOpacity: value })}
+              />
+            </div>
+            <div className="map-debug-subsection">
+              <h4>攻击国描边</h4>
+              <CheckboxField
+                label="攻击国描边显示"
+                checked={settings.threatOutlineVisible}
+                onChange={(value) => onMapSettingsChange({ threatOutlineVisible: value })}
+              />
+              <ColorField
+                label="攻击国描边中性色"
+                value={settings.threatOutlineNeutralColor}
+                onChange={(value) => onMapSettingsChange({ threatOutlineNeutralColor: value })}
+              />
+              <NumberField
+                label="攻击国描边线宽"
+                value={settings.threatOutlineWidth}
+                min={0}
+                max={12}
+                step={0.1}
+                onChange={(value) => onMapSettingsChange({ threatOutlineWidth: value })}
+              />
+              <NumberField
+                label="攻击国描边透明度"
+                value={settings.threatOutlineOpacity}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(value) => onMapSettingsChange({ threatOutlineOpacity: value })}
+              />
+            </div>
+            <div className="map-debug-subsection">
+              <h4>攻击国 Glow</h4>
+              <ColorField
+                label="攻击国 glow 中性色"
+                value={settings.threatGlowNeutralColor}
+                onChange={(value) => onMapSettingsChange({ threatGlowNeutralColor: value })}
+              />
+              <NumberField
+                label="攻击国 glow 线宽"
+                value={settings.threatGlowWidth}
+                min={0}
+                max={24}
+                step={0.1}
+                onChange={(value) => onMapSettingsChange({ threatGlowWidth: value })}
+              />
+              <NumberField
+                label="攻击国 glow 透明度"
+                value={settings.threatGlowOpacity}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(value) => onMapSettingsChange({ threatGlowOpacity: value })}
+              />
+            </div>
+            <p>图层定位：`countries-base-line` / `countries-base-glow` 控制底图内部边界，`countries-threat-line` / `countries-threat-glow` 控制攻击国外轮廓。</p>
             <TextField
               label="启用国家（两位字母国家代码，英文逗号分隔）"
               value={activeCountryInput}
               placeholder="CN, US, JP"
               onChange={setActiveCountryInput}
               onCommit={() => onActiveCountryCodesChange(activeCountryInput)}
+            />
+          </section>
+
+          <section className="map-debug-section">
+            <h3>悬停高亮</h3>
+            <ColorField
+              label="悬停填充颜色"
+              value={settings.hoverFillColor}
+              onChange={(value) => onMapSettingsChange({ hoverFillColor: value })}
+            />
+            <NumberField
+              label="悬停填充透明度"
+              value={settings.hoverFillOpacity}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(value) => onMapSettingsChange({ hoverFillOpacity: value })}
+            />
+            <NumberField
+              label="威胁悬停填充透明度"
+              value={settings.hoverThreatFillOpacity}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(value) => onMapSettingsChange({ hoverThreatFillOpacity: value })}
+            />
+            <ColorField
+              label="悬停发光颜色"
+              value={settings.hoverGlowColor}
+              onChange={(value) => onMapSettingsChange({ hoverGlowColor: value })}
+            />
+            <NumberField
+              label="悬停发光线宽"
+              value={settings.hoverGlowWidth}
+              min={0}
+              max={24}
+              step={0.1}
+              onChange={(value) => onMapSettingsChange({ hoverGlowWidth: value })}
+            />
+            <NumberField
+              label="悬停发光透明度"
+              value={settings.hoverGlowOpacity}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(value) => onMapSettingsChange({ hoverGlowOpacity: value })}
+            />
+            <NumberField
+              label="威胁悬停发光透明度"
+              value={settings.hoverThreatGlowOpacity}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(value) => onMapSettingsChange({ hoverThreatGlowOpacity: value })}
+            />
+            <ColorField
+              label="悬停描边颜色"
+              value={settings.hoverBorderColor}
+              onChange={(value) => onMapSettingsChange({ hoverBorderColor: value })}
+            />
+            <NumberField
+              label="悬停描边线宽"
+              value={settings.hoverBorderWidth}
+              min={0}
+              max={24}
+              step={0.1}
+              onChange={(value) => onMapSettingsChange({ hoverBorderWidth: value })}
+            />
+            <NumberField
+              label="悬停描边透明度"
+              value={settings.hoverBorderOpacity}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(value) => onMapSettingsChange({ hoverBorderOpacity: value })}
+            />
+            <NumberField
+              label="威胁悬停描边透明度"
+              value={settings.hoverThreatBorderOpacity}
+              min={0}
+              max={1}
+              step={0.05}
+              onChange={(value) => onMapSettingsChange({ hoverThreatBorderOpacity: value })}
             />
           </section>
 
@@ -384,9 +602,81 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
             />
           </section>
 
+          {!attackArcConfigState.isValid && attackArcConfigState.errorMessage ? (
+            <section className="map-debug-section">
+              <h3>AttackArc 状态</h3>
+              <p className="map-debug-error">{attackArcConfigState.errorMessage}</p>
+            </section>
+          ) : null}
+
           {ARC_LENGTH_PRESETS.map((preset) => (
             <section className="map-debug-section" key={preset}>
               <h3>{getPresetLabel(preset)}</h3>
+              <div className="map-debug-subsection">
+                <h4>公共弧线参数</h4>
+                <NumberField
+                  label="弧度"
+                  value={settings.attackArc.presets[preset].bundleSpreadRatio}
+                  min={0.01}
+                  max={0.5}
+                  step={0.01}
+                  onChange={(value) => updateAttackArcPreset(preset, { bundleSpreadRatio: value })}
+                />
+                <NumberField
+                  label="线条间距"
+                  value={settings.attackArc.presets[preset].curvatureRatio}
+                  min={0.01}
+                  max={0.6}
+                  step={0.01}
+                  onChange={(value) => updateAttackArcPreset(preset, { curvatureRatio: value })}
+                />
+                <NumberField
+                  label="线宽"
+                  value={settings.attackArc.presets[preset].lineWidth}
+                  min={0}
+                  max={10}
+                  step={0.1}
+                  onChange={(value) => updateAttackArcPreset(preset, { lineWidth: value })}
+                />
+                <NumberField
+                  label="采样段数"
+                  value={settings.attackArc.presets[preset].segmentCount}
+                  min={12}
+                  max={240}
+                  step={1}
+                  onChange={(value) => updateAttackArcPreset(preset, { segmentCount: value })}
+                />
+                <ColorField
+                  label="主线颜色"
+                  value={settings.attackArc.presets[preset].style.lineColor}
+                  onChange={(value) => updateAttackArcPreset(preset, {
+                    style: {
+                      ...settings.attackArc.presets[preset].style,
+                      lineColor: value,
+                    },
+                  })}
+                />
+                <ColorField
+                  label="圆环颜色"
+                  value={settings.attackArc.presets[preset].style.ringColor}
+                  onChange={(value) => updateAttackArcPreset(preset, {
+                    style: {
+                      ...settings.attackArc.presets[preset].style,
+                      ringColor: value,
+                    },
+                  })}
+                />
+                <ColorField
+                  label="中心点颜色"
+                  value={settings.attackArc.presets[preset].style.dotColor}
+                  onChange={(value) => updateAttackArcPreset(preset, {
+                    style: {
+                      ...settings.attackArc.presets[preset].style,
+                      dotColor: value,
+                    },
+                  })}
+                />
+              </div>
               <NumberField
                 label="线条数量"
                 value={settings.attackArc.presets[preset].bundleCount}
@@ -448,36 +738,28 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
                 <div className="map-debug-subsection" key={`${preset}-${stage}`}>
                   <h4>{getStageLabel(stage)}</h4>
                   <NumberField
-                    label="弧度"
-                    value={settings.attackArc.presets[preset].stages[stage].curvatureRatio}
-                    min={0.01}
-                    max={0.6}
-                    step={0.01}
-                    onChange={(value) => updateAttackArcStage(preset, stage, { curvatureRatio: value })}
+                    label="主线透明度"
+                    value={settings.attackArc.presets[preset].stages[stage].lineAlpha}
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { lineAlpha: value })}
                   />
                   <NumberField
-                    label="线条间距"
-                    value={settings.attackArc.presets[preset].stages[stage].bundleSpreadRatio}
-                    min={0.01}
-                    max={0.5}
-                    step={0.01}
-                    onChange={(value) => updateAttackArcStage(preset, stage, { bundleSpreadRatio: value })}
+                    label="圆环透明度"
+                    value={settings.attackArc.presets[preset].stages[stage].ringAlpha}
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { ringAlpha: value })}
                   />
                   <NumberField
-                    label="线宽"
-                    value={settings.attackArc.presets[preset].stages[stage].lineWidth}
-                    min={0.5}
-                    max={6}
-                    step={0.1}
-                    onChange={(value) => updateAttackArcStage(preset, stage, { lineWidth: value })}
-                  />
-                  <NumberField
-                    label="采样段数"
-                    value={settings.attackArc.presets[preset].stages[stage].segmentCount}
-                    min={12}
-                    max={240}
-                    step={1}
-                    onChange={(value) => updateAttackArcStage(preset, stage, { segmentCount: value })}
+                    label="中心点透明度"
+                    value={settings.attackArc.presets[preset].stages[stage].dotAlpha}
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    onChange={(value) => updateAttackArcStage(preset, stage, { dotAlpha: value })}
                   />
                   <NumberField
                     label="圆环大小"

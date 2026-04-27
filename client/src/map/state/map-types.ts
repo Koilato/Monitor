@@ -30,11 +30,36 @@ export interface MapDebugSettings {
   latestSectionHeight: number;
   minZoom: number;
   maxZoom: number;
+  baseCountryFillColor: string;
+  baseCountryFillOpacity: number;
+  baseCountryOutlineColor: string;
+  baseCountryOutlineWidth: number;
+  baseCountryOutlineOpacity: number;
+  baseCountryGlowColor: string;
+  baseCountryGlowWidth: number;
+  baseCountryGlowOpacity: number;
   activeCountryCodes: string[];
   countryCenterOverrides: Record<string, CountryCenterPoint>;
   threatColorsEnabled: boolean;
+  threatFillOpacity: number;
   threatOutlineVisible: boolean;
+  threatOutlineNeutralColor: string;
   threatOutlineWidth: number;
+  threatOutlineOpacity: number;
+  threatGlowNeutralColor: string;
+  threatGlowWidth: number;
+  threatGlowOpacity: number;
+  hoverFillColor: string;
+  hoverFillOpacity: number;
+  hoverThreatFillOpacity: number;
+  hoverGlowColor: string;
+  hoverGlowWidth: number;
+  hoverGlowOpacity: number;
+  hoverThreatGlowOpacity: number;
+  hoverBorderColor: string;
+  hoverBorderWidth: number;
+  hoverBorderOpacity: number;
+  hoverThreatBorderOpacity: number;
   attackArc: AttackArcDebugSettings;
 }
 
@@ -45,6 +70,7 @@ export interface CountryCenterPoint {
 
 export type ArcLengthPreset = 'short' | 'medium' | 'long';
 export type AttackArcStagePreset = 'stage1' | 'stage2' | 'stage3';
+export type AttackArcVisualLevel = 'low' | 'medium' | 'high' | 'critical' | 'active';
 
 export interface AttackArcLengthThresholds {
   shortMax: number;
@@ -52,15 +78,27 @@ export interface AttackArcLengthThresholds {
 }
 
 export interface AttackArcStageSettings {
-  curvatureRatio: number;
-  bundleSpreadRatio: number;
-  lineWidth: number;
-  segmentCount: number;
+  lineAlpha: number;
+  ringAlpha: number;
+  dotAlpha: number;
   ringRadius: number;
   ringCount: number;
   ringSpacing: number;
   ringLineWidth: number;
   ringDotRadius: number;
+}
+
+export interface AttackArcVisualStyle {
+  lineColor: string;
+  ringColor: string;
+  dotColor: string;
+}
+
+export interface AttackArcResolvedStageSettings extends AttackArcStageSettings, AttackArcVisualStyle {
+  curvatureRatio: number;
+  bundleSpreadRatio: number;
+  lineWidth: number;
+  segmentCount: number;
 }
 
 export interface AttackArcLengthPresetSettings {
@@ -71,12 +109,22 @@ export interface AttackArcLengthPresetSettings {
   replayDelayMs: number;
   bundleIntervalMs: number;
   maxConcurrentStarts: number;
+  bundleSpreadRatio: number;
+  curvatureRatio: number;
+  lineWidth: number;
+  segmentCount: number;
+  style: AttackArcVisualStyle;
   stages: Record<AttackArcStagePreset, AttackArcStageSettings>;
 }
 
 export interface AttackArcDebugSettings {
   lengthThresholds: AttackArcLengthThresholds;
   presets: Record<ArcLengthPreset, AttackArcLengthPresetSettings>;
+}
+
+export interface AttackArcConfigState {
+  isValid: boolean;
+  errorMessage: string | null;
 }
 
 export interface MapViewProps {

@@ -1,18 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   ArcLengthPreset,
-  AttackArcStagePreset,
-  AttackArcStageSettings,
+  AttackArcConfigState,
   AttackArcDebugSettings,
   AttackArcLengthPresetSettings,
   AttackArcLengthThresholds,
+  AttackArcStagePreset,
+  AttackArcStageSettings,
+  AttackArcVisualStyle,
   CountryCenterPoint,
   MapDebugSettings,
 } from 'map/state/map-types';
-import { THREAT_LINE_WIDTH } from 'map/layers/tokens';
+import {
+  COUNTRY_BASE_FILL_COLOR,
+  COUNTRY_BASE_FILL_OPACITY,
+  COUNTRY_BASE_GLOW_COLOR,
+  COUNTRY_BASE_GLOW_OPACITY,
+  COUNTRY_BASE_GLOW_WIDTH,
+  COUNTRY_BASE_LINE_COLOR,
+  COUNTRY_BASE_LINE_OPACITY,
+  COUNTRY_BASE_LINE_WIDTH,
+  HOVER_BORDER_WIDTH,
+  THREAT_FILL_OPACITY,
+  THREAT_GLOW_NEUTRAL_COLOR,
+  THREAT_GLOW_OPACITY,
+  THREAT_GLOW_WIDTH,
+  THREAT_OUTLINE_NEUTRAL_COLOR,
+  THREAT_LINE_WIDTH,
+  THREAT_LINE_OPACITY,
+} from 'map/layers/tokens';
 
-const STORAGE_KEY = 'world-monitor.map-debug-settings.v15';
-const LEGACY_STORAGE_KEY = 'world-monitor.map-debug-settings.v14';
+const STORAGE_KEY = 'world-monitor.map-debug-settings.v16';
+const LEGACY_STORAGE_KEY = 'world-monitor.map-debug-settings.v15';
 const DEBUG_MODE_STORAGE_KEY = 'world-monitor.map-debug-mode.v1';
 const LATEST_SECTION_HEIGHT_MIN = 100;
 const LATEST_SECTION_HEIGHT_MAX = 560;
@@ -26,8 +45,8 @@ const MIN_SPREAD_RATIO = 0.01;
 const MAX_SPREAD_RATIO = 0.5;
 const MIN_CURVATURE_RATIO = 0.01;
 const MAX_CURVATURE_RATIO = 0.6;
-const MIN_LINE_WIDTH = 0.5;
-const MAX_LINE_WIDTH = 6;
+const MIN_LINE_WIDTH = 0;
+const MAX_LINE_WIDTH = 10;
 const MIN_SEGMENT_COUNT = 12;
 const MAX_SEGMENT_COUNT = 240;
 const MIN_DURATION = 100;
@@ -36,8 +55,14 @@ const MIN_REPLAY_DELAY = 1000;
 const MAX_REPLAY_DELAY = 30000;
 const MIN_MAX_CONCURRENT_STARTS = 1;
 const MAX_MAX_CONCURRENT_STARTS = 12;
-const MIN_THREAT_OUTLINE_WIDTH = 0.5;
-const MAX_THREAT_OUTLINE_WIDTH = 8;
+const MIN_THREAT_OUTLINE_WIDTH = 0;
+const MAX_THREAT_OUTLINE_WIDTH = 12;
+const MIN_BASE_COUNTRY_OUTLINE_WIDTH = 0;
+const MAX_BASE_COUNTRY_OUTLINE_WIDTH = 8;
+const MIN_GLOW_WIDTH = 0;
+const MAX_GLOW_WIDTH = 24;
+const MIN_HOVER_WIDTH = 0;
+const MAX_HOVER_WIDTH = 24;
 const MIN_RING_RADIUS = 2;
 const MAX_RING_RADIUS = 80;
 const MIN_RING_COUNT = 1;
@@ -48,18 +73,38 @@ const MIN_RING_LINE_WIDTH = 0.5;
 const MAX_RING_LINE_WIDTH = 6;
 const MIN_RING_DOT_RADIUS = 0;
 const MAX_RING_DOT_RADIUS = 16;
+const MIN_ALPHA = 0;
+const MAX_ALPHA = 1;
+const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
+const INVALID_ATTACK_ARC_CONFIG_MESSAGE = 'AttackArc Debug 配置不完整，未应用已存样式。';
 
-function createDefaultStageSettings(
-  curvatureRatio: number,
-  bundleSpreadRatio: number,
-  lineWidth: number,
-  segmentCount: number,
-): AttackArcStageSettings {
+function createValidAttackArcConfigState(): AttackArcConfigState {
   return {
-    curvatureRatio,
-    bundleSpreadRatio,
-    lineWidth,
-    segmentCount,
+    isValid: true,
+    errorMessage: null,
+  };
+}
+
+function createInvalidAttackArcConfigState(): AttackArcConfigState {
+  return {
+    isValid: false,
+    errorMessage: INVALID_ATTACK_ARC_CONFIG_MESSAGE,
+  };
+}
+
+function resolveSafeRingSpacing(ringRadius: number, ringCount: number, ringSpacing: number): number {
+  if (ringCount <= 1) {
+    return ringRadius;
+  }
+
+  return Math.min(ringSpacing, Math.max(1, ringRadius / ringCount));
+}
+
+function createDefaultStageSettings(): AttackArcStageSettings {
+  return {
+    lineAlpha: 1,
+    ringAlpha: 1,
+    dotAlpha: 1,
     ringRadius: 15,
     ringCount: 2,
     ringSpacing: 5,
@@ -68,42 +113,159 @@ function createDefaultStageSettings(
   };
 }
 
-function createDefaultLengthPresetSettings(stageSettings: AttackArcStageSettings): AttackArcLengthPresetSettings {
+function createDefaultVisualStyle(lineColor: string): AttackArcVisualStyle {
   return {
-    bundleCount: 4,
+    lineColor,
+    ringColor: lineColor,
+    dotColor: lineColor,
+  };
+}
+
+function createDefaultLengthPresetSettings(
+  bundleSpreadRatio: number,
+  curvatureRatio: number,
+  lineWidth: number,
+  segmentCount: number,
+  style: AttackArcVisualStyle,
+): AttackArcLengthPresetSettings {
+  return {
+    bundleCount: 2,
     flightDuration: 1300,
     holdDuration: 2000,
     fadeoutDuration: 700,
     replayDelayMs: 5000,
     bundleIntervalMs: 220,
     maxConcurrentStarts: 4,
+    bundleSpreadRatio,
+    curvatureRatio,
+    lineWidth,
+    segmentCount,
+    style,
     stages: {
-      stage1: { ...stageSettings },
-      stage2: { ...stageSettings },
-      stage3: { ...stageSettings },
+      stage1: createDefaultStageSettings(),
+      stage2: createDefaultStageSettings(),
+      stage3: createDefaultStageSettings(),
     },
   };
 }
 
 const DEFAULT_ATTACK_ARC_LENGTH_PRESETS: Record<ArcLengthPreset, AttackArcLengthPresetSettings> = {
-  short: createDefaultLengthPresetSettings(createDefaultStageSettings(0.08, 0.05, 1.5, 64)),
-  medium: createDefaultLengthPresetSettings(createDefaultStageSettings(0.16, 0.08, 1.8, 100)),
-  long: createDefaultLengthPresetSettings(createDefaultStageSettings(0.24, 0.12, 2.2, 140)),
+  short: {
+    ...createDefaultLengthPresetSettings(0.05, 0.08, 1.5, 64, createDefaultVisualStyle('#f5a623')),
+    stages: {
+      stage1: {
+        lineAlpha: 1,
+        ringAlpha: 1,
+        dotAlpha: 1,
+        ringRadius: 15,
+        ringCount: 2,
+        ringSpacing: 5,
+        ringLineWidth: 2.5,
+        ringDotRadius: 6,
+      },
+      stage2: {
+        lineAlpha: 1,
+        ringAlpha: 1,
+        dotAlpha: 1,
+        ringRadius: 9,
+        ringCount: 2,
+        ringSpacing: 3,
+        ringLineWidth: 1.5,
+        ringDotRadius: 2,
+      },
+      stage3: {
+        lineAlpha: 1,
+        ringAlpha: 1,
+        dotAlpha: 1,
+        ringRadius: 9,
+        ringCount: 2,
+        ringSpacing: 3,
+        ringLineWidth: 1.5,
+        ringDotRadius: 2,
+      },
+    },
+  },
+  medium: {
+    ...createDefaultLengthPresetSettings(0.08, 0.16, 2, 100, createDefaultVisualStyle('#ff5f3c')),
+    bundleCount: 3,
+    stages: {
+      stage1: {
+        lineAlpha: 1,
+        ringAlpha: 1,
+        dotAlpha: 1,
+        ringRadius: 9,
+        ringCount: 1,
+        ringSpacing: 9,
+        ringLineWidth: 2,
+        ringDotRadius: 1,
+      },
+      stage2: {
+        lineAlpha: 1,
+        ringAlpha: 1,
+        dotAlpha: 1,
+        ringRadius: 12,
+        ringCount: 2,
+        ringSpacing: 5,
+        ringLineWidth: 2,
+        ringDotRadius: 3,
+      },
+      stage3: {
+        lineAlpha: 1,
+        ringAlpha: 1,
+        dotAlpha: 1,
+        ringRadius: 15,
+        ringCount: 2,
+        ringSpacing: 5,
+        ringLineWidth: 2.5,
+        ringDotRadius: 6,
+      },
+    },
+  },
+  long: {
+    ...createDefaultLengthPresetSettings(0.12, 0.24, 4, 140, createDefaultVisualStyle('#eb282d')),
+    bundleCount: 1,
+    maxConcurrentStarts: 5,
+  },
 };
 
 const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
-  latestSectionHeight: 160,
+  latestSectionHeight: 339,
   minZoom: -2,
   maxZoom: 6,
+  baseCountryFillColor: '#000000',
+  baseCountryFillOpacity: 0.65,
+  baseCountryOutlineColor: COUNTRY_BASE_LINE_COLOR,
+  baseCountryOutlineWidth: COUNTRY_BASE_LINE_WIDTH,
+  baseCountryOutlineOpacity: COUNTRY_BASE_LINE_OPACITY,
+  baseCountryGlowColor: COUNTRY_BASE_GLOW_COLOR,
+  baseCountryGlowWidth: COUNTRY_BASE_GLOW_WIDTH,
+  baseCountryGlowOpacity: COUNTRY_BASE_GLOW_OPACITY,
   activeCountryCodes: [],
   countryCenterOverrides: {},
-  threatColorsEnabled: true,
-  threatOutlineVisible: true,
-  threatOutlineWidth: THREAT_LINE_WIDTH,
+  threatColorsEnabled: false,
+  threatFillOpacity: THREAT_FILL_OPACITY,
+  threatOutlineVisible: false,
+  threatOutlineNeutralColor: THREAT_OUTLINE_NEUTRAL_COLOR,
+  threatOutlineWidth: 1.5,
+  threatOutlineOpacity: THREAT_LINE_OPACITY,
+  threatGlowNeutralColor: THREAT_GLOW_NEUTRAL_COLOR,
+  threatGlowWidth: 3.2,
+  threatGlowOpacity: THREAT_GLOW_OPACITY,
+  hoverFillColor: '#34c8ff',
+  hoverFillOpacity: 0.18,
+  hoverThreatFillOpacity: 1,
+  hoverGlowColor: '#34c8ff',
+  hoverGlowWidth: 5.5,
+  hoverGlowOpacity: 0.28,
+  hoverThreatGlowOpacity: 1,
+  hoverBorderColor: '#52d6ff',
+  hoverBorderWidth: HOVER_BORDER_WIDTH,
+  hoverBorderOpacity: 0.9,
+  hoverThreatBorderOpacity: 1,
   attackArc: {
     lengthThresholds: {
-      shortMax: 18,
-      mediumMax: 55,
+      shortMax: 19,
+      mediumMax: 74,
     },
     presets: DEFAULT_ATTACK_ARC_LENGTH_PRESETS,
   },
@@ -119,6 +281,14 @@ function isFiniteNumber(value: unknown): value is number {
 
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function isHexColor(value: unknown): value is string {
+  return typeof value === 'string' && HEX_COLOR_PATTERN.test(value.trim());
+}
+
+function coerceHexColor(value: unknown, fallback: string): string {
+  return isHexColor(value) ? value.trim().toLowerCase() : fallback;
 }
 
 function coerceBoolean(value: unknown, fallback: boolean): boolean {
@@ -182,66 +352,37 @@ function coerceLengthThresholds(value: unknown): AttackArcLengthThresholds {
   return { shortMax, mediumMax };
 }
 
-function coerceLengthPresetSettings(
-  value: unknown,
-  fallback: AttackArcLengthPresetSettings,
-): AttackArcLengthPresetSettings {
-  const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcLengthPresetSettings> : {};
-
-  return {
-    bundleCount: isFiniteNumber(record.bundleCount)
-      ? Math.round(clampNumber(record.bundleCount, MIN_BUNDLE_COUNT, MAX_BUNDLE_COUNT))
-      : fallback.bundleCount,
-    flightDuration: isFiniteNumber(record.flightDuration)
-      ? Math.round(clampNumber(record.flightDuration, MIN_DURATION, MAX_DURATION))
-      : fallback.flightDuration,
-    holdDuration: isFiniteNumber(record.holdDuration)
-      ? Math.round(clampNumber(record.holdDuration, MIN_DURATION, MAX_DURATION))
-      : fallback.holdDuration,
-    fadeoutDuration: isFiniteNumber(record.fadeoutDuration)
-      ? Math.round(clampNumber(record.fadeoutDuration, MIN_DURATION, MAX_DURATION))
-      : fallback.fadeoutDuration,
-    replayDelayMs: isFiniteNumber(record.replayDelayMs)
-      ? Math.round(clampNumber(record.replayDelayMs, MIN_REPLAY_DELAY, MAX_REPLAY_DELAY))
-      : fallback.replayDelayMs,
-    bundleIntervalMs: isFiniteNumber(record.bundleIntervalMs)
-      ? Math.round(clampNumber(record.bundleIntervalMs, MIN_DURATION, MAX_DURATION))
-      : fallback.bundleIntervalMs,
-    maxConcurrentStarts: isFiniteNumber(record.maxConcurrentStarts)
-      ? Math.round(clampNumber(record.maxConcurrentStarts, MIN_MAX_CONCURRENT_STARTS, MAX_MAX_CONCURRENT_STARTS))
-      : fallback.maxConcurrentStarts,
-    stages: coerceStageSettingsRecord(record.stages, fallback.stages),
-  };
-}
-
 function coerceStageSettings(
   value: unknown,
   fallback: AttackArcStageSettings,
 ): AttackArcStageSettings {
   const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcStageSettings> : {};
+  const lineAlpha = isFiniteNumber(record.lineAlpha)
+    ? clampNumber(record.lineAlpha, MIN_ALPHA, MAX_ALPHA)
+    : fallback.lineAlpha;
+  const ringAlpha = isFiniteNumber(record.ringAlpha)
+    ? clampNumber(record.ringAlpha, MIN_ALPHA, MAX_ALPHA)
+    : fallback.ringAlpha;
+  const dotAlpha = isFiniteNumber(record.dotAlpha)
+    ? clampNumber(record.dotAlpha, MIN_ALPHA, MAX_ALPHA)
+    : fallback.dotAlpha;
+  const ringRadius = isFiniteNumber(record.ringRadius)
+    ? clampNumber(record.ringRadius, MIN_RING_RADIUS, MAX_RING_RADIUS)
+    : fallback.ringRadius;
+  const ringCount = isFiniteNumber(record.ringCount)
+    ? Math.round(clampNumber(record.ringCount, MIN_RING_COUNT, MAX_RING_COUNT))
+    : fallback.ringCount;
+  const rawRingSpacing = isFiniteNumber(record.ringSpacing)
+    ? clampNumber(record.ringSpacing, MIN_RING_SPACING, MAX_RING_SPACING)
+    : fallback.ringSpacing;
 
   return {
-    bundleSpreadRatio: isFiniteNumber(record.bundleSpreadRatio)
-      ? clampNumber(record.bundleSpreadRatio, MIN_SPREAD_RATIO, MAX_SPREAD_RATIO)
-      : fallback.bundleSpreadRatio,
-    curvatureRatio: isFiniteNumber(record.curvatureRatio)
-      ? clampNumber(record.curvatureRatio, MIN_CURVATURE_RATIO, MAX_CURVATURE_RATIO)
-      : fallback.curvatureRatio,
-    lineWidth: isFiniteNumber(record.lineWidth)
-      ? clampNumber(record.lineWidth, MIN_LINE_WIDTH, MAX_LINE_WIDTH)
-      : fallback.lineWidth,
-    segmentCount: isFiniteNumber(record.segmentCount)
-      ? Math.round(clampNumber(record.segmentCount, MIN_SEGMENT_COUNT, MAX_SEGMENT_COUNT))
-      : fallback.segmentCount,
-    ringRadius: isFiniteNumber(record.ringRadius)
-      ? clampNumber(record.ringRadius, MIN_RING_RADIUS, MAX_RING_RADIUS)
-      : fallback.ringRadius,
-    ringCount: isFiniteNumber(record.ringCount)
-      ? Math.round(clampNumber(record.ringCount, MIN_RING_COUNT, MAX_RING_COUNT))
-      : fallback.ringCount,
-    ringSpacing: isFiniteNumber(record.ringSpacing)
-      ? clampNumber(record.ringSpacing, MIN_RING_SPACING, MAX_RING_SPACING)
-      : fallback.ringSpacing,
+    lineAlpha,
+    ringAlpha,
+    dotAlpha,
+    ringRadius,
+    ringCount,
+    ringSpacing: resolveSafeRingSpacing(ringRadius, ringCount, rawRingSpacing),
     ringLineWidth: isFiniteNumber(record.ringLineWidth)
       ? clampNumber(record.ringLineWidth, MIN_RING_LINE_WIDTH, MAX_RING_LINE_WIDTH)
       : fallback.ringLineWidth,
@@ -266,86 +407,64 @@ function coerceStageSettingsRecord(
   };
 }
 
-function createLegacyStageSettings(
-  value: unknown,
-  fallback: AttackArcStageSettings,
-  legacyAttackArcRecord?: Record<string, unknown>,
-): AttackArcStageSettings {
-  const legacyStage = coerceStageSettings(value, fallback);
-  return {
-    ...legacyStage,
-    ringRadius: isFiniteNumber(legacyAttackArcRecord?.ringRadius)
-      ? clampNumber(legacyAttackArcRecord.ringRadius, MIN_RING_RADIUS, MAX_RING_RADIUS)
-      : legacyStage.ringRadius,
-    ringCount: isFiniteNumber(legacyAttackArcRecord?.ringCount)
-      ? Math.round(clampNumber(legacyAttackArcRecord.ringCount, MIN_RING_COUNT, MAX_RING_COUNT))
-      : legacyStage.ringCount,
-    ringSpacing: isFiniteNumber(legacyAttackArcRecord?.ringSpacing)
-      ? clampNumber(legacyAttackArcRecord.ringSpacing, MIN_RING_SPACING, MAX_RING_SPACING)
-      : legacyStage.ringSpacing,
-    ringLineWidth: isFiniteNumber(legacyAttackArcRecord?.ringLineWidth)
-      ? clampNumber(legacyAttackArcRecord.ringLineWidth, MIN_RING_LINE_WIDTH, MAX_RING_LINE_WIDTH)
-      : legacyStage.ringLineWidth,
-    ringDotRadius: isFiniteNumber(legacyAttackArcRecord?.ringDotRadius)
-      ? clampNumber(legacyAttackArcRecord.ringDotRadius, MIN_RING_DOT_RADIUS, MAX_RING_DOT_RADIUS)
-      : legacyStage.ringDotRadius,
-  };
-}
-
-function coerceLegacyLengthPresetSettings(
+function coerceLengthPresetSettings(
   value: unknown,
   fallback: AttackArcLengthPresetSettings,
-  legacyAttackArcRecord: Record<string, unknown>,
 ): AttackArcLengthPresetSettings {
+  const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcLengthPresetSettings> : {};
+  const styleRecord = typeof record.style === 'object' && record.style !== null
+    ? record.style as Partial<AttackArcVisualStyle>
+    : {};
+  const lineWidth = isFiniteNumber(record.lineWidth)
+    ? clampNumber(record.lineWidth, MIN_LINE_WIDTH, MAX_LINE_WIDTH)
+    : fallback.lineWidth;
+  const segmentCount = isFiniteNumber(record.segmentCount)
+    ? Math.round(clampNumber(record.segmentCount, MIN_SEGMENT_COUNT, MAX_SEGMENT_COUNT))
+    : fallback.segmentCount;
+
   return {
-    bundleCount: isFiniteNumber(legacyAttackArcRecord.bundleCount)
-      ? Math.round(clampNumber(legacyAttackArcRecord.bundleCount, MIN_BUNDLE_COUNT, MAX_BUNDLE_COUNT))
+    bundleCount: isFiniteNumber(record.bundleCount)
+      ? Math.round(clampNumber(record.bundleCount, MIN_BUNDLE_COUNT, MAX_BUNDLE_COUNT))
       : fallback.bundleCount,
-    flightDuration: isFiniteNumber(legacyAttackArcRecord.flightDuration)
-      ? Math.round(clampNumber(legacyAttackArcRecord.flightDuration, MIN_DURATION, MAX_DURATION))
+    flightDuration: isFiniteNumber(record.flightDuration)
+      ? Math.round(clampNumber(record.flightDuration, MIN_DURATION, MAX_DURATION))
       : fallback.flightDuration,
-    holdDuration: isFiniteNumber(legacyAttackArcRecord.holdDuration)
-      ? Math.round(clampNumber(legacyAttackArcRecord.holdDuration, MIN_DURATION, MAX_DURATION))
+    holdDuration: isFiniteNumber(record.holdDuration)
+      ? Math.round(clampNumber(record.holdDuration, MIN_DURATION, MAX_DURATION))
       : fallback.holdDuration,
-    fadeoutDuration: isFiniteNumber(legacyAttackArcRecord.fadeoutDuration)
-      ? Math.round(clampNumber(legacyAttackArcRecord.fadeoutDuration, MIN_DURATION, MAX_DURATION))
+    fadeoutDuration: isFiniteNumber(record.fadeoutDuration)
+      ? Math.round(clampNumber(record.fadeoutDuration, MIN_DURATION, MAX_DURATION))
       : fallback.fadeoutDuration,
-    replayDelayMs: isFiniteNumber(legacyAttackArcRecord.replayDelayMs)
-      ? Math.round(clampNumber(legacyAttackArcRecord.replayDelayMs, MIN_REPLAY_DELAY, MAX_REPLAY_DELAY))
+    replayDelayMs: isFiniteNumber(record.replayDelayMs)
+      ? Math.round(clampNumber(record.replayDelayMs, MIN_REPLAY_DELAY, MAX_REPLAY_DELAY))
       : fallback.replayDelayMs,
-    bundleIntervalMs: isFiniteNumber(legacyAttackArcRecord.bundleIntervalMs)
-      ? Math.round(clampNumber(legacyAttackArcRecord.bundleIntervalMs, MIN_DURATION, MAX_DURATION))
+    bundleIntervalMs: isFiniteNumber(record.bundleIntervalMs)
+      ? Math.round(clampNumber(record.bundleIntervalMs, MIN_DURATION, MAX_DURATION))
       : fallback.bundleIntervalMs,
-    maxConcurrentStarts: isFiniteNumber(legacyAttackArcRecord.maxConcurrentStarts)
-      ? Math.round(clampNumber(
-        legacyAttackArcRecord.maxConcurrentStarts,
-        MIN_MAX_CONCURRENT_STARTS,
-        MAX_MAX_CONCURRENT_STARTS,
-      ))
+    maxConcurrentStarts: isFiniteNumber(record.maxConcurrentStarts)
+      ? Math.round(clampNumber(record.maxConcurrentStarts, MIN_MAX_CONCURRENT_STARTS, MAX_MAX_CONCURRENT_STARTS))
       : fallback.maxConcurrentStarts,
-    stages: {
-      stage1: createLegacyStageSettings(value, fallback.stages.stage1, legacyAttackArcRecord),
-      stage2: createLegacyStageSettings(value, fallback.stages.stage2, legacyAttackArcRecord),
-      stage3: createLegacyStageSettings(value, fallback.stages.stage3, legacyAttackArcRecord),
+    bundleSpreadRatio: isFiniteNumber(record.bundleSpreadRatio)
+      ? clampNumber(record.bundleSpreadRatio, MIN_SPREAD_RATIO, MAX_SPREAD_RATIO)
+      : fallback.bundleSpreadRatio,
+    curvatureRatio: isFiniteNumber(record.curvatureRatio)
+      ? clampNumber(record.curvatureRatio, MIN_CURVATURE_RATIO, MAX_CURVATURE_RATIO)
+      : fallback.curvatureRatio,
+    lineWidth,
+    segmentCount,
+    style: {
+      lineColor: coerceHexColor(styleRecord.lineColor, fallback.style.lineColor),
+      ringColor: coerceHexColor(styleRecord.ringColor, fallback.style.ringColor),
+      dotColor: coerceHexColor(styleRecord.dotColor, fallback.style.dotColor),
     },
+    stages: coerceStageSettingsRecord(record.stages, fallback.stages),
   };
 }
 
-function coerceLengthPresets(
-  value: unknown,
-  legacyAttackArcRecord?: Record<string, unknown>,
-): Record<ArcLengthPreset, AttackArcLengthPresetSettings> {
+function coerceLengthPresets(value: unknown): Record<ArcLengthPreset, AttackArcLengthPresetSettings> {
   const record = typeof value === 'object' && value !== null
     ? value as Partial<Record<ArcLengthPreset, AttackArcLengthPresetSettings>>
     : {};
-
-  if (legacyAttackArcRecord) {
-    return {
-      short: coerceLegacyLengthPresetSettings(record.short, DEFAULT_ATTACK_ARC_LENGTH_PRESETS.short, legacyAttackArcRecord),
-      medium: coerceLegacyLengthPresetSettings(record.medium, DEFAULT_ATTACK_ARC_LENGTH_PRESETS.medium, legacyAttackArcRecord),
-      long: coerceLegacyLengthPresetSettings(record.long, DEFAULT_ATTACK_ARC_LENGTH_PRESETS.long, legacyAttackArcRecord),
-    };
-  }
 
   return {
     short: coerceLengthPresetSettings(record.short, DEFAULT_ATTACK_ARC_LENGTH_PRESETS.short),
@@ -356,14 +475,81 @@ function coerceLengthPresets(
 
 function coerceAttackArcSettings(value: unknown): AttackArcDebugSettings {
   const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcDebugSettings> : {};
-  const legacyRecord = value && typeof value === 'object' ? value as Record<string, unknown> : null;
-  const hasLegacyLengthPresets = typeof legacyRecord?.lengthPresets === 'object' && legacyRecord.lengthPresets !== null;
-  const presetsValue = record.presets ?? legacyRecord?.lengthPresets;
-
   return {
     lengthThresholds: coerceLengthThresholds(record.lengthThresholds),
-    presets: coerceLengthPresets(presetsValue, hasLegacyLengthPresets ? legacyRecord ?? undefined : undefined),
+    presets: coerceLengthPresets(record.presets),
   };
+}
+
+function isCompleteStageSettings(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const record = value as Partial<AttackArcStageSettings>;
+  return isFiniteNumber(record.lineAlpha)
+    && isFiniteNumber(record.ringAlpha)
+    && isFiniteNumber(record.dotAlpha)
+    && isFiniteNumber(record.ringRadius)
+    && isFiniteNumber(record.ringCount)
+    && isFiniteNumber(record.ringSpacing)
+    && isFiniteNumber(record.ringLineWidth)
+    && isFiniteNumber(record.ringDotRadius);
+}
+
+function isCompleteVisualStyle(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const record = value as Partial<AttackArcVisualStyle>;
+  return isHexColor(record.lineColor)
+    && isHexColor(record.ringColor)
+    && isHexColor(record.dotColor);
+}
+
+function isCompleteLengthPresetSettings(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const record = value as Partial<AttackArcLengthPresetSettings>;
+  const stages = record.stages as Partial<Record<AttackArcStagePreset, unknown>> | undefined;
+
+  return isFiniteNumber(record.bundleCount)
+    && isFiniteNumber(record.flightDuration)
+    && isFiniteNumber(record.holdDuration)
+    && isFiniteNumber(record.fadeoutDuration)
+    && isFiniteNumber(record.replayDelayMs)
+    && isFiniteNumber(record.bundleIntervalMs)
+    && isFiniteNumber(record.maxConcurrentStarts)
+    && isFiniteNumber(record.bundleSpreadRatio)
+    && isFiniteNumber(record.curvatureRatio)
+    && isFiniteNumber(record.lineWidth)
+    && isFiniteNumber(record.segmentCount)
+    && isCompleteVisualStyle(record.style)
+    && !!stages
+    && isCompleteStageSettings(stages.stage1)
+    && isCompleteStageSettings(stages.stage2)
+    && isCompleteStageSettings(stages.stage3);
+}
+
+function hasCompleteStoredAttackArcSettings(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const record = value as Partial<AttackArcDebugSettings>;
+  const presets = record.presets as Partial<Record<ArcLengthPreset, unknown>> | undefined;
+
+  return typeof record.lengthThresholds === 'object'
+    && record.lengthThresholds !== null
+    && isFiniteNumber((record.lengthThresholds as Partial<AttackArcLengthThresholds>).shortMax)
+    && isFiniteNumber((record.lengthThresholds as Partial<AttackArcLengthThresholds>).mediumMax)
+    && !!presets
+    && isCompleteLengthPresetSettings(presets.short)
+    && isCompleteLengthPresetSettings(presets.medium)
+    && isCompleteLengthPresetSettings(presets.long);
 }
 
 export function parseActiveCountryCodesInput(value: string): string[] {
@@ -389,18 +575,136 @@ export function coerceMapDebugSettings(value: unknown): MapDebugSettings {
       : DEFAULT_MAP_DEBUG_SETTINGS.latestSectionHeight,
     minZoom,
     maxZoom,
+    baseCountryFillColor: coerceHexColor(
+      record.baseCountryFillColor,
+      DEFAULT_MAP_DEBUG_SETTINGS.baseCountryFillColor,
+    ),
+    baseCountryFillOpacity: isFiniteNumber(record.baseCountryFillOpacity)
+      ? clampNumber(record.baseCountryFillOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.baseCountryFillOpacity,
+    baseCountryOutlineColor: coerceHexColor(
+      record.baseCountryOutlineColor,
+      DEFAULT_MAP_DEBUG_SETTINGS.baseCountryOutlineColor,
+    ),
+    baseCountryOutlineWidth: isFiniteNumber(record.baseCountryOutlineWidth)
+      ? clampNumber(record.baseCountryOutlineWidth, MIN_BASE_COUNTRY_OUTLINE_WIDTH, MAX_BASE_COUNTRY_OUTLINE_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.baseCountryOutlineWidth,
+    baseCountryOutlineOpacity: isFiniteNumber(record.baseCountryOutlineOpacity)
+      ? clampNumber(record.baseCountryOutlineOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.baseCountryOutlineOpacity,
+    baseCountryGlowColor: coerceHexColor(
+      record.baseCountryGlowColor,
+      DEFAULT_MAP_DEBUG_SETTINGS.baseCountryGlowColor,
+    ),
+    baseCountryGlowWidth: isFiniteNumber(record.baseCountryGlowWidth)
+      ? clampNumber(record.baseCountryGlowWidth, MIN_GLOW_WIDTH, MAX_GLOW_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.baseCountryGlowWidth,
+    baseCountryGlowOpacity: isFiniteNumber(record.baseCountryGlowOpacity)
+      ? clampNumber(record.baseCountryGlowOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.baseCountryGlowOpacity,
     activeCountryCodes: normalizeActiveCountryCodes(record.activeCountryCodes),
     countryCenterOverrides: coerceCountryCenterOverrides(record.countryCenterOverrides),
     threatColorsEnabled: coerceBoolean(record.threatColorsEnabled, DEFAULT_MAP_DEBUG_SETTINGS.threatColorsEnabled),
+    threatFillOpacity: isFiniteNumber(record.threatFillOpacity)
+      ? clampNumber(record.threatFillOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.threatFillOpacity,
     threatOutlineVisible: coerceBoolean(record.threatOutlineVisible, DEFAULT_MAP_DEBUG_SETTINGS.threatOutlineVisible),
+    threatOutlineNeutralColor: coerceHexColor(
+      record.threatOutlineNeutralColor,
+      DEFAULT_MAP_DEBUG_SETTINGS.threatOutlineNeutralColor,
+    ),
     threatOutlineWidth: isFiniteNumber(record.threatOutlineWidth)
       ? clampNumber(record.threatOutlineWidth, MIN_THREAT_OUTLINE_WIDTH, MAX_THREAT_OUTLINE_WIDTH)
       : DEFAULT_MAP_DEBUG_SETTINGS.threatOutlineWidth,
+    threatOutlineOpacity: isFiniteNumber(record.threatOutlineOpacity)
+      ? clampNumber(record.threatOutlineOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.threatOutlineOpacity,
+    threatGlowNeutralColor: coerceHexColor(
+      record.threatGlowNeutralColor,
+      DEFAULT_MAP_DEBUG_SETTINGS.threatGlowNeutralColor,
+    ),
+    threatGlowWidth: isFiniteNumber(record.threatGlowWidth)
+      ? clampNumber(record.threatGlowWidth, MIN_GLOW_WIDTH, MAX_GLOW_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.threatGlowWidth,
+    threatGlowOpacity: isFiniteNumber(record.threatGlowOpacity)
+      ? clampNumber(record.threatGlowOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.threatGlowOpacity,
+    hoverFillColor: coerceHexColor(
+      record.hoverFillColor,
+      DEFAULT_MAP_DEBUG_SETTINGS.hoverFillColor,
+    ),
+    hoverFillOpacity: isFiniteNumber(record.hoverFillOpacity)
+      ? clampNumber(record.hoverFillOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.hoverFillOpacity,
+    hoverThreatFillOpacity: isFiniteNumber(record.hoverThreatFillOpacity)
+      ? clampNumber(record.hoverThreatFillOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.hoverThreatFillOpacity,
+    hoverGlowColor: coerceHexColor(
+      record.hoverGlowColor,
+      DEFAULT_MAP_DEBUG_SETTINGS.hoverGlowColor,
+    ),
+    hoverGlowWidth: isFiniteNumber(record.hoverGlowWidth)
+      ? clampNumber(record.hoverGlowWidth, MIN_HOVER_WIDTH, MAX_HOVER_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.hoverGlowWidth,
+    hoverGlowOpacity: isFiniteNumber(record.hoverGlowOpacity)
+      ? clampNumber(record.hoverGlowOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.hoverGlowOpacity,
+    hoverThreatGlowOpacity: isFiniteNumber(record.hoverThreatGlowOpacity)
+      ? clampNumber(record.hoverThreatGlowOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.hoverThreatGlowOpacity,
+    hoverBorderColor: coerceHexColor(
+      record.hoverBorderColor,
+      DEFAULT_MAP_DEBUG_SETTINGS.hoverBorderColor,
+    ),
+    hoverBorderWidth: isFiniteNumber(record.hoverBorderWidth)
+      ? clampNumber(record.hoverBorderWidth, MIN_HOVER_WIDTH, MAX_HOVER_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.hoverBorderWidth,
+    hoverBorderOpacity: isFiniteNumber(record.hoverBorderOpacity)
+      ? clampNumber(record.hoverBorderOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.hoverBorderOpacity,
+    hoverThreatBorderOpacity: isFiniteNumber(record.hoverThreatBorderOpacity)
+      ? clampNumber(record.hoverThreatBorderOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.hoverThreatBorderOpacity,
     attackArc: coerceAttackArcSettings(record.attackArc),
   };
 }
 
-function readStoredSettings(): MapDebugSettings | null {
+interface StoredMapDebugSettingsResult {
+  settings: MapDebugSettings;
+  attackArcConfigState: AttackArcConfigState;
+  skipInitialPersist: boolean;
+}
+
+export function coerceStoredMapDebugSettings(value: unknown): StoredMapDebugSettingsResult {
+  const settings = coerceMapDebugSettings(value);
+  if (typeof value !== 'object' || value === null) {
+    return {
+      settings,
+      attackArcConfigState: createValidAttackArcConfigState(),
+      skipInitialPersist: false,
+    };
+  }
+
+  const record = value as Partial<MapDebugSettings>;
+  if (hasCompleteStoredAttackArcSettings(record.attackArc)) {
+    return {
+      settings,
+      attackArcConfigState: createValidAttackArcConfigState(),
+      skipInitialPersist: false,
+    };
+  }
+
+  return {
+    settings: {
+      ...settings,
+      attackArc: DEFAULT_MAP_DEBUG_SETTINGS.attackArc,
+    },
+    attackArcConfigState: createInvalidAttackArcConfigState(),
+    skipInitialPersist: true,
+  };
+}
+
+function readStoredSettings(): StoredMapDebugSettingsResult | null {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -411,7 +715,7 @@ function readStoredSettings(): MapDebugSettings | null {
   }
 
   try {
-    return coerceMapDebugSettings(JSON.parse(raw));
+    return coerceStoredMapDebugSettings(JSON.parse(raw));
   } catch {
     return null;
   }
@@ -425,6 +729,7 @@ export interface UseMapDebugSettingsResult {
   persistEnabled: boolean;
   setPersistEnabled: (enabled: boolean) => void;
   settings: MapDebugSettings;
+  attackArcConfigState: AttackArcConfigState;
   resetSettings: () => void;
   updateLatestSectionHeight: (value: number) => void;
   updateMapSettings: (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight' | 'activeCountryCodes'>>) => void;
@@ -436,12 +741,16 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
   const [debugModeEnabled, setDebugModeEnabledState] = useState(false);
   const [persistEnabled, setPersistEnabledState] = useState(false);
   const [settings, setSettings] = useState<MapDebugSettings>(DEFAULT_MAP_DEBUG_SETTINGS);
+  const [attackArcConfigState, setAttackArcConfigState] = useState<AttackArcConfigState>(createValidAttackArcConfigState());
+  const skipNextPersistRef = useRef(false);
 
   useEffect(() => {
     const stored = readStoredSettings();
     if (stored) {
-      setSettings(stored);
+      setSettings(stored.settings);
+      setAttackArcConfigState(stored.attackArcConfigState);
       setPersistEnabledState(true);
+      skipNextPersistRef.current = stored.skipInitialPersist;
     }
   }, []);
 
@@ -464,6 +773,11 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
 
     if (!persistEnabled) {
       window.localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+
+    if (skipNextPersistRef.current) {
+      skipNextPersistRef.current = false;
       return;
     }
 
@@ -491,6 +805,10 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
   };
 
   const updateMapSettings = (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight' | 'activeCountryCodes'>>) => {
+    if (patch.attackArc) {
+      setAttackArcConfigState(createValidAttackArcConfigState());
+    }
+
     setSettings((current) => coerceMapDebugSettings({
       ...current,
       ...patch,
@@ -509,6 +827,11 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     }));
   };
 
+  const resetSettings = () => {
+    setSettings(DEFAULT_MAP_DEBUG_SETTINGS);
+    setAttackArcConfigState(createValidAttackArcConfigState());
+  };
+
   return {
     debugModeEnabled,
     setDebugModeEnabled: (enabled) => {
@@ -525,7 +848,8 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
       }
     },
     settings,
-    resetSettings: () => setSettings(DEFAULT_MAP_DEBUG_SETTINGS),
+    attackArcConfigState,
+    resetSettings,
     updateLatestSectionHeight,
     updateMapSettings,
     updateActiveCountryCodes,

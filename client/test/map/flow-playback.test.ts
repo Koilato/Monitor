@@ -23,12 +23,20 @@ function withArcSettings<T extends {
   replayDelayMs: number;
   bundleIntervalMs: number;
   maxConcurrentStarts: number;
+  bundleSpreadRatio: number;
+  curvatureRatio: number;
+  lineWidth: number;
+  segmentCount: number;
+  style: {
+    lineColor: string;
+    ringColor: string;
+    dotColor: string;
+  };
   stages: {
     stage1: {
-      bundleSpreadRatio: number;
-      curvatureRatio: number;
-      lineWidth: number;
-      segmentCount: number;
+      lineAlpha: number;
+      ringAlpha: number;
+      dotAlpha: number;
       ringRadius: number;
       ringCount: number;
       ringSpacing: number;
@@ -36,10 +44,9 @@ function withArcSettings<T extends {
       ringDotRadius: number;
     };
     stage2: {
-      bundleSpreadRatio: number;
-      curvatureRatio: number;
-      lineWidth: number;
-      segmentCount: number;
+      lineAlpha: number;
+      ringAlpha: number;
+      dotAlpha: number;
       ringRadius: number;
       ringCount: number;
       ringSpacing: number;
@@ -47,10 +54,9 @@ function withArcSettings<T extends {
       ringDotRadius: number;
     };
     stage3: {
-      bundleSpreadRatio: number;
-      curvatureRatio: number;
-      lineWidth: number;
-      segmentCount: number;
+      lineAlpha: number;
+      ringAlpha: number;
+      dotAlpha: number;
       ringRadius: number;
       ringCount: number;
       ringSpacing: number;
@@ -58,12 +64,11 @@ function withArcSettings<T extends {
       ringDotRadius: number;
     };
   };
-} {
+  } {
   const stage = {
-    bundleSpreadRatio: datum.bundleSpreadRatio,
-    curvatureRatio: datum.curvatureRatio,
-    lineWidth: datum.lineWidth,
-    segmentCount: datum.segmentCount,
+    lineAlpha: 1,
+    ringAlpha: 1,
+    dotAlpha: 1,
     ringRadius: 15,
     ringCount: 2,
     ringSpacing: 5,
@@ -80,6 +85,15 @@ function withArcSettings<T extends {
     replayDelayMs: 5000,
     bundleIntervalMs: 220,
     maxConcurrentStarts: 4,
+    bundleSpreadRatio: datum.bundleSpreadRatio,
+    curvatureRatio: datum.curvatureRatio,
+    lineWidth: datum.lineWidth,
+    segmentCount: datum.segmentCount,
+    style: {
+      lineColor: '#123456',
+      ringColor: '#234567',
+      dotColor: '#345678',
+    },
     stages: {
       stage1: { ...stage },
       stage2: { ...stage },

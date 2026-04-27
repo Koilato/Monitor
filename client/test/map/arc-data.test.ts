@@ -12,10 +12,9 @@ function createPreset(
   bundleCount = 4,
 ) {
   const stage = {
-    bundleSpreadRatio,
-    curvatureRatio,
-    lineWidth,
-    segmentCount,
+    lineAlpha: 1,
+    ringAlpha: 1,
+    dotAlpha: 1,
     ringRadius: 15,
     ringCount: 2,
     ringSpacing: 5,
@@ -31,6 +30,15 @@ function createPreset(
     replayDelayMs: 5000,
     bundleIntervalMs: 220,
     maxConcurrentStarts: 4,
+    bundleSpreadRatio,
+    curvatureRatio,
+    lineWidth,
+    segmentCount,
+    style: {
+      lineColor: '#123456',
+      ringColor: '#234567',
+      dotColor: '#345678',
+    },
     stages: {
       stage1: { ...stage },
       stage2: { ...stage },

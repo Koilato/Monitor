@@ -36,6 +36,7 @@ export function AppShell() {
     persistEnabled,
     setPersistEnabled,
     settings: debugSettings,
+    attackArcConfigState,
     resetSettings,
     updateLatestSectionHeight,
     updateMapSettings,
@@ -156,6 +157,7 @@ export function AppShell() {
                   open={panelOpen}
                   persistEnabled={persistEnabled}
                   settings={debugSettings}
+                  attackArcConfigState={attackArcConfigState}
                   onToggleOpen={() => setPanelOpen(!panelOpen)}
                   onPersistChange={setPersistEnabled}
                   onReset={resetSettings}

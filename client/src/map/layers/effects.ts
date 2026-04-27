@@ -3,6 +3,7 @@ import type { ExpressionSpecification } from 'maplibre-gl';
 
 import type { LayerRenderContext } from 'map/layers/registry';
 import {
+  COUNTRIES_BASE_LAYER_IDS,
   buildCountryCodeFilter,
   HOVER_HIGHLIGHT_LAYER_IDS,
   THREAT_FILL_LAYER_ID,
@@ -11,17 +12,10 @@ import {
 } from 'map/layers/maplibre';
 import {
   COUNTRY_BASE_FILL_COLOR,
-  COUNTRY_BASE_GLOW_COLOR,
-  COUNTRY_BASE_LINE_COLOR,
+  THREAT_GLOW_NEUTRAL_COLOR,
+  THREAT_OUTLINE_NEUTRAL_COLOR,
   createActiveCountryCodeSet,
   getThreatVisualToken,
-  HOVER_BORDER_DEFAULT_COLOR,
-  HOVER_FILL_DEFAULT_COLOR,
-  HOVER_FILL_DEFAULT_OPACITY,
-  HOVER_FILL_THREAT_OPACITY,
-  HOVER_GLOW_DEFAULT_COLOR,
-  HOVER_GLOW_DEFAULT_OPACITY,
-  HOVER_GLOW_THREAT_OPACITY,
   resolveThreatVisualLevel,
   type ThreatVisualLevel,
 } from 'map/layers/tokens';
@@ -41,13 +35,14 @@ export function buildThreatColorExpression(
   threatData: ThreatMapResponse | null,
   activeCountryCodes: readonly string[] = [],
   threatColorsEnabled = true,
+  fallbackColor = COUNTRY_BASE_FILL_COLOR,
 ): ExpressionSpecification | string {
   return buildThreatExpression(
     threatData,
     activeCountryCodes,
     threatColorsEnabled,
     (level) => getThreatVisualToken(level).fill,
-    COUNTRY_BASE_FILL_COLOR,
+    fallbackColor,
   );
 }
 
@@ -87,13 +82,14 @@ export function buildThreatOutlineColorExpression(
   threatData: ThreatMapResponse | null,
   activeCountryCodes: readonly string[] = [],
   threatColorsEnabled = true,
+  fallbackColor = THREAT_OUTLINE_NEUTRAL_COLOR,
 ): ExpressionSpecification | string {
   return buildThreatExpression(
     threatData,
     activeCountryCodes,
     threatColorsEnabled,
     (level) => getThreatVisualToken(level).stroke,
-    COUNTRY_BASE_LINE_COLOR,
+    fallbackColor,
   );
 }
 
@@ -101,13 +97,14 @@ export function buildThreatGlowColorExpression(
   threatData: ThreatMapResponse | null,
   activeCountryCodes: readonly string[] = [],
   threatColorsEnabled = true,
+  fallbackColor = THREAT_GLOW_NEUTRAL_COLOR,
 ): ExpressionSpecification | string {
   return buildThreatExpression(
     threatData,
     activeCountryCodes,
     threatColorsEnabled,
     (level) => getThreatVisualToken(level).glow,
-    COUNTRY_BASE_GLOW_COLOR,
+    fallbackColor,
   );
 }
 
@@ -120,8 +117,34 @@ export function applyThreatFillState(context: LayerRenderContext) {
         context.threatData,
         context.activeThreatCountryCodes,
         context.debugSettings.threatColorsEnabled,
+        context.debugSettings.baseCountryFillColor,
       ),
     );
+    context.map.setPaintProperty(
+      THREAT_FILL_LAYER_ID,
+      'fill-opacity',
+      context.debugSettings.threatFillOpacity,
+    );
+  }
+}
+
+export function applyCountriesBaseState(context: LayerRenderContext) {
+  const baseFillLayerId = COUNTRIES_BASE_LAYER_IDS[0];
+  const baseOutlineLayerId = COUNTRIES_BASE_LAYER_IDS[1];
+  const baseGlowLayerId = COUNTRIES_BASE_LAYER_IDS[2];
+  if (context.map.getLayer(baseFillLayerId)) {
+    context.map.setPaintProperty(baseFillLayerId, 'fill-color', context.debugSettings.baseCountryFillColor);
+    context.map.setPaintProperty(baseFillLayerId, 'fill-opacity', context.debugSettings.baseCountryFillOpacity);
+  }
+  if (context.map.getLayer(baseOutlineLayerId)) {
+    context.map.setPaintProperty(baseOutlineLayerId, 'line-color', context.debugSettings.baseCountryOutlineColor);
+    context.map.setPaintProperty(baseOutlineLayerId, 'line-width', context.debugSettings.baseCountryOutlineWidth);
+    context.map.setPaintProperty(baseOutlineLayerId, 'line-opacity', context.debugSettings.baseCountryOutlineOpacity);
+  }
+  if (context.map.getLayer(baseGlowLayerId)) {
+    context.map.setPaintProperty(baseGlowLayerId, 'line-color', context.debugSettings.baseCountryGlowColor);
+    context.map.setPaintProperty(baseGlowLayerId, 'line-width', context.debugSettings.baseCountryGlowWidth);
+    context.map.setPaintProperty(baseGlowLayerId, 'line-opacity', context.debugSettings.baseCountryGlowOpacity);
   }
 }
 
@@ -139,12 +162,18 @@ export function applyThreatOutlineState(context: LayerRenderContext) {
         context.threatData,
         context.activeThreatCountryCodes,
         context.debugSettings.threatColorsEnabled,
+        context.debugSettings.threatOutlineNeutralColor,
       ),
     );
     context.map.setPaintProperty(
       THREAT_OUTLINE_LAYER_ID,
       'line-width',
       context.debugSettings.threatOutlineWidth,
+    );
+    context.map.setPaintProperty(
+      THREAT_OUTLINE_LAYER_ID,
+      'line-opacity',
+      context.debugSettings.threatOutlineOpacity,
     );
   }
 }
@@ -158,7 +187,18 @@ export function applyThreatGlowState(context: LayerRenderContext) {
         context.threatData,
         context.activeThreatCountryCodes,
         context.debugSettings.threatColorsEnabled,
+        context.debugSettings.threatGlowNeutralColor,
       ),
+    );
+    context.map.setPaintProperty(
+      THREAT_GLOW_LAYER_ID,
+      'line-width',
+      context.debugSettings.threatGlowWidth,
+    );
+    context.map.setPaintProperty(
+      THREAT_GLOW_LAYER_ID,
+      'line-opacity',
+      context.debugSettings.threatGlowOpacity,
     );
   }
 }
@@ -177,13 +217,13 @@ export function applyHoverHighlightState(context: LayerRenderContext) {
     : null;
   const hoverFillColor = visualLevel
     ? getThreatVisualToken(visualLevel).fill
-    : HOVER_FILL_DEFAULT_COLOR;
+    : context.debugSettings.hoverFillColor;
   const hoverGlowColor = visualLevel
     ? getThreatVisualToken(visualLevel).glow
-    : HOVER_GLOW_DEFAULT_COLOR;
+    : context.debugSettings.hoverGlowColor;
   const hoverBorderColor = visualLevel
     ? getThreatVisualToken(visualLevel).stroke
-    : HOVER_BORDER_DEFAULT_COLOR;
+    : context.debugSettings.hoverBorderColor;
 
   if (context.map.getLayer(HOVER_HIGHLIGHT_LAYER_IDS[0])) {
     context.map.setFilter(HOVER_HIGHLIGHT_LAYER_IDS[0], filter as never);
@@ -191,7 +231,7 @@ export function applyHoverHighlightState(context: LayerRenderContext) {
     context.map.setPaintProperty(
       HOVER_HIGHLIGHT_LAYER_IDS[0],
       'fill-opacity',
-      hoveredThreat ? HOVER_FILL_THREAT_OPACITY : HOVER_FILL_DEFAULT_OPACITY,
+      hoveredThreat ? context.debugSettings.hoverThreatFillOpacity : context.debugSettings.hoverFillOpacity,
     );
   }
 
@@ -200,13 +240,28 @@ export function applyHoverHighlightState(context: LayerRenderContext) {
     context.map.setPaintProperty(HOVER_HIGHLIGHT_LAYER_IDS[1], 'line-color', hoverGlowColor);
     context.map.setPaintProperty(
       HOVER_HIGHLIGHT_LAYER_IDS[1],
+      'line-width',
+      context.debugSettings.hoverGlowWidth,
+    );
+    context.map.setPaintProperty(
+      HOVER_HIGHLIGHT_LAYER_IDS[1],
       'line-opacity',
-      hoveredThreat ? HOVER_GLOW_THREAT_OPACITY : HOVER_GLOW_DEFAULT_OPACITY,
+      hoveredThreat ? context.debugSettings.hoverThreatGlowOpacity : context.debugSettings.hoverGlowOpacity,
     );
   }
 
   if (context.map.getLayer(HOVER_HIGHLIGHT_LAYER_IDS[2])) {
     context.map.setFilter(HOVER_HIGHLIGHT_LAYER_IDS[2], filter as never);
     context.map.setPaintProperty(HOVER_HIGHLIGHT_LAYER_IDS[2], 'line-color', hoverBorderColor);
+    context.map.setPaintProperty(
+      HOVER_HIGHLIGHT_LAYER_IDS[2],
+      'line-width',
+      context.debugSettings.hoverBorderWidth,
+    );
+    context.map.setPaintProperty(
+      HOVER_HIGHLIGHT_LAYER_IDS[2],
+      'line-opacity',
+      hoveredThreat ? context.debugSettings.hoverThreatBorderOpacity : context.debugSettings.hoverBorderOpacity,
+    );
   }
 }

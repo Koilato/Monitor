@@ -119,8 +119,10 @@ export const COUNTRY_BASE_GLOW_OPACITY = 0;
 export const COUNTRY_INTERACTIVE_FILL_COLOR = '#0f172a';
 
 export const THREAT_FILL_OPACITY = 1;
+export const THREAT_OUTLINE_NEUTRAL_COLOR = '#707070';
 export const THREAT_LINE_WIDTH = 1.7;
 export const THREAT_LINE_OPACITY = 1;
+export const THREAT_GLOW_NEUTRAL_COLOR = '#707070';
 export const THREAT_GLOW_WIDTH = 6.4;
 export const THREAT_GLOW_OPACITY = 1;
 

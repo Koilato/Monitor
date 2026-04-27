@@ -16,12 +16,9 @@ import {
   createInitialFlowSchedule,
   type ScheduledFlowDatum,
 } from 'map/lib/flow-playback';
-import { type ThreatVisualLevel } from 'map/layers/tokens';
-import { normalizeCssColor } from 'shared/styles/color-utils';
 import type { FlowPlaybackMode } from 'map/state/map-state';
 import type {
   AttackArcStagePreset,
-  AttackArcStageSettings,
   MapDebugSettings,
 } from 'map/state/map-types';
 
@@ -45,47 +42,21 @@ interface ScreenPoint {
 type BundledScheduledFlowDatum = ScheduledFlowDatum & ArcBundleMeta;
 
 type CanvasAttackRuntime = BundledScheduledFlowDatum & {
-  colorRgb: string;
   flightMs: number;
   groupKey: string;
 };
 
-const ARC_COLOR_BY_LEVEL: Record<'low' | 'medium' | 'high', string> = {
-  low: '245,166,35',
-  medium: '255,95,60',
-  high: '235,40,45',
-};
+function hexToRgbString(value: string): string {
+  const normalized = value.trim().replace('#', '');
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
 
-function getActiveArcColor(): string {
-  if (typeof document === 'undefined') {
-    return '220,120,255';
+  if (![red, green, blue].every(Number.isFinite)) {
+    return '255,255,255';
   }
 
-  const cssValue = window.getComputedStyle(document.documentElement).getPropertyValue('--threat-active').trim();
-  const normalized = normalizeCssColor(cssValue || 'rgba(220, 120, 255, 0.98)');
-  const rgbMatch = normalized.match(/rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/i);
-
-  if (!rgbMatch) {
-    return '220,120,255';
-  }
-
-  return `${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]}`;
-}
-
-function resolveCanvasArcColor(visualLevel: ThreatVisualLevel): string {
-  if (visualLevel === 'active') {
-    return getActiveArcColor();
-  }
-
-  if (visualLevel === 'critical') {
-    return ARC_COLOR_BY_LEVEL.high;
-  }
-
-  if (visualLevel === 'medium' || visualLevel === 'high' || visualLevel === 'low') {
-    return ARC_COLOR_BY_LEVEL[visualLevel];
-  }
-
-  return ARC_COLOR_BY_LEVEL.low;
+  return `${red},${green},${blue}`;
 }
 
 function syncCanvasSize(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D) {
@@ -110,8 +81,10 @@ function resolveRingSpacing(ringRadius: number, ringCount: number, ringSpacing: 
     return ringRadius;
   }
 
+  const maxVisibleSpacing = Math.max(1, ringRadius / ringCount);
+
   if (ringSpacing > 0) {
-    return ringSpacing;
+    return Math.min(ringSpacing, maxVisibleSpacing);
   }
 
   return Math.max(1, ringRadius / (ringCount + 1));
@@ -164,6 +137,7 @@ function drawArc(
   lineWidth: number,
   segmentCount: number,
   curvatureRatio: number,
+  lineColor: string,
 ) {
   const control = resolveControlPoint(start, end, attack.bundleOffset, curvatureRatio);
   const widthBoost = Math.min(0.8, Math.max(0, attack.count - 1) * 0.08);
@@ -174,7 +148,7 @@ function drawArc(
     return;
   }
 
-  context.strokeStyle = `rgba(${attack.colorRgb},${Math.max(0, Math.min(alpha, 1))})`;
+  context.strokeStyle = `rgba(${hexToRgbString(lineColor)},${Math.max(0, Math.min(alpha, 1))})`;
   context.lineWidth = lineWidth + widthBoost;
   context.lineCap = 'round';
   context.beginPath();
@@ -195,8 +169,10 @@ function drawArc(
 function drawTargetRings(
   context: CanvasRenderingContext2D,
   point: ScreenPoint,
-  alpha: number,
-  ringColorRgb: string,
+  ringAlpha: number,
+  dotAlpha: number,
+  ringColor: string,
+  dotColor: string,
   ringRadius: number,
   ringCount: number,
   ringSpacing: number,
@@ -210,15 +186,15 @@ function drawTargetRings(
       continue;
     }
 
-    const ringAlpha = Math.max(0, alpha * (1 - (index / Math.max(1, ringCount + 0.5))));
-    context.strokeStyle = `rgba(${ringColorRgb},${ringAlpha})`;
+    const nextRingAlpha = Math.max(0, ringAlpha * (1 - (index / Math.max(1, ringCount + 0.5))));
+    context.strokeStyle = `rgba(${hexToRgbString(ringColor)},${nextRingAlpha})`;
     context.lineWidth = ringLineWidth;
     context.beginPath();
     context.arc(point.x, point.y, radius, 0, Math.PI * 2);
     context.stroke();
   }
 
-  context.fillStyle = `rgba(${ringColorRgb},${alpha})`;
+  context.fillStyle = `rgba(${hexToRgbString(dotColor)},${dotAlpha})`;
   context.beginPath();
   context.arc(point.x, point.y, ringDotRadius, 0, Math.PI * 2);
   context.fill();
@@ -322,7 +298,6 @@ export function AttackArcCanvas({
     const now = performance.now();
     const pending: CanvasAttackRuntime[] = (createInitialFlowSchedule(arcData, playbackMode, now) as BundledScheduledFlowDatum[]).map((datum) => ({
       ...datum,
-      colorRgb: resolveCanvasArcColor(datum.visualLevel),
       flightMs: datum.flightDuration + ((datum.bundleIndex % 2 === 0 ? -1 : 1) * 100),
       startAt: datum.startAt,
       groupKey: `${datum.flowKey}-${datum.startAt}`,
@@ -388,7 +363,7 @@ export function AttackArcCanvas({
           attack.holdDuration,
           attack.fadeoutDuration,
         );
-        const stageSettings: AttackArcStageSettings = resolveArcStageSettings(
+        const stageSettings = resolveArcStageSettings(
           attack,
           resolvePhaseStage(frameWindow.phase),
         );
@@ -406,9 +381,10 @@ export function AttackArcCanvas({
           frameWindow.alpha,
           start,
           end,
-          stageSettings.lineWidth,
+          stageSettings.lineWidth * stageSettings.lineAlpha,
           stageSettings.segmentCount,
           stageSettings.curvatureRatio,
+          stageSettings.lineColor,
         );
         activeContext.restore();
 
@@ -416,8 +392,10 @@ export function AttackArcCanvas({
           drawTargetRings(
             activeContext,
             end,
-            frameWindow.alpha,
-            attack.colorRgb,
+            frameWindow.alpha * stageSettings.ringAlpha,
+            frameWindow.alpha * stageSettings.dotAlpha,
+            stageSettings.ringColor,
+            stageSettings.dotColor,
             stageSettings.ringRadius,
             stageSettings.ringCount,
             stageSettings.ringSpacing,
@@ -457,7 +435,6 @@ export function AttackArcCanvas({
     mapReady,
     mapRef,
     playbackMode,
-    themeRevision,
   ]);
 
   return <canvas ref={canvasRef} className="attack-arc-canvas" aria-hidden="true" />;

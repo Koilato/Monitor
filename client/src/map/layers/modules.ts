@@ -1,5 +1,6 @@
 import type { LayerModule } from 'map/layers/registry';
 import {
+  applyCountriesBaseState,
   applyHoverHighlightState,
   applyThreatFillState,
   applyThreatGlowState,
@@ -31,6 +32,7 @@ const countriesBaseModule: LayerModule = {
   styleLayerIds: [...COUNTRIES_BASE_LAYER_IDS],
   registerMapSources: ensureCountrySource,
   registerStyleLayers: registerCountriesBaseLayers,
+  applyState: applyCountriesBaseState,
 };
 
 const threatHighlightModule: LayerModule = {
