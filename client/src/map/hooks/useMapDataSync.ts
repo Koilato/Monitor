@@ -171,12 +171,7 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
   useEffect(() => {
     latestRangeRef.current = dateRange;
     void startThreatRequest(dateRange);
-    if (input.flowMode === 'allflow') {
-      void startAllFlowRequest(dateRange);
-    } else {
-      allFlowRequestTrackerRef.current.abort();
-      setAllFlowLoading(false);
-    }
+    void startAllFlowRequest(dateRange);
     if (!hoveredCountry || dateRangeKey === activeRangeRef.current) {
       return;
     }

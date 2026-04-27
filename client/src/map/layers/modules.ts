@@ -14,6 +14,7 @@ import {
   registerHoverHighlightLayers,
   registerThreatHighlightLayers,
   THREAT_FILL_LAYER_ID,
+  THREAT_PATTERN_LAYER_IDS,
   THREAT_GLOW_LAYER_ID,
   THREAT_OUTLINE_LAYER_ID,
 } from 'map/layers/maplibre';
@@ -39,7 +40,7 @@ const threatHighlightModule: LayerModule = {
   id: 'threat-highlight',
   label: '威胁高亮',
   defaultEnabled: true,
-  styleLayerIds: [THREAT_FILL_LAYER_ID, THREAT_OUTLINE_LAYER_ID, THREAT_GLOW_LAYER_ID],
+  styleLayerIds: [...THREAT_PATTERN_LAYER_IDS, THREAT_OUTLINE_LAYER_ID, THREAT_GLOW_LAYER_ID],
   registerMapSources: ensureCountrySource,
   registerStyleLayers: registerThreatHighlightLayers,
   applyState(context) {

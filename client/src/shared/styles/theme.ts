@@ -23,9 +23,9 @@ interface ThemePalette {
 }
 
 const DEFAULT_THEME_LEVEL_COLORS: Record<ThreatThemeLevel, string> = {
-  low: 'rgba(82, 214, 255, 0.76)',
-  medium: 'rgba(255, 215, 120, 0.84)',
-  high: 'rgba(255, 150, 110, 0.9)',
+  low: 'rgb(20, 184, 166)',
+  medium: 'rgb(255, 183, 46)',
+  high: 'rgb(255, 29, 36)',
 };
 
 const THREAT_LEVEL_ALPHA_FACTORS: Record<ThreatThemeLevel, { fill: number; glow: number; arc: number }> = {

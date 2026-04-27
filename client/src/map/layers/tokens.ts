@@ -10,7 +10,7 @@ import { rgbaStringToDeckColor, scaleDeckColorAlpha, type DeckColor } from 'shar
 export type { DeckColor } from 'shared/styles/color-utils';
 export { rgbaStringToDeckColor, scaleDeckColorAlpha } from 'shared/styles/color-utils';
 
-export type ThreatVisualLevel = 'none' | 'low' | 'medium' | 'high' | 'critical' | 'active';
+export type ThreatVisualLevel = 'none' | 'low' | 'medium' | 'high' | 'critical';
 
 const NONE_TOKEN: ThreatVisualLayerToken = {
   fill: 'rgba(0,0,0,0)',
@@ -21,17 +21,8 @@ const NONE_TOKEN: ThreatVisualLayerToken = {
 
 export const THREAT_VISUAL_LEVEL_TOKENS: Record<ThreatVisualLevel, ThreatVisualLayerToken> = {
   none: NONE_TOKEN,
-  critical: {
-    fill: 'rgba(255,61,87,0.28)',
-    stroke: 'rgba(255,95,116,0.96)',
-    glow: 'rgba(255,61,87,0.34)',
-    arc: 'rgba(255,95,116,0.90)',
-  },
-  active: {
-    fill: 'rgba(201,60,255,0.22)',
-    stroke: 'rgba(220,120,255,0.98)',
-    glow: 'rgba(201,60,255,0.40)',
-    arc: 'rgba(220,120,255,0.92)',
+  get critical() {
+    return getThemeThreatVisualToken('high');
   },
   get low() {
     return getThemeThreatVisualToken('low');
@@ -44,48 +35,16 @@ export const THREAT_VISUAL_LEVEL_TOKENS: Record<ThreatVisualLevel, ThreatVisualL
   },
 };
 
-const EVENT_LEVEL_TO_VISUAL_LEVEL: Record<EventLevel, ThreatVisualLevel> = {
+const EVENT_LEVEL_TO_VISUAL_LEVEL: Record<EventLevel, Exclude<ThreatVisualLevel, 'none'>> = {
   low: 'low',
   medium: 'medium',
   high: 'critical',
 };
 
-function normalizeCountryCode(countryCode: string): string {
-  return countryCode.trim().toUpperCase();
-}
-
-function normalizeCountryCodeSet(countryCodes: readonly string[]): Set<string> {
-  return new Set(
-    countryCodes
-      .map((countryCode) => normalizeCountryCode(countryCode))
-      .filter((countryCode) => /^[A-Z]{2}$/.test(countryCode)),
-  );
-}
-
-export function createActiveCountryCodeSet(countryCodes: readonly string[]): Set<string> {
-  return normalizeCountryCodeSet(countryCodes);
-}
-
 export function resolveThreatVisualLevel(
   level: EventLevel,
-  countryCode: string | null | undefined,
-  activeCountryCodes: readonly string[],
-  activeCountryCodeSet?: ReadonlySet<string>,
-): ThreatVisualLevel {
-  const baseVisualLevel = EVENT_LEVEL_TO_VISUAL_LEVEL[level];
-  if (!countryCode) {
-    return baseVisualLevel;
-  }
-
-  const normalizedCode = normalizeCountryCode(countryCode);
-  if (!normalizedCode) {
-    return baseVisualLevel;
-  }
-
-  const activeOverrideSet = activeCountryCodeSet ?? normalizeCountryCodeSet(activeCountryCodes);
-  return activeOverrideSet.has(normalizedCode)
-    ? 'active'
-    : baseVisualLevel;
+): Exclude<ThreatVisualLevel, 'none'> {
+  return EVENT_LEVEL_TO_VISUAL_LEVEL[level];
 }
 
 export function getThreatVisualToken(level: ThreatVisualLevel): ThreatVisualLayerToken {
@@ -103,7 +62,6 @@ export const THREAT_LEGEND: LayerLegendDefinition = {
       { label: '低', color: THREAT_VISUAL_LEVEL_TOKENS.low.stroke },
       { label: '中', color: THREAT_VISUAL_LEVEL_TOKENS.medium.stroke },
       { label: '高', color: THREAT_VISUAL_LEVEL_TOKENS.critical.stroke },
-      { label: '激活', color: THREAT_VISUAL_LEVEL_TOKENS.active.stroke },
     ];
   },
 };

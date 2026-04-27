@@ -34,15 +34,30 @@ function createPreset(
     curvatureRatio,
     lineWidth,
     segmentCount,
-    style: {
-      lineColor: '#123456',
-      ringColor: '#234567',
-      dotColor: '#345678',
-    },
     stages: {
       stage1: { ...stage },
       stage2: { ...stage },
       stage3: { ...stage },
+    },
+  };
+}
+
+function createVisualStyles() {
+  return {
+    low: {
+      lineColor: '#14b8a6',
+      ringColor: '#14b8a6',
+      dotColor: '#14b8a6',
+    },
+    medium: {
+      lineColor: '#ffb72e',
+      ringColor: '#ffb72e',
+      dotColor: '#ffb72e',
+    },
+    high: {
+      lineColor: '#ff1d24',
+      ringColor: '#ff1d24',
+      dotColor: '#ff1d24',
     },
   };
 }
@@ -52,6 +67,7 @@ const ARC_SETTINGS: AttackArcDebugSettings = {
     shortMax: 18,
     mediumMax: 55,
   },
+  visualStyles: createVisualStyles(),
   presets: {
     short: createPreset(0.05, 0.08, 1.5, 64),
     medium: createPreset(0.08, 0.16, 1.8, 100),
@@ -112,7 +128,7 @@ test('builds bundled 2d arc data from the static country center dictionary', asy
         uuids: ['a', 'b'],
       },
     ],
-  }, null, [], ARC_SETTINGS);
+  }, null, ARC_SETTINGS);
 
   assert.equal(data.length, 4);
   assert.deepEqual(data.map((datum) => datum.id), [
@@ -141,6 +157,7 @@ test('builds bundled 2d arc data from the static country center dictionary', asy
   assert.equal(data[0]?.curvatureRatio, 0.24);
   assert.equal(data[0]?.lineWidth, 2.2);
   assert.equal(data[0]?.segmentCount, 140);
+  assert.deepEqual(data[0]?.visualStyle, ARC_SETTINGS.visualStyles.low);
   assert.notDeepEqual(data[0]?.arrowPosition, data[3]?.arrowPosition);
   assert.deepEqual(new Set(data.map((datum) => datum.source.map((value) => value.toFixed(6)).join(','))).size, 1);
   assert.deepEqual(new Set(data.map((datum) => datum.target.map((value) => value.toFixed(6)).join(','))).size, 1);
@@ -168,7 +185,7 @@ test('applies short, medium, and long presets from euclidean distance thresholds
         uuids: ['c'],
       },
     ],
-  }, null, [], ARC_SETTINGS);
+  }, null, ARC_SETTINGS);
 
   assert.equal(data.length, 12);
 
@@ -195,6 +212,46 @@ test('applies short, medium, and long presets from euclidean distance thresholds
   assert.equal(longFlow?.segmentCount, 140);
 });
 
+test('uses victim threat level colors independently from short, medium, and long presets', async () => {
+  const threatData = {
+    startDate: '2026-04-01',
+    endDate: '2026-04-22',
+    total: 3,
+    countries: [
+      {
+        country: 'FR',
+        incidentCount: 1,
+        severityCounts: { low: 1, medium: 0, high: 0 },
+        eventLevel: 'low' as const,
+      },
+      {
+        country: 'DE',
+        incidentCount: 1,
+        severityCounts: { low: 0, medium: 1, high: 0 },
+        eventLevel: 'medium' as const,
+      },
+      {
+        country: 'CN',
+        incidentCount: 1,
+        severityCounts: { low: 0, medium: 0, high: 1 },
+        eventLevel: 'high' as const,
+      },
+    ],
+  };
+
+  const data = await buildCanvasArcData({
+    flows: [
+      { attackerCountry: 'DE', victimCountry: 'FR', count: 1, uuids: ['a'] },
+      { attackerCountry: 'TR', victimCountry: 'DE', count: 1, uuids: ['b'] },
+      { attackerCountry: 'US', victimCountry: 'CN', count: 1, uuids: ['c'] },
+    ],
+  }, threatData, ARC_SETTINGS);
+
+  assert.deepEqual(data.find((datum) => datum.flowKey === 'DE->FR')?.visualStyle, ARC_SETTINGS.visualStyles.low);
+  assert.deepEqual(data.find((datum) => datum.flowKey === 'TR->DE')?.visualStyle, ARC_SETTINGS.visualStyles.medium);
+  assert.deepEqual(data.find((datum) => datum.flowKey === 'US->CN')?.visualStyle, ARC_SETTINGS.visualStyles.high);
+});
+
 test('supports single-line and wider bundle counts with the new settings shape', async () => {
   const singleLine = await buildCanvasArcData({
     flows: [
@@ -205,7 +262,7 @@ test('supports single-line and wider bundle counts with the new settings shape',
         uuids: ['a'],
       },
     ],
-  }, null, [], {
+  }, null, {
     ...ARC_SETTINGS,
     presets: {
       ...ARC_SETTINGS.presets,
@@ -230,7 +287,7 @@ test('supports single-line and wider bundle counts with the new settings shape',
         uuids: ['a'],
       },
     ],
-  }, null, [], {
+  }, null, {
     ...ARC_SETTINGS,
     presets: {
       ...ARC_SETTINGS.presets,
@@ -256,7 +313,7 @@ test('returns no arcs when a country center cannot be resolved', async () => {
           uuids: ['a'],
         },
       ],
-    }, null, [], ARC_SETTINGS);
+    }, null, ARC_SETTINGS);
 
     assert.deepEqual(missingSource, []);
 
@@ -274,7 +331,7 @@ test('returns no arcs when a country center cannot be resolved', async () => {
           uuids: ['a'],
         },
       ],
-    }, null, [], ARC_SETTINGS);
+    }, null, ARC_SETTINGS);
 
     assert.deepEqual(missingTarget, []);
   } finally {

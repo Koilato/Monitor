@@ -13,11 +13,10 @@
   --green: #44ff88;
   --yellow: #ffc857;
   --red: #ff3d57;
-  --threat-low: rgba(82, 214, 255, 0.76);
-  --threat-medium: rgba(255, 215, 120, 0.84);
-  --threat-high: rgba(255, 150, 110, 0.9);
-  --threat-critical: rgba(255, 95, 116, 0.96);
-  --threat-active: rgba(220, 120, 255, 0.98);
+  --threat-low: rgb(20, 184, 166);
+  --threat-medium: rgb(255, 183, 46);
+  --threat-high: rgb(255, 29, 36);
+  --threat-critical: rgb(255, 29, 36);
   --map-bg: #333333;
   --map-grid: #102234;
   --map-country: #1a212c;

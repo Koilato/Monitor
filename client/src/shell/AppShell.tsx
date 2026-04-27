@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { LatestFeedSection } from 'content/components/LatestFeedSection';
 import { MapViewport } from 'map/components/MapViewport';
 import { useMapDataSync } from 'map/hooks/useMapDataSync';
-import { useMapDebugSettings } from 'map/hooks/useMapDebugSettings';
-import { useMapUrlState } from 'map/hooks/useMapUrlState';
 import { ThreatIntelPanel } from 'shell/components/ThreatIntelPanel';
 import { ThreatTickerPanel } from 'shell/components/ThreatTickerPanel';
+import { TrafficStatsSection } from 'shell/components/TrafficStatsSection';
 import { useWorkspaceLayout } from 'shell/hooks/useWorkspaceLayout';
+import { useMapDebugSettings } from 'map/hooks/useMapDebugSettings';
+import { useMapUrlState } from 'map/hooks/useMapUrlState';
 import { MapDebugPanel } from 'shell/panels/MapDebugPanel';
 import { AppToolbar } from 'shell/toolbar/AppToolbar';
 
@@ -40,7 +40,6 @@ export function AppShell() {
     resetSettings,
     updateLatestSectionHeight,
     updateMapSettings,
-    updateActiveCountryCodes,
   } = useMapDebugSettings();
   const {
     appShellRef,
@@ -56,13 +55,14 @@ export function AppShell() {
     setTimeFilter,
     setFlowMode,
     setFlowPlaybackMode,
-    setActiveLayerIds,
   } = useMapUrlState();
   const {
     hoveredCountry,
     popupAnchor,
     hoverData,
     allFlowData,
+    allFlowLoading,
+    allFlowError,
     threatData,
     loading,
     error,
@@ -148,7 +148,6 @@ export function AppShell() {
                 anchor={popupAnchor}
                 onCountryHover={handleCountryHover}
                 onCameraChange={setCamera}
-                onActiveLayerIdsChange={setActiveLayerIds}
                 debugSettings={debugSettings}
               />
 
@@ -163,7 +162,6 @@ export function AppShell() {
                   onReset={resetSettings}
                   onLatestSectionHeightChange={updateLatestSectionHeight}
                   onMapSettingsChange={updateMapSettings}
-                  onActiveCountryCodesChange={updateActiveCountryCodes}
                 />
               ) : null}
             </div>
@@ -176,10 +174,12 @@ export function AppShell() {
               onMouseDown={handleRightDividerMouseDown}
             />
 
-            <LatestFeedSection
+            <TrafficStatsSection
               sectionRef={latestSectionRef}
-              category="sql"
-              limit={5}
+              data={allFlowData}
+              loading={allFlowLoading}
+              error={allFlowError}
+              settings={debugSettings.trafficStats}
             />
           </section>
         </div>

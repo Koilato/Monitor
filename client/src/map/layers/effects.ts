@@ -1,6 +1,13 @@
 import type { ThreatMapResponse } from '@shared/types';
 import type { ExpressionSpecification } from 'maplibre-gl';
 
+import {
+  COUNTRY_DOT_PATTERN_BASE_IMAGE_ID,
+  COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID,
+  resolveThreatPatternImageId,
+  syncCountryDotPatternImages,
+  THREAT_PATTERN_LAYER_ID,
+} from 'map/layers/patterns';
 import type { LayerRenderContext } from 'map/layers/registry';
 import {
   COUNTRIES_BASE_LAYER_IDS,
@@ -14,7 +21,6 @@ import {
   COUNTRY_BASE_FILL_COLOR,
   THREAT_GLOW_NEUTRAL_COLOR,
   THREAT_OUTLINE_NEUTRAL_COLOR,
-  createActiveCountryCodeSet,
   getThreatVisualToken,
   resolveThreatVisualLevel,
   type ThreatVisualLevel,
@@ -33,13 +39,11 @@ export function getThreatLevelForCountry(
 
 export function buildThreatColorExpression(
   threatData: ThreatMapResponse | null,
-  activeCountryCodes: readonly string[] = [],
   threatColorsEnabled = true,
   fallbackColor = COUNTRY_BASE_FILL_COLOR,
 ): ExpressionSpecification | string {
   return buildThreatExpression(
     threatData,
-    activeCountryCodes,
     threatColorsEnabled,
     (level) => getThreatVisualToken(level).fill,
     fallbackColor,
@@ -48,16 +52,14 @@ export function buildThreatColorExpression(
 
 function buildThreatExpression(
   threatData: ThreatMapResponse | null,
-  activeCountryCodes: readonly string[],
   threatColorsEnabled: boolean,
-  getColor: (level: ThreatVisualLevel) => string,
+  getColor: (level: Exclude<ThreatVisualLevel, 'none'>) => string,
   fallbackColor: string,
 ): ExpressionSpecification | string {
   const countries = threatData?.countries ?? [];
   if (countries.length === 0) {
     return 'rgba(0,0,0,0)';
   }
-  const activeCountryCodeSet = createActiveCountryCodeSet(activeCountryCodes);
 
   const expression: Array<string | number | boolean | null | Array<string | number | boolean | null>> = [
     'match',
@@ -65,12 +67,7 @@ function buildThreatExpression(
   ];
 
   for (const country of countries) {
-    const visualLevel = resolveThreatVisualLevel(
-      country.eventLevel,
-      country.country,
-      activeCountryCodes,
-      activeCountryCodeSet,
-    );
+    const visualLevel = resolveThreatVisualLevel(country.eventLevel);
     expression.push(country.country, threatColorsEnabled ? getColor(visualLevel) : fallbackColor);
   }
 
@@ -78,15 +75,39 @@ function buildThreatExpression(
   return expression as unknown as ExpressionSpecification;
 }
 
+export function buildThreatPatternExpression(
+  threatData: ThreatMapResponse | null,
+  threatColorsEnabled = true,
+): ExpressionSpecification | string {
+  const countries = threatData?.countries ?? [];
+  if (countries.length === 0) {
+    return COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID;
+  }
+
+  const expression: Array<string | number | boolean | null | Array<string | number | boolean | null>> = [
+    'match',
+    ['get', 'ISO3166-1-Alpha-2'],
+  ];
+
+  for (const country of countries) {
+    const visualLevel = resolveThreatVisualLevel(country.eventLevel);
+    expression.push(
+      country.country,
+      resolveThreatPatternImageId(visualLevel, threatColorsEnabled),
+    );
+  }
+
+  expression.push(COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID);
+  return expression as unknown as ExpressionSpecification;
+}
+
 export function buildThreatOutlineColorExpression(
   threatData: ThreatMapResponse | null,
-  activeCountryCodes: readonly string[] = [],
   threatColorsEnabled = true,
   fallbackColor = THREAT_OUTLINE_NEUTRAL_COLOR,
 ): ExpressionSpecification | string {
   return buildThreatExpression(
     threatData,
-    activeCountryCodes,
     threatColorsEnabled,
     (level) => getThreatVisualToken(level).stroke,
     fallbackColor,
@@ -95,13 +116,11 @@ export function buildThreatOutlineColorExpression(
 
 export function buildThreatGlowColorExpression(
   threatData: ThreatMapResponse | null,
-  activeCountryCodes: readonly string[] = [],
   threatColorsEnabled = true,
   fallbackColor = THREAT_GLOW_NEUTRAL_COLOR,
 ): ExpressionSpecification | string {
   return buildThreatExpression(
     threatData,
-    activeCountryCodes,
     threatColorsEnabled,
     (level) => getThreatVisualToken(level).glow,
     fallbackColor,
@@ -109,13 +128,14 @@ export function buildThreatGlowColorExpression(
 }
 
 export function applyThreatFillState(context: LayerRenderContext) {
+  syncCountryDotPatternImages(context.map, context.debugSettings);
+
   if (context.map.getLayer(THREAT_FILL_LAYER_ID)) {
     context.map.setPaintProperty(
       THREAT_FILL_LAYER_ID,
       'fill-color',
       buildThreatColorExpression(
         context.threatData,
-        context.activeThreatCountryCodes,
         context.debugSettings.threatColorsEnabled,
         context.debugSettings.baseCountryFillColor,
       ),
@@ -126,15 +146,42 @@ export function applyThreatFillState(context: LayerRenderContext) {
       context.debugSettings.threatFillOpacity,
     );
   }
+
+  if (context.map.getLayer(THREAT_PATTERN_LAYER_ID)) {
+    context.map.setLayoutProperty(
+      THREAT_PATTERN_LAYER_ID,
+      'visibility',
+      context.debugSettings.countryDotPatternEnabled ? 'visible' : 'none',
+    );
+    context.map.setPaintProperty(
+      THREAT_PATTERN_LAYER_ID,
+      'fill-pattern',
+      buildThreatPatternExpression(
+        context.threatData,
+        context.debugSettings.threatColorsEnabled,
+      ),
+    );
+  }
 }
 
 export function applyCountriesBaseState(context: LayerRenderContext) {
+  syncCountryDotPatternImages(context.map, context.debugSettings);
+
   const baseFillLayerId = COUNTRIES_BASE_LAYER_IDS[0];
-  const baseOutlineLayerId = COUNTRIES_BASE_LAYER_IDS[1];
-  const baseGlowLayerId = COUNTRIES_BASE_LAYER_IDS[2];
+  const basePatternLayerId = COUNTRIES_BASE_LAYER_IDS[1];
+  const baseOutlineLayerId = COUNTRIES_BASE_LAYER_IDS[2];
+  const baseGlowLayerId = COUNTRIES_BASE_LAYER_IDS[3];
   if (context.map.getLayer(baseFillLayerId)) {
     context.map.setPaintProperty(baseFillLayerId, 'fill-color', context.debugSettings.baseCountryFillColor);
     context.map.setPaintProperty(baseFillLayerId, 'fill-opacity', context.debugSettings.baseCountryFillOpacity);
+  }
+  if (context.map.getLayer(basePatternLayerId)) {
+    context.map.setLayoutProperty(
+      basePatternLayerId,
+      'visibility',
+      context.debugSettings.countryDotPatternEnabled ? 'visible' : 'none',
+    );
+    context.map.setPaintProperty(basePatternLayerId, 'fill-pattern', COUNTRY_DOT_PATTERN_BASE_IMAGE_ID);
   }
   if (context.map.getLayer(baseOutlineLayerId)) {
     context.map.setPaintProperty(baseOutlineLayerId, 'line-color', context.debugSettings.baseCountryOutlineColor);
@@ -160,7 +207,6 @@ export function applyThreatOutlineState(context: LayerRenderContext) {
       'line-color',
       buildThreatOutlineColorExpression(
         context.threatData,
-        context.activeThreatCountryCodes,
         context.debugSettings.threatColorsEnabled,
         context.debugSettings.threatOutlineNeutralColor,
       ),
@@ -185,7 +231,6 @@ export function applyThreatGlowState(context: LayerRenderContext) {
       'line-color',
       buildThreatGlowColorExpression(
         context.threatData,
-        context.activeThreatCountryCodes,
         context.debugSettings.threatColorsEnabled,
         context.debugSettings.threatGlowNeutralColor,
       ),
@@ -206,15 +251,7 @@ export function applyThreatGlowState(context: LayerRenderContext) {
 export function applyHoverHighlightState(context: LayerRenderContext) {
   const filter = buildCountryCodeFilter(context.hoveredCountryCode);
   const hoveredThreat = getThreatLevelForCountry(context.threatData, context.hoveredCountryCode);
-  const activeCountryCodeSet = createActiveCountryCodeSet(context.activeThreatCountryCodes);
-  const visualLevel = hoveredThreat
-    ? resolveThreatVisualLevel(
-      hoveredThreat.eventLevel,
-      hoveredThreat.country,
-      context.activeThreatCountryCodes,
-      activeCountryCodeSet,
-    )
-    : null;
+  const visualLevel = hoveredThreat ? resolveThreatVisualLevel(hoveredThreat.eventLevel) : null;
   const hoverFillColor = visualLevel
     ? getThreatVisualToken(visualLevel).fill
     : context.debugSettings.hoverFillColor;

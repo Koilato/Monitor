@@ -28,7 +28,6 @@ interface AttackArcCanvasProps {
   isEnabled: boolean;
   flowData: FlowArcSource | null;
   threatData: ThreatMapResponse | null;
-  activeThreatCountryCodes: string[];
   playbackMode: FlowPlaybackMode;
   themeRevision: number;
   debugSettings: MapDebugSettings;
@@ -239,7 +238,6 @@ export function AttackArcCanvas({
   isEnabled,
   flowData,
   threatData,
-  activeThreatCountryCodes,
   playbackMode,
   themeRevision,
   debugSettings,
@@ -257,7 +255,7 @@ export function AttackArcCanvas({
     let cancelled = false;
 
     async function loadArcData() {
-      const nextData = await buildCanvasArcData(flowData, threatData, activeThreatCountryCodes, attackArcSettings);
+      const nextData = await buildCanvasArcData(flowData, threatData, attackArcSettings);
       if (!cancelled) {
         setArcData(nextData);
       }
@@ -274,7 +272,6 @@ export function AttackArcCanvas({
       cancelled = true;
     };
   }, [
-    activeThreatCountryCodes,
     attackArcSettings,
     flowData,
     isEnabled,
@@ -366,6 +363,7 @@ export function AttackArcCanvas({
         const stageSettings = resolveArcStageSettings(
           attack,
           resolvePhaseStage(frameWindow.phase),
+          attack.visualStyle,
         );
         const sourcePoint = mapRef.current.project(attack.source);
         const targetPoint = mapRef.current.project(attack.target);

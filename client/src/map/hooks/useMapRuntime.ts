@@ -138,7 +138,6 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
       const initResult = await initializeLayerModules({
         map: activeMap,
         activeLayerIds: mapState.activeLayerIds,
-        activeThreatCountryCodes: debugSettings.activeCountryCodes,
         debugSettings,
         hoverData,
         flowData,
@@ -157,7 +156,6 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
       const syncResult = await synchronizeLayerModules({
         map: activeMap,
         activeLayerIds: mapState.activeLayerIds,
-        activeThreatCountryCodes: debugSettings.activeCountryCodes,
         debugSettings,
         hoverData,
         flowData,

@@ -2,6 +2,7 @@ import type { HoverFlow, ThreatMapResponse } from '@shared/types';
 
 import { getCountryCentroid } from 'map/lib/country-geometry';
 import { resolveThreatVisualLevel, type ThreatVisualLevel } from 'map/layers/tokens';
+import type { EventLevel } from '@shared/types';
 import type {
   ArcLengthPreset,
   AttackArcStagePreset,
@@ -9,6 +10,7 @@ import type {
   AttackArcDebugSettings,
   AttackArcLengthPresetSettings,
   AttackArcLengthThresholds,
+  AttackArcVisualStyle,
 } from 'map/state/map-types';
 
 export interface FlowArcSource {
@@ -36,6 +38,7 @@ export interface TwoDArcDatum extends ArcGeometryPreset {
   count: number;
   angle: number;
   visualLevel: ThreatVisualLevel;
+  visualStyle: AttackArcVisualStyle;
 }
 
 export interface CanvasArcDatum extends ArcGeometryPreset {
@@ -45,6 +48,7 @@ export interface CanvasArcDatum extends ArcGeometryPreset {
   target: [number, number];
   count: number;
   visualLevel: ThreatVisualLevel;
+  visualStyle: AttackArcVisualStyle;
   attackerCountry: string;
   victimCountry: string;
   firstDate: string | null;
@@ -59,15 +63,19 @@ interface ResolvedArcFlow extends ArcGeometryPreset {
   sourcePosition: [number, number];
   targetPosition: [number, number];
   visualLevel: ThreatVisualLevel;
+  visualStyle: AttackArcDebugSettings['visualStyles'][EventLevel];
 }
 
 export function resolveArcStageSettings(
   settings: AttackArcLengthPresetSettings,
   stage: AttackArcStagePreset,
+  style: AttackArcVisualStyle,
 ): AttackArcResolvedStageSettings {
   return {
     ...settings.stages[stage],
-    ...settings.style,
+    lineColor: style.lineColor,
+    ringColor: style.ringColor,
+    dotColor: style.dotColor,
     bundleSpreadRatio: settings.bundleSpreadRatio,
     curvatureRatio: settings.curvatureRatio,
     lineWidth: settings.lineWidth,
@@ -177,7 +185,6 @@ function createBundledArcMeta(bundleCount: number): ArcBundleMeta[] {
 async function resolveBundledArcFlows(
   data: FlowArcSource | null,
   threatData: ThreatMapResponse | null,
-  activeThreatCountryCodes: readonly string[],
   arcSettings: AttackArcDebugSettings,
 ): Promise<Array<ResolvedArcFlow | null>> {
   if (!data) {
@@ -196,6 +203,8 @@ async function resolveBundledArcFlows(
     const distance = resolveFlowDistance(sourcePosition, targetPosition);
     const lengthPreset = resolveArcLengthPreset(distance, arcSettings.lengthThresholds);
     const geometryPreset: AttackArcLengthPresetSettings = arcSettings.presets[lengthPreset];
+    const eventLevel: EventLevel =
+      threatData?.countries.find((country) => country.country === flow.victimCountry)?.eventLevel ?? 'low';
     return {
       flowKey: getFlowKey(flow.attackerCountry, flow.victimCountry),
       sourcePosition,
@@ -213,13 +222,9 @@ async function resolveBundledArcFlows(
       curvatureRatio: geometryPreset.curvatureRatio,
       lineWidth: geometryPreset.lineWidth,
       segmentCount: geometryPreset.segmentCount,
-      style: geometryPreset.style,
       stages: geometryPreset.stages,
-      visualLevel: resolveThreatVisualLevel(
-        threatData?.countries.find((country) => country.country === flow.victimCountry)?.eventLevel ?? 'low',
-        flow.victimCountry,
-        activeThreatCountryCodes,
-      ),
+      visualLevel: resolveThreatVisualLevel(eventLevel),
+      visualStyle: arcSettings.visualStyles[eventLevel],
     };
   }));
 }
@@ -268,7 +273,6 @@ function expandBundledArcData<T>(
 export async function buildTwoDArcData(
   data: FlowArcSource | null,
   threatData: ThreatMapResponse | null,
-  activeThreatCountryCodes: readonly string[],
   arcSettings: AttackArcDebugSettings,
 ): Promise<BundledTwoDArcDatum[]> {
   if (!data) {
@@ -278,7 +282,6 @@ export async function buildTwoDArcData(
   const resolvedFlows = await resolveBundledArcFlows(
     data,
     threatData,
-    activeThreatCountryCodes,
     arcSettings,
   );
 
@@ -304,6 +307,7 @@ export async function buildTwoDArcData(
     count: flow.count,
     angle: getBearing(resolvedFlow.sourcePosition, resolvedFlow.targetPosition),
     visualLevel: resolvedFlow.visualLevel,
+    visualStyle: resolvedFlow.visualStyle,
     distance: resolvedFlow.distance,
     lengthPreset: resolvedFlow.lengthPreset,
     flightDuration: resolvedFlow.flightDuration,
@@ -312,7 +316,6 @@ export async function buildTwoDArcData(
     replayDelayMs: resolvedFlow.replayDelayMs,
     bundleIntervalMs: resolvedFlow.bundleIntervalMs,
     maxConcurrentStarts: resolvedFlow.maxConcurrentStarts,
-    style: resolvedFlow.style,
     stages: resolvedFlow.stages,
     bundleSpreadRatio: resolvedFlow.bundleSpreadRatio,
     curvatureRatio: resolvedFlow.curvatureRatio,
@@ -327,7 +330,6 @@ export async function buildTwoDArcData(
 export async function buildCanvasArcData(
   data: FlowArcSource | null,
   threatData: ThreatMapResponse | null,
-  activeThreatCountryCodes: readonly string[],
   arcSettings: AttackArcDebugSettings,
 ): Promise<BundledCanvasArcDatum[]> {
   if (!data) {
@@ -337,7 +339,6 @@ export async function buildCanvasArcData(
   const resolvedFlows = await resolveBundledArcFlows(
     data,
     threatData,
-    activeThreatCountryCodes,
     arcSettings,
   );
 
@@ -354,6 +355,7 @@ export async function buildCanvasArcData(
     target: resolvedFlow.targetPosition,
     count: flow.count,
     visualLevel: resolvedFlow.visualLevel,
+    visualStyle: resolvedFlow.visualStyle,
     attackerCountry: flow.attackerCountry,
     victimCountry: flow.victimCountry,
     firstDate: flow.firstDate ?? null,
@@ -366,7 +368,6 @@ export async function buildCanvasArcData(
     replayDelayMs: resolvedFlow.replayDelayMs,
     bundleIntervalMs: resolvedFlow.bundleIntervalMs,
     maxConcurrentStarts: resolvedFlow.maxConcurrentStarts,
-    style: resolvedFlow.style,
     stages: resolvedFlow.stages,
     bundleSpreadRatio: resolvedFlow.bundleSpreadRatio,
     curvatureRatio: resolvedFlow.curvatureRatio,

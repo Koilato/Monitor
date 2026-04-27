@@ -12,7 +12,6 @@ export interface LayerLegendDefinition {
 export interface LayerRenderContext {
   map: maplibregl.Map;
   activeLayerIds: string[];
-  activeThreatCountryCodes: string[];
   debugSettings: MapDebugSettings;
   hoverData: CountryHoverResponse | null;
   flowData: FlowArcSource | null;

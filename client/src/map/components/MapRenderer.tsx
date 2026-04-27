@@ -24,7 +24,6 @@ export function MapRenderer(props: MapViewProps) {
         isEnabled={mapState.activeLayerIds.includes('attack-arcs')}
         flowData={flowData}
         threatData={threatData}
-        activeThreatCountryCodes={debugSettings.activeCountryCodes}
         playbackMode={flowPlaybackMode}
         themeRevision={themeRevision}
         debugSettings={debugSettings}

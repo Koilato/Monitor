@@ -28,8 +28,13 @@ export interface CountryHoverEvent {
 
 export interface MapDebugSettings {
   latestSectionHeight: number;
+  trafficStats: TrafficStatsDebugSettings;
   minZoom: number;
   maxZoom: number;
+  countryDotPatternEnabled: boolean;
+  countryDotPatternColor: string;
+  countryDotPatternDensity: number;
+  countryDotPatternOpacity: number;
   baseCountryFillColor: string;
   baseCountryFillOpacity: number;
   baseCountryOutlineColor: string;
@@ -38,7 +43,6 @@ export interface MapDebugSettings {
   baseCountryGlowColor: string;
   baseCountryGlowWidth: number;
   baseCountryGlowOpacity: number;
-  activeCountryCodes: string[];
   countryCenterOverrides: Record<string, CountryCenterPoint>;
   threatColorsEnabled: boolean;
   threatFillOpacity: number;
@@ -63,6 +67,25 @@ export interface MapDebugSettings {
   attackArc: AttackArcDebugSettings;
 }
 
+export interface TrafficStatsDebugSettings {
+  uiScale: number;
+  trendPanelWidth: number;
+  barsPanelWidth: number;
+  originsPanelWidth: number;
+  panelPaddingX: number;
+  panelPaddingTop: number;
+  panelPaddingBottom: number;
+  barGap: number;
+  barCount: number;
+  barWidth: number;
+  countryLabelScale: number;
+  trendAxisLabelScale: number;
+  trendAreaOpacity: number;
+  trendStrokeWidth: number;
+  summaryValueScale: number;
+  originCount: number;
+}
+
 export interface CountryCenterPoint {
   lon: number;
   lat: number;
@@ -70,7 +93,7 @@ export interface CountryCenterPoint {
 
 export type ArcLengthPreset = 'short' | 'medium' | 'long';
 export type AttackArcStagePreset = 'stage1' | 'stage2' | 'stage3';
-export type AttackArcVisualLevel = 'low' | 'medium' | 'high' | 'critical' | 'active';
+export type AttackArcVisualLevel = 'low' | 'medium' | 'high';
 
 export interface AttackArcLengthThresholds {
   shortMax: number;
@@ -113,12 +136,12 @@ export interface AttackArcLengthPresetSettings {
   curvatureRatio: number;
   lineWidth: number;
   segmentCount: number;
-  style: AttackArcVisualStyle;
   stages: Record<AttackArcStagePreset, AttackArcStageSettings>;
 }
 
 export interface AttackArcDebugSettings {
   lengthThresholds: AttackArcLengthThresholds;
+  visualStyles: Record<AttackArcVisualLevel, AttackArcVisualStyle>;
   presets: Record<ArcLengthPreset, AttackArcLengthPresetSettings>;
 }
 

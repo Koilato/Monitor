@@ -4,6 +4,7 @@ import type {
   ArcLengthPreset,
   AttackArcConfigState,
   AttackArcStagePreset,
+  AttackArcVisualLevel,
   CountryCenterPoint,
   MapDebugSettings,
 } from 'map/state/map-types';
@@ -17,8 +18,7 @@ interface MapDebugPanelProps {
   onPersistChange: (enabled: boolean) => void;
   onReset: () => void;
   onLatestSectionHeightChange: (value: number) => void;
-  onMapSettingsChange: (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight' | 'activeCountryCodes'>>) => void;
-  onActiveCountryCodesChange: (value: string) => void;
+  onMapSettingsChange: (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight'>>) => void;
 }
 
 interface NumberFieldProps {
@@ -46,6 +46,7 @@ interface ColorFieldProps {
 
 const ARC_LENGTH_PRESETS: ArcLengthPreset[] = ['long', 'medium', 'short'];
 const ARC_STAGE_PRESETS: AttackArcStagePreset[] = ['stage1', 'stage2', 'stage3'];
+const ARC_VISUAL_LEVELS: AttackArcVisualLevel[] = ['high', 'medium', 'low'];
 
 function parseNumber(value: string): number {
   const next = Number(value);
@@ -152,6 +153,18 @@ function getStageLabel(stage: AttackArcStagePreset): string {
   return '阶段三（fadeout）';
 }
 
+function getVisualLevelLabel(level: AttackArcVisualLevel): string {
+  if (level === 'high') {
+    return '高危颜色';
+  }
+
+  if (level === 'medium') {
+    return '中危颜色';
+  }
+
+  return '低危颜色';
+}
+
 function getSourceLabel(source: ReturnType<typeof getCountryCenterSource>): string {
   if (source === 'override') {
     return '调试覆写';
@@ -180,12 +193,10 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
     attackArcConfigState,
     onToggleOpen,
     onPersistChange,
-    onReset,
-    onLatestSectionHeightChange,
-    onMapSettingsChange,
-    onActiveCountryCodesChange,
+  onReset,
+  onLatestSectionHeightChange,
+  onMapSettingsChange,
   } = props;
-  const [activeCountryInput, setActiveCountryInput] = useState(settings.activeCountryCodes.join(', '));
   const [centerCountryCode, setCenterCountryCode] = useState('CN');
   const normalizedCenterCountryCode = centerCountryCode.trim().toUpperCase();
 
@@ -200,10 +211,6 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
   }, [normalizedCenterCountryCode, settings.countryCenterOverrides]);
   const [centerLonInput, setCenterLonInput] = useState(formatCoordinateValue(resolvedCenterPoint?.lon));
   const [centerLatInput, setCenterLatInput] = useState(formatCoordinateValue(resolvedCenterPoint?.lat));
-
-  useEffect(() => {
-    setActiveCountryInput(settings.activeCountryCodes.join(', '));
-  }, [settings.activeCountryCodes]);
 
   useEffect(() => {
     setCenterLonInput(formatCoordinateValue(resolvedCenterPoint?.lon));
@@ -279,6 +286,24 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
     });
   };
 
+  const updateAttackArcVisualStyle = (
+    level: AttackArcVisualLevel,
+    patch: Partial<MapDebugSettings['attackArc']['visualStyles'][AttackArcVisualLevel]>,
+  ) => {
+    onMapSettingsChange({
+      attackArc: {
+        ...settings.attackArc,
+        visualStyles: {
+          ...settings.attackArc.visualStyles,
+          [level]: {
+            ...settings.attackArc.visualStyles[level],
+            ...patch,
+          },
+        },
+      },
+    });
+  };
+
   return (
     <aside className={`map-debug-panel ${open ? '' : 'map-debug-panel--closed'}`}>
       <button
@@ -321,6 +346,204 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
               step={10}
               onChange={onLatestSectionHeightChange}
             />
+            <div className="map-debug-subsection">
+              <h4>右下统计面板</h4>
+              <NumberField
+                label="UI 缩放"
+                value={settings.trafficStats.uiScale}
+                min={0.55}
+                max={1.2}
+                step={0.05}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    uiScale: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="趋势面板宽度"
+                value={settings.trafficStats.trendPanelWidth}
+                min={220}
+                max={720}
+                step={4}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    trendPanelWidth: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="柱图面板宽度"
+                value={settings.trafficStats.barsPanelWidth}
+                min={280}
+                max={1200}
+                step={4}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    barsPanelWidth: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="右栏宽度"
+                value={settings.trafficStats.originsPanelWidth}
+                min={180}
+                max={420}
+                step={4}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    originsPanelWidth: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="面板横向内边距"
+                value={settings.trafficStats.panelPaddingX}
+                min={8}
+                max={40}
+                step={1}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    panelPaddingX: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="图表上内边距"
+                value={settings.trafficStats.panelPaddingTop}
+                min={0}
+                max={32}
+                step={1}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    panelPaddingTop: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="图表下内边距"
+                value={settings.trafficStats.panelPaddingBottom}
+                min={8}
+                max={40}
+                step={1}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    panelPaddingBottom: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="柱间距"
+                value={settings.trafficStats.barGap}
+                min={4}
+                max={20}
+                step={1}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    barGap: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="柱状图数量"
+                value={settings.trafficStats.barCount}
+                min={4}
+                max={16}
+                step={1}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    barCount: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="柱宽"
+                value={settings.trafficStats.barWidth}
+                min={12}
+                max={80}
+                step={1}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    barWidth: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="国家标签字号"
+                value={settings.trafficStats.countryLabelScale}
+                min={0.7}
+                max={1.8}
+                step={0.05}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    countryLabelScale: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="趋势轴字号"
+                value={settings.trafficStats.trendAxisLabelScale}
+                min={0.7}
+                max={1.8}
+                step={0.05}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    trendAxisLabelScale: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="趋势填充透明度"
+                value={settings.trafficStats.trendAreaOpacity}
+                min={0.05}
+                max={0.6}
+                step={0.01}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    trendAreaOpacity: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="趋势线宽"
+                value={settings.trafficStats.trendStrokeWidth}
+                min={1}
+                max={4}
+                step={0.1}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    trendStrokeWidth: value,
+                  },
+                })}
+              />
+              <NumberField
+                label="统计数字字号"
+                value={settings.trafficStats.summaryValueScale}
+                min={0.7}
+                max={1.8}
+                step={0.05}
+                onChange={(value) => onMapSettingsChange({
+                  trafficStats: {
+                    ...settings.trafficStats,
+                    summaryValueScale: value,
+                  },
+                })}
+              />
+            </div>
           </section>
 
           <section className="map-debug-section">
@@ -345,6 +568,36 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
 
           <section className="map-debug-section">
             <h3>底图样式</h3>
+            <div className="map-debug-subsection">
+              <h4>底图点阵</h4>
+              <CheckboxField
+                label="点阵显示"
+                checked={settings.countryDotPatternEnabled}
+                onChange={(value) => onMapSettingsChange({ countryDotPatternEnabled: value })}
+              />
+              <ColorField
+                label="点阵颜色"
+                value={settings.countryDotPatternColor}
+                onChange={(value) => onMapSettingsChange({ countryDotPatternColor: value })}
+              />
+              <NumberField
+                label="点阵密度"
+                value={settings.countryDotPatternDensity}
+                min={8}
+                max={24}
+                step={1}
+                onChange={(value) => onMapSettingsChange({ countryDotPatternDensity: value })}
+              />
+              <NumberField
+                label="点阵深浅"
+                value={settings.countryDotPatternOpacity}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(value) => onMapSettingsChange({ countryDotPatternOpacity: value })}
+              />
+              <p>作用于底图与威胁填充，悬停高亮不使用点阵。</p>
+            </div>
             <ColorField
               label="底图填充颜色"
               value={settings.baseCountryFillColor}
@@ -474,13 +727,6 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
               />
             </div>
             <p>图层定位：`countries-base-line` / `countries-base-glow` 控制底图内部边界，`countries-threat-line` / `countries-threat-glow` 控制攻击国外轮廓。</p>
-            <TextField
-              label="启用国家（两位字母国家代码，英文逗号分隔）"
-              value={activeCountryInput}
-              placeholder="CN, US, JP"
-              onChange={setActiveCountryInput}
-              onCommit={() => onActiveCountryCodesChange(activeCountryInput)}
-            />
           </section>
 
           <section className="map-debug-section">
@@ -609,6 +855,30 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
             </section>
           ) : null}
 
+          <section className="map-debug-section">
+            <h3>威胁颜色分档</h3>
+            {ARC_VISUAL_LEVELS.map((level) => (
+              <div className="map-debug-subsection" key={level}>
+                <h4>{getVisualLevelLabel(level)}</h4>
+                <ColorField
+                  label="主线颜色"
+                  value={settings.attackArc.visualStyles[level].lineColor}
+                  onChange={(value) => updateAttackArcVisualStyle(level, { lineColor: value })}
+                />
+                <ColorField
+                  label="圆环颜色"
+                  value={settings.attackArc.visualStyles[level].ringColor}
+                  onChange={(value) => updateAttackArcVisualStyle(level, { ringColor: value })}
+                />
+                <ColorField
+                  label="中心点颜色"
+                  value={settings.attackArc.visualStyles[level].dotColor}
+                  onChange={(value) => updateAttackArcVisualStyle(level, { dotColor: value })}
+                />
+              </div>
+            ))}
+          </section>
+
           {ARC_LENGTH_PRESETS.map((preset) => (
             <section className="map-debug-section" key={preset}>
               <h3>{getPresetLabel(preset)}</h3>
@@ -645,36 +915,6 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
                   max={240}
                   step={1}
                   onChange={(value) => updateAttackArcPreset(preset, { segmentCount: value })}
-                />
-                <ColorField
-                  label="主线颜色"
-                  value={settings.attackArc.presets[preset].style.lineColor}
-                  onChange={(value) => updateAttackArcPreset(preset, {
-                    style: {
-                      ...settings.attackArc.presets[preset].style,
-                      lineColor: value,
-                    },
-                  })}
-                />
-                <ColorField
-                  label="圆环颜色"
-                  value={settings.attackArc.presets[preset].style.ringColor}
-                  onChange={(value) => updateAttackArcPreset(preset, {
-                    style: {
-                      ...settings.attackArc.presets[preset].style,
-                      ringColor: value,
-                    },
-                  })}
-                />
-                <ColorField
-                  label="中心点颜色"
-                  value={settings.attackArc.presets[preset].style.dotColor}
-                  onChange={(value) => updateAttackArcPreset(preset, {
-                    style: {
-                      ...settings.attackArc.presets[preset].style,
-                      dotColor: value,
-                    },
-                  })}
                 />
               </div>
               <NumberField

@@ -6,7 +6,6 @@ import { getCountryLabelAnchor, getCountryName } from 'map/lib/country-geometry'
 import { getChineseCountryName } from 'map/lib/country-names-zh';
 import type { LayerRenderContext } from 'map/layers/registry';
 import {
-  createActiveCountryCodeSet,
   getThreatVisualToken,
   resolveThreatVisualLevel,
 } from 'map/layers/tokens';
@@ -47,13 +46,11 @@ export function resolveThreatLabelName(code: string, englishName: string | null)
 
 export async function buildThreatLabelFeatures(
   threatData: ThreatMapResponse | null,
-  activeThreatCountryCodes: readonly string[] = [],
 ): Promise<FeatureCollection<Point>> {
   if (!threatData || threatData.countries.length === 0) {
     return createEmptyThreatLabelFeatureCollection();
   }
 
-  const activeCountryCodeSet = createActiveCountryCodeSet(activeThreatCountryCodes);
   const sortedCountries = [...threatData.countries].sort(compareThreatPriority);
   const features = await Promise.all(sortedCountries.map(async (country) => {
     const [anchor, englishName] = await Promise.all([
@@ -65,12 +62,7 @@ export async function buildThreatLabelFeatures(
       return null;
     }
 
-    const threatVisualLevel = resolveThreatVisualLevel(
-      country.eventLevel,
-      country.country,
-      activeThreatCountryCodes,
-      activeCountryCodeSet,
-    );
+    const threatVisualLevel = resolveThreatVisualLevel(country.eventLevel);
 
     return {
       type: 'Feature' as const,
@@ -148,8 +140,6 @@ export function registerThreatLabelLayer(context: LayerRenderContext) {
         getThreatVisualToken('high').glow,
         'critical',
         getThreatVisualToken('critical').glow,
-        'active',
-        getThreatVisualToken('active').glow,
         'rgba(12,14,18,0.94)',
       ],
       'text-halo-width': [
@@ -163,8 +153,6 @@ export function registerThreatLabelLayer(context: LayerRenderContext) {
         1.8,
         'critical',
         2.05,
-        'active',
-        2.2,
         1.5,
       ],
       'text-halo-blur': 0.4,
@@ -178,5 +166,5 @@ export async function applyThreatLabelState(context: LayerRenderContext) {
     return;
   }
 
-  source.setData(await buildThreatLabelFeatures(context.threatData, context.activeThreatCountryCodes));
+  source.setData(await buildThreatLabelFeatures(context.threatData));
 }

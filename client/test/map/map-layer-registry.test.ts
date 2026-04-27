@@ -29,16 +29,19 @@ function createPreset(bundleSpreadRatio: number, curvatureRatio: number, lineWid
     curvatureRatio,
     lineWidth,
     segmentCount,
-    style: {
-      lineColor: '#123456',
-      ringColor: '#234567',
-      dotColor: '#345678',
-    },
     stages: {
       stage1: { ...stage },
       stage2: { ...stage },
       stage3: { ...stage },
     },
+  };
+}
+
+function createVisualStyles() {
+  return {
+    low: { lineColor: '#14b8a6', ringColor: '#14b8a6', dotColor: '#14b8a6' },
+    medium: { lineColor: '#ffb72e', ringColor: '#ffb72e', dotColor: '#ffb72e' },
+    high: { lineColor: '#ff1d24', ringColor: '#ff1d24', dotColor: '#ff1d24' },
   };
 }
 
@@ -86,6 +89,10 @@ test('initializes supported modules and disables a failed module without abortin
       latestSectionHeight: 160,
       minZoom: -2,
       maxZoom: 6,
+      countryDotPatternEnabled: true,
+      countryDotPatternColor: '#7a7a7a',
+      countryDotPatternDensity: 16,
+      countryDotPatternOpacity: 0.36,
       baseCountryFillColor: '#141414',
       baseCountryFillOpacity: 1,
       baseCountryOutlineColor: '#707070',
@@ -94,7 +101,6 @@ test('initializes supported modules and disables a failed module without abortin
       baseCountryGlowColor: '#707070',
       baseCountryGlowWidth: 0,
       baseCountryGlowOpacity: 0,
-      activeCountryCodes: [],
       countryCenterOverrides: {},
       threatColorsEnabled: true,
       threatFillOpacity: 1,
@@ -121,6 +127,7 @@ test('initializes supported modules and disables a failed module without abortin
           shortMax: 18,
           mediumMax: 55,
         },
+        visualStyles: createVisualStyles(),
         presets: {
           short: createPreset(0.05, 0.08, 1.5, 64),
           medium: createPreset(0.08, 0.16, 1.8, 100),
@@ -130,7 +137,6 @@ test('initializes supported modules and disables a failed module without abortin
     },
     modules,
     activeLayerIds: ['ok-a', 'bad', 'ok-b'],
-    activeThreatCountryCodes: [],
     hoverData: null,
     flowData: null,
     threatData: null,

@@ -7,9 +7,11 @@ import type {
   AttackArcLengthThresholds,
   AttackArcStagePreset,
   AttackArcStageSettings,
+  AttackArcVisualLevel,
   AttackArcVisualStyle,
   CountryCenterPoint,
   MapDebugSettings,
+  TrafficStatsDebugSettings,
 } from 'map/state/map-types';
 import {
   COUNTRY_BASE_FILL_COLOR,
@@ -30,13 +32,46 @@ import {
   THREAT_LINE_OPACITY,
 } from 'map/layers/tokens';
 
-const STORAGE_KEY = 'world-monitor.map-debug-settings.v16';
-const LEGACY_STORAGE_KEY = 'world-monitor.map-debug-settings.v15';
+const STORAGE_KEY = 'world-monitor.map-debug-settings.v18';
+const LEGACY_STORAGE_KEYS = [
+  'world-monitor.map-debug-settings.v17',
+  'world-monitor.map-debug-settings.v16',
+] as const;
 const DEBUG_MODE_STORAGE_KEY = 'world-monitor.map-debug-mode.v1';
 const LATEST_SECTION_HEIGHT_MIN = 100;
 const LATEST_SECTION_HEIGHT_MAX = 560;
 const MIN_MIN_ZOOM = -6;
 const MAX_MAX_ZOOM = 10;
+const MIN_TRAFFIC_UI_SCALE = 0.55;
+const MAX_TRAFFIC_UI_SCALE = 1.2;
+const MIN_TRAFFIC_TREND_PANEL_WIDTH = 220;
+const MAX_TRAFFIC_TREND_PANEL_WIDTH = 720;
+const MIN_TRAFFIC_BARS_PANEL_WIDTH = 280;
+const MAX_TRAFFIC_BARS_PANEL_WIDTH = 1200;
+const MIN_TRAFFIC_ORIGINS_WIDTH = 180;
+const MAX_TRAFFIC_ORIGINS_WIDTH = 420;
+const MIN_TRAFFIC_PANEL_PADDING = 8;
+const MAX_TRAFFIC_PANEL_PADDING = 40;
+const MIN_TRAFFIC_PANEL_TOP_PADDING = 0;
+const MAX_TRAFFIC_PANEL_TOP_PADDING = 32;
+const MIN_TRAFFIC_BAR_GAP = 4;
+const MAX_TRAFFIC_BAR_GAP = 20;
+const MIN_TRAFFIC_BAR_COUNT = 4;
+const MAX_TRAFFIC_BAR_COUNT = 16;
+const MIN_TRAFFIC_BAR_WIDTH = 12;
+const MAX_TRAFFIC_BAR_WIDTH = 80;
+const MIN_TRAFFIC_COUNTRY_LABEL_SCALE = 0.7;
+const MAX_TRAFFIC_COUNTRY_LABEL_SCALE = 1.8;
+const MIN_TRAFFIC_TREND_AXIS_LABEL_SCALE = 0.7;
+const MAX_TRAFFIC_TREND_AXIS_LABEL_SCALE = 1.8;
+const MIN_TRAFFIC_TREND_AREA_OPACITY = 0.05;
+const MAX_TRAFFIC_TREND_AREA_OPACITY = 0.6;
+const MIN_TRAFFIC_TREND_STROKE_WIDTH = 1;
+const MAX_TRAFFIC_TREND_STROKE_WIDTH = 4;
+const MIN_TRAFFIC_SUMMARY_VALUE_SCALE = 0.7;
+const MAX_TRAFFIC_SUMMARY_VALUE_SCALE = 1.8;
+const MIN_TRAFFIC_ORIGIN_COUNT = 1;
+const MAX_TRAFFIC_ORIGIN_COUNT = 8;
 const MIN_BUNDLE_COUNT = 1;
 const MAX_BUNDLE_COUNT = 12;
 const MIN_THRESHOLD = 1;
@@ -75,6 +110,8 @@ const MIN_RING_DOT_RADIUS = 0;
 const MAX_RING_DOT_RADIUS = 16;
 const MIN_ALPHA = 0;
 const MAX_ALPHA = 1;
+const MIN_COUNTRY_DOT_PATTERN_DENSITY = 8;
+const MAX_COUNTRY_DOT_PATTERN_DENSITY = 24;
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 const INVALID_ATTACK_ARC_CONFIG_MESSAGE = 'AttackArc Debug 配置不完整，未应用已存样式。';
 
@@ -126,7 +163,6 @@ function createDefaultLengthPresetSettings(
   curvatureRatio: number,
   lineWidth: number,
   segmentCount: number,
-  style: AttackArcVisualStyle,
 ): AttackArcLengthPresetSettings {
   return {
     bundleCount: 2,
@@ -140,7 +176,6 @@ function createDefaultLengthPresetSettings(
     curvatureRatio,
     lineWidth,
     segmentCount,
-    style,
     stages: {
       stage1: createDefaultStageSettings(),
       stage2: createDefaultStageSettings(),
@@ -151,7 +186,7 @@ function createDefaultLengthPresetSettings(
 
 const DEFAULT_ATTACK_ARC_LENGTH_PRESETS: Record<ArcLengthPreset, AttackArcLengthPresetSettings> = {
   short: {
-    ...createDefaultLengthPresetSettings(0.05, 0.08, 1.5, 64, createDefaultVisualStyle('#f5a623')),
+    ...createDefaultLengthPresetSettings(0.05, 0.08, 1.5, 64),
     stages: {
       stage1: {
         lineAlpha: 1,
@@ -186,7 +221,7 @@ const DEFAULT_ATTACK_ARC_LENGTH_PRESETS: Record<ArcLengthPreset, AttackArcLength
     },
   },
   medium: {
-    ...createDefaultLengthPresetSettings(0.08, 0.16, 2, 100, createDefaultVisualStyle('#ff5f3c')),
+    ...createDefaultLengthPresetSettings(0.08, 0.16, 2, 100),
     bundleCount: 3,
     stages: {
       stage1: {
@@ -222,16 +257,44 @@ const DEFAULT_ATTACK_ARC_LENGTH_PRESETS: Record<ArcLengthPreset, AttackArcLength
     },
   },
   long: {
-    ...createDefaultLengthPresetSettings(0.12, 0.24, 4, 140, createDefaultVisualStyle('#eb282d')),
+    ...createDefaultLengthPresetSettings(0.12, 0.24, 4, 140),
     bundleCount: 1,
     maxConcurrentStarts: 5,
   },
 };
 
+const DEFAULT_ATTACK_ARC_VISUAL_STYLES: Record<AttackArcVisualLevel, AttackArcVisualStyle> = {
+  low: createDefaultVisualStyle('#14b8a6'),
+  medium: createDefaultVisualStyle('#ffb72e'),
+  high: createDefaultVisualStyle('#ff1d24'),
+};
+
 const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
   latestSectionHeight: 339,
+  trafficStats: {
+    uiScale: 0.76,
+    trendPanelWidth: 500,
+    barsPanelWidth: 800,
+    originsPanelWidth: 236,
+    panelPaddingX: 18,
+    panelPaddingTop: 8,
+    panelPaddingBottom: 16,
+    barGap: 8,
+    barCount: 10,
+    barWidth: 36,
+    countryLabelScale: 1,
+    trendAxisLabelScale: 1,
+    trendAreaOpacity: 0.22,
+    trendStrokeWidth: 2,
+    summaryValueScale: 1,
+    originCount: 3,
+  },
   minZoom: -2,
   maxZoom: 6,
+  countryDotPatternEnabled: true,
+  countryDotPatternColor: '#7a7a7a',
+  countryDotPatternDensity: 16,
+  countryDotPatternOpacity: 0.36,
   baseCountryFillColor: '#000000',
   baseCountryFillOpacity: 0.65,
   baseCountryOutlineColor: COUNTRY_BASE_LINE_COLOR,
@@ -240,7 +303,6 @@ const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
   baseCountryGlowColor: COUNTRY_BASE_GLOW_COLOR,
   baseCountryGlowWidth: COUNTRY_BASE_GLOW_WIDTH,
   baseCountryGlowOpacity: COUNTRY_BASE_GLOW_OPACITY,
-  activeCountryCodes: [],
   countryCenterOverrides: {},
   threatColorsEnabled: false,
   threatFillOpacity: THREAT_FILL_OPACITY,
@@ -267,6 +329,7 @@ const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
       shortMax: 19,
       mediumMax: 74,
     },
+    visualStyles: DEFAULT_ATTACK_ARC_VISUAL_STYLES,
     presets: DEFAULT_ATTACK_ARC_LENGTH_PRESETS,
   },
 };
@@ -295,18 +358,63 @@ function coerceBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
-function normalizeActiveCountryCodes(value: unknown): string[] {
-  const rawValues = Array.isArray(value)
-    ? value.filter((entry): entry is string => typeof entry === 'string')
-    : typeof value === 'string'
-      ? value.split(',')
-      : [];
+function coerceTrafficStatsSettings(value: unknown): TrafficStatsDebugSettings {
+  if (typeof value !== 'object' || value === null) {
+    return DEFAULT_MAP_DEBUG_SETTINGS.trafficStats;
+  }
 
-  const normalized = rawValues
-    .map((entry) => entry.trim().toUpperCase())
-    .filter((entry) => /^[A-Z]{2}$/.test(entry));
+  const record = value as Partial<TrafficStatsDebugSettings>;
 
-  return normalized.filter((entry, index) => normalized.indexOf(entry) === index);
+  return {
+    uiScale: isFiniteNumber(record.uiScale)
+      ? clampNumber(record.uiScale, MIN_TRAFFIC_UI_SCALE, MAX_TRAFFIC_UI_SCALE)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.uiScale,
+    trendPanelWidth: isFiniteNumber(record.trendPanelWidth)
+      ? clampNumber(record.trendPanelWidth, MIN_TRAFFIC_TREND_PANEL_WIDTH, MAX_TRAFFIC_TREND_PANEL_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.trendPanelWidth,
+    barsPanelWidth: isFiniteNumber(record.barsPanelWidth)
+      ? clampNumber(record.barsPanelWidth, MIN_TRAFFIC_BARS_PANEL_WIDTH, MAX_TRAFFIC_BARS_PANEL_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.barsPanelWidth,
+    originsPanelWidth: isFiniteNumber(record.originsPanelWidth)
+      ? clampNumber(record.originsPanelWidth, MIN_TRAFFIC_ORIGINS_WIDTH, MAX_TRAFFIC_ORIGINS_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.originsPanelWidth,
+    panelPaddingX: isFiniteNumber(record.panelPaddingX)
+      ? clampNumber(record.panelPaddingX, MIN_TRAFFIC_PANEL_PADDING, MAX_TRAFFIC_PANEL_PADDING)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.panelPaddingX,
+    panelPaddingTop: isFiniteNumber(record.panelPaddingTop)
+      ? clampNumber(record.panelPaddingTop, MIN_TRAFFIC_PANEL_TOP_PADDING, MAX_TRAFFIC_PANEL_TOP_PADDING)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.panelPaddingTop,
+    panelPaddingBottom: isFiniteNumber(record.panelPaddingBottom)
+      ? clampNumber(record.panelPaddingBottom, MIN_TRAFFIC_PANEL_PADDING, MAX_TRAFFIC_PANEL_PADDING)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.panelPaddingBottom,
+    barGap: isFiniteNumber(record.barGap)
+      ? clampNumber(record.barGap, MIN_TRAFFIC_BAR_GAP, MAX_TRAFFIC_BAR_GAP)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.barGap,
+    barCount: isFiniteNumber(record.barCount)
+      ? clampNumber(record.barCount, MIN_TRAFFIC_BAR_COUNT, MAX_TRAFFIC_BAR_COUNT)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.barCount,
+    barWidth: isFiniteNumber(record.barWidth)
+      ? clampNumber(record.barWidth, MIN_TRAFFIC_BAR_WIDTH, MAX_TRAFFIC_BAR_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.barWidth,
+    countryLabelScale: isFiniteNumber(record.countryLabelScale)
+      ? clampNumber(record.countryLabelScale, MIN_TRAFFIC_COUNTRY_LABEL_SCALE, MAX_TRAFFIC_COUNTRY_LABEL_SCALE)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.countryLabelScale,
+    trendAxisLabelScale: isFiniteNumber(record.trendAxisLabelScale)
+      ? clampNumber(record.trendAxisLabelScale, MIN_TRAFFIC_TREND_AXIS_LABEL_SCALE, MAX_TRAFFIC_TREND_AXIS_LABEL_SCALE)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.trendAxisLabelScale,
+    trendAreaOpacity: isFiniteNumber(record.trendAreaOpacity)
+      ? clampNumber(record.trendAreaOpacity, MIN_TRAFFIC_TREND_AREA_OPACITY, MAX_TRAFFIC_TREND_AREA_OPACITY)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.trendAreaOpacity,
+    trendStrokeWidth: isFiniteNumber(record.trendStrokeWidth)
+      ? clampNumber(record.trendStrokeWidth, MIN_TRAFFIC_TREND_STROKE_WIDTH, MAX_TRAFFIC_TREND_STROKE_WIDTH)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.trendStrokeWidth,
+    summaryValueScale: isFiniteNumber(record.summaryValueScale)
+      ? clampNumber(record.summaryValueScale, MIN_TRAFFIC_SUMMARY_VALUE_SCALE, MAX_TRAFFIC_SUMMARY_VALUE_SCALE)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.summaryValueScale,
+    originCount: isFiniteNumber(record.originCount)
+      ? clampNumber(record.originCount, MIN_TRAFFIC_ORIGIN_COUNT, MAX_TRAFFIC_ORIGIN_COUNT)
+      : DEFAULT_MAP_DEBUG_SETTINGS.trafficStats.originCount,
+  };
 }
 
 function coerceCountryCenterOverrides(value: unknown): Record<string, CountryCenterPoint> {
@@ -407,14 +515,37 @@ function coerceStageSettingsRecord(
   };
 }
 
+function coerceVisualStyle(
+  value: unknown,
+  fallback: AttackArcVisualStyle,
+): AttackArcVisualStyle {
+  const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcVisualStyle> : {};
+  return {
+    lineColor: coerceHexColor(record.lineColor, fallback.lineColor),
+    ringColor: coerceHexColor(record.ringColor, fallback.ringColor),
+    dotColor: coerceHexColor(record.dotColor, fallback.dotColor),
+  };
+}
+
+function coerceVisualStyles(
+  value: unknown,
+): Record<AttackArcVisualLevel, AttackArcVisualStyle> {
+  const record = typeof value === 'object' && value !== null
+    ? value as Partial<Record<AttackArcVisualLevel, AttackArcVisualStyle>>
+    : {};
+
+  return {
+    low: coerceVisualStyle(record.low, DEFAULT_ATTACK_ARC_VISUAL_STYLES.low),
+    medium: coerceVisualStyle(record.medium, DEFAULT_ATTACK_ARC_VISUAL_STYLES.medium),
+    high: coerceVisualStyle(record.high, DEFAULT_ATTACK_ARC_VISUAL_STYLES.high),
+  };
+}
+
 function coerceLengthPresetSettings(
   value: unknown,
   fallback: AttackArcLengthPresetSettings,
 ): AttackArcLengthPresetSettings {
   const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcLengthPresetSettings> : {};
-  const styleRecord = typeof record.style === 'object' && record.style !== null
-    ? record.style as Partial<AttackArcVisualStyle>
-    : {};
   const lineWidth = isFiniteNumber(record.lineWidth)
     ? clampNumber(record.lineWidth, MIN_LINE_WIDTH, MAX_LINE_WIDTH)
     : fallback.lineWidth;
@@ -452,11 +583,6 @@ function coerceLengthPresetSettings(
       : fallback.curvatureRatio,
     lineWidth,
     segmentCount,
-    style: {
-      lineColor: coerceHexColor(styleRecord.lineColor, fallback.style.lineColor),
-      ringColor: coerceHexColor(styleRecord.ringColor, fallback.style.ringColor),
-      dotColor: coerceHexColor(styleRecord.dotColor, fallback.style.dotColor),
-    },
     stages: coerceStageSettingsRecord(record.stages, fallback.stages),
   };
 }
@@ -477,6 +603,7 @@ function coerceAttackArcSettings(value: unknown): AttackArcDebugSettings {
   const record = typeof value === 'object' && value !== null ? value as Partial<AttackArcDebugSettings> : {};
   return {
     lengthThresholds: coerceLengthThresholds(record.lengthThresholds),
+    visualStyles: coerceVisualStyles(record.visualStyles),
     presets: coerceLengthPresets(record.presets),
   };
 }
@@ -495,17 +622,6 @@ function isCompleteStageSettings(value: unknown): boolean {
     && isFiniteNumber(record.ringSpacing)
     && isFiniteNumber(record.ringLineWidth)
     && isFiniteNumber(record.ringDotRadius);
-}
-
-function isCompleteVisualStyle(value: unknown): boolean {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const record = value as Partial<AttackArcVisualStyle>;
-  return isHexColor(record.lineColor)
-    && isHexColor(record.ringColor)
-    && isHexColor(record.dotColor);
 }
 
 function isCompleteLengthPresetSettings(value: unknown): boolean {
@@ -527,7 +643,6 @@ function isCompleteLengthPresetSettings(value: unknown): boolean {
     && isFiniteNumber(record.curvatureRatio)
     && isFiniteNumber(record.lineWidth)
     && isFiniteNumber(record.segmentCount)
-    && isCompleteVisualStyle(record.style)
     && !!stages
     && isCompleteStageSettings(stages.stage1)
     && isCompleteStageSettings(stages.stage2)
@@ -552,10 +667,6 @@ function hasCompleteStoredAttackArcSettings(value: unknown): boolean {
     && isCompleteLengthPresetSettings(presets.long);
 }
 
-export function parseActiveCountryCodesInput(value: string): string[] {
-  return normalizeActiveCountryCodes(value);
-}
-
 export function coerceMapDebugSettings(value: unknown): MapDebugSettings {
   if (typeof value !== 'object' || value === null) {
     return DEFAULT_MAP_DEBUG_SETTINGS;
@@ -573,8 +684,27 @@ export function coerceMapDebugSettings(value: unknown): MapDebugSettings {
     latestSectionHeight: isFiniteNumber(record.latestSectionHeight)
       ? clamp(record.latestSectionHeight, LATEST_SECTION_HEIGHT_MIN, LATEST_SECTION_HEIGHT_MAX)
       : DEFAULT_MAP_DEBUG_SETTINGS.latestSectionHeight,
+    trafficStats: coerceTrafficStatsSettings(record.trafficStats),
     minZoom,
     maxZoom,
+    countryDotPatternEnabled: coerceBoolean(
+      record.countryDotPatternEnabled,
+      DEFAULT_MAP_DEBUG_SETTINGS.countryDotPatternEnabled,
+    ),
+    countryDotPatternColor: coerceHexColor(
+      record.countryDotPatternColor,
+      DEFAULT_MAP_DEBUG_SETTINGS.countryDotPatternColor,
+    ),
+    countryDotPatternDensity: isFiniteNumber(record.countryDotPatternDensity)
+      ? Math.round(clampNumber(
+        record.countryDotPatternDensity,
+        MIN_COUNTRY_DOT_PATTERN_DENSITY,
+        MAX_COUNTRY_DOT_PATTERN_DENSITY,
+      ))
+      : DEFAULT_MAP_DEBUG_SETTINGS.countryDotPatternDensity,
+    countryDotPatternOpacity: isFiniteNumber(record.countryDotPatternOpacity)
+      ? clampNumber(record.countryDotPatternOpacity, MIN_ALPHA, MAX_ALPHA)
+      : DEFAULT_MAP_DEBUG_SETTINGS.countryDotPatternOpacity,
     baseCountryFillColor: coerceHexColor(
       record.baseCountryFillColor,
       DEFAULT_MAP_DEBUG_SETTINGS.baseCountryFillColor,
@@ -602,7 +732,6 @@ export function coerceMapDebugSettings(value: unknown): MapDebugSettings {
     baseCountryGlowOpacity: isFiniteNumber(record.baseCountryGlowOpacity)
       ? clampNumber(record.baseCountryGlowOpacity, MIN_ALPHA, MAX_ALPHA)
       : DEFAULT_MAP_DEBUG_SETTINGS.baseCountryGlowOpacity,
-    activeCountryCodes: normalizeActiveCountryCodes(record.activeCountryCodes),
     countryCenterOverrides: coerceCountryCenterOverrides(record.countryCenterOverrides),
     threatColorsEnabled: coerceBoolean(record.threatColorsEnabled, DEFAULT_MAP_DEBUG_SETTINGS.threatColorsEnabled),
     threatFillOpacity: isFiniteNumber(record.threatFillOpacity)
@@ -709,7 +838,10 @@ function readStoredSettings(): StoredMapDebugSettingsResult | null {
     return null;
   }
 
-  const raw = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEY);
+  const raw = window.localStorage.getItem(STORAGE_KEY)
+    ?? LEGACY_STORAGE_KEYS
+      .map((key) => window.localStorage.getItem(key))
+      .find((value) => Boolean(value));
   if (!raw) {
     return null;
   }
@@ -732,8 +864,7 @@ export interface UseMapDebugSettingsResult {
   attackArcConfigState: AttackArcConfigState;
   resetSettings: () => void;
   updateLatestSectionHeight: (value: number) => void;
-  updateMapSettings: (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight' | 'activeCountryCodes'>>) => void;
-  updateActiveCountryCodes: (value: string) => void;
+  updateMapSettings: (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight'>>) => void;
 }
 
 export function useMapDebugSettings(): UseMapDebugSettingsResult {
@@ -804,7 +935,7 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     }));
   };
 
-  const updateMapSettings = (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight' | 'activeCountryCodes'>>) => {
+  const updateMapSettings = (patch: Partial<Omit<MapDebugSettings, 'latestSectionHeight'>>) => {
     if (patch.attackArc) {
       setAttackArcConfigState(createValidAttackArcConfigState());
     }
@@ -817,13 +948,6 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
         ...current.attackArc,
         ...patch.attackArc,
       },
-    }));
-  };
-
-  const updateActiveCountryCodes = (value: string) => {
-    setSettings((current) => ({
-      ...current,
-      activeCountryCodes: parseActiveCountryCodesInput(value),
     }));
   };
 
@@ -852,6 +976,5 @@ export function useMapDebugSettings(): UseMapDebugSettingsResult {
     resetSettings,
     updateLatestSectionHeight,
     updateMapSettings,
-    updateActiveCountryCodes,
   };
 }
