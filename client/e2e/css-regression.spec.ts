@@ -45,8 +45,9 @@ async function bootShell(page: Page, viewport: { width: number; height: number }
   await page.goto('/');
 
   await expect(page.getByText('全球信号地图')).toBeVisible();
-  await expect(page.getByText('最新信息流', { exact: true })).toBeVisible();
-  await expect(page.getByText('SQL 库存同步完成')).toBeVisible();
+  await expect(page.getByText('威胁观察列表', { exact: true })).toBeVisible();
+  await expect(page.getByText('来源国家流量', { exact: true })).toBeVisible();
+  await expect(page.getByText('威胁统计', { exact: true })).toBeVisible();
   await expect(page.locator('.map-surface canvas')).toHaveCount(1);
 }
 

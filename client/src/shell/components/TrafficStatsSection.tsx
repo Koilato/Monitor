@@ -1,6 +1,6 @@
 import type { AllFlowResponse } from '@shared/types';
 import type { RefObject } from 'react';
-import { Area, AreaChart, Bar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import type { TrafficStatsDebugSettings } from 'map/state/map-types';
 import {
   buildTrafficStats,
@@ -20,9 +20,9 @@ interface TrafficStatsSectionProps {
 
 const TONE_COLOR_MAP: Record<TrafficStatTone, string> = {
   critical: '#ff4d4d',
-  warning: '#ffa500',
-  info: '#ffd700',
-  neutral: 'rgba(255,255,255,0.06)',
+  warning: '#f2b94b',
+  info: '#14b8a6',
+  neutral: 'rgba(185,198,204,0.16)',
 };
 
 const THREAT_TREND_DATA: ThreatTrendDatum[] = [
@@ -205,6 +205,7 @@ function renderThreatTrend(settings: TrafficStatsDebugSettings) {
         <div className="threat-trend-chart">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={THREAT_TREND_DATA} margin={{ top: 10, right: 4, left: 0, bottom: 2 }}>
+            <CartesianGrid vertical={false} stroke="rgba(159,179,190,0.1)" strokeDasharray="2 6" />
             <YAxis
               axisLine={false}
               tickLine={false}
@@ -225,7 +226,7 @@ function renderThreatTrend(settings: TrafficStatsDebugSettings) {
               dataKey="high"
               stroke="var(--threat-high)"
               fill="var(--threat-high)"
-              fillOpacity={settings.trendAreaOpacity}
+              fillOpacity={Math.min(settings.trendAreaOpacity, 0.18)}
               strokeWidth={settings.trendStrokeWidth}
               dot={false}
               activeDot={false}
@@ -235,7 +236,7 @@ function renderThreatTrend(settings: TrafficStatsDebugSettings) {
               dataKey="medium"
               stroke="var(--threat-medium)"
               fill="var(--threat-medium)"
-              fillOpacity={settings.trendAreaOpacity}
+              fillOpacity={Math.min(settings.trendAreaOpacity, 0.18)}
               strokeWidth={settings.trendStrokeWidth}
               dot={false}
               activeDot={false}
@@ -245,7 +246,7 @@ function renderThreatTrend(settings: TrafficStatsDebugSettings) {
               dataKey="low"
               stroke="var(--threat-low)"
               fill="var(--threat-low)"
-              fillOpacity={settings.trendAreaOpacity}
+              fillOpacity={Math.min(settings.trendAreaOpacity, 0.18)}
               strokeWidth={settings.trendStrokeWidth}
               dot={false}
               activeDot={false}
@@ -293,6 +294,7 @@ function renderTrafficVolumePanel(
             <div className="traffic-volume-chart">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={items} margin={{ top: 8, right: 2, left: 0, bottom: 2 }} barCategoryGap={settings.barGap}>
+                  <CartesianGrid vertical={false} stroke="rgba(159,179,190,0.1)" strokeDasharray="2 6" />
                   <YAxis
                     axisLine={false}
                     tickLine={false}

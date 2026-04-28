@@ -1,7 +1,7 @@
 .map-header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   margin-left: auto;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -9,7 +9,9 @@
 
 .map-dimension-toggle {
   display: flex;
-  background: var(--bg);
+  min-height: 30px;
+  padding: 2px;
+  background: rgba(5, 8, 10, 0.54);
   border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
@@ -17,49 +19,67 @@
 
 .map-dim-btn {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
   color: var(--text-dim);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
+  min-height: 24px;
   padding: 3px 9px;
   cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: 0.5px;
+  transition:
+    background 140ms var(--ease-standard),
+    border-color 140ms var(--ease-standard),
+    color 140ms var(--ease-standard);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .map-dim-btn:hover {
   color: var(--text);
-  background: var(--surface-hover);
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .map-dim-btn.active {
-  background: var(--green);
-  color: var(--bg);
+  background: rgba(51, 214, 159, 0.1);
+  border-color: rgba(51, 214, 159, 0.46);
+  color: #d7fff0;
 }
 
 .map-filter-field {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 3px 7px;
-  background: var(--bg);
+  min-height: 30px;
+  padding: 4px 8px;
+  background: rgba(5, 8, 10, 0.54);
   border: 1px solid var(--border);
   border-radius: 4px;
+  transition: border-color 140ms var(--ease-standard), background 140ms var(--ease-standard);
 }
 
 .map-filter-label {
   font-size: 8px;
-  letter-spacing: 0.8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.map-filter-field:focus-within,
+.map-filter-field:hover {
+  border-color: rgba(51, 214, 159, 0.34);
+  background: rgba(12, 18, 22, 0.78);
 }
 
 .map-filter-field input {
   border: none;
   outline: none;
   background: transparent;
-  color: var(--text);
+  color: var(--text-secondary);
   font-size: 10px;
   min-width: 118px;
+  height: 18px;
 }
 
 .map-filter-field input::-webkit-calendar-picker-indicator {
@@ -72,24 +92,27 @@
   padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: rgba(10, 10, 10, 0.92);
+  background: rgba(5, 8, 10, 0.62);
   color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.04em;
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background 140ms var(--ease-standard),
+    border-color 140ms var(--ease-standard),
+    color 140ms var(--ease-standard);
 }
 
 .map-debug-mode-btn:hover {
-  border-color: var(--green);
-  color: var(--green);
+  border-color: rgba(51, 214, 159, 0.42);
+  color: #d7fff0;
 }
 
 .map-debug-mode-btn.active {
-  background: var(--green);
-  color: var(--bg);
+  background: rgba(51, 214, 159, 0.1);
+  border-color: rgba(51, 214, 159, 0.5);
+  color: #d7fff0;
 }
 
 .map-brand-panel {
@@ -97,14 +120,14 @@
   flex-direction: column;
   justify-content: center;
   gap: 3px;
-  min-width: 260px;
-  padding: 5px 10px 6px;
+  min-width: 246px;
+  min-height: 30px;
+  padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: rgba(10, 10, 10, 0.72);
+  background: rgba(5, 8, 10, 0.58);
   color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.04em;
   user-select: none;
 }
 
@@ -123,7 +146,7 @@
 .map-brand-title {
   font-size: 9px;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text);
   white-space: nowrap;
 }
 
@@ -155,8 +178,8 @@
   height: 6px;
   border-radius: 50%;
   background: currentColor;
-  box-shadow: 0 0 8px currentColor;
-  animation: status-pulse 1.8s ease-in-out infinite;
+  box-shadow: 0 0 6px currentColor;
+  animation: status-pulse 2.4s ease-in-out infinite;
 }
 
 .map-brand-status.live {

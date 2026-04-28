@@ -3,7 +3,7 @@
   min-height: 100px;
   border: 1px solid var(--border);
   border-top: none;
-  background: #0f0f0f;
+  background: var(--bg-secondary);
   display: grid;
   grid-template-columns:
     minmax(var(--traffic-trend-width, 500px), 1.08fr)
@@ -25,15 +25,14 @@
   display: flex;
   flex-direction: column;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
-    #101010;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.024), rgba(255, 255, 255, 0)),
+    var(--bg-secondary);
 }
 
 .traffic-stats-panel--trend {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
-    radial-gradient(circle at top, rgba(255, 29, 36, 0.08), transparent 56%),
-    #101010;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.024), rgba(255, 255, 255, 0)),
+    var(--bg-secondary);
 }
 
 .traffic-panel-header {
@@ -69,16 +68,15 @@
 .traffic-panel-title {
   margin: 0;
   font-size: clamp(calc(18px * var(--traffic-ui-scale)), 1.4vw, calc(34px * var(--traffic-ui-scale)));
-  font-weight: 900;
-  line-height: 0.94;
-  letter-spacing: -0.06em;
-  text-transform: uppercase;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: 0;
   color: #f5f5f5;
 }
 
 .traffic-panel-title--compact {
   font-size: clamp(calc(14px * var(--traffic-ui-scale)), 1vw, calc(22px * var(--traffic-ui-scale)));
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .traffic-panel-body {
@@ -167,7 +165,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border: 1px dashed rgba(159, 179, 190, 0.18);
   color: var(--text-dim);
   font-size: calc(9px * var(--traffic-ui-scale));
   font-weight: 700;
@@ -199,13 +197,13 @@
 
 .threat-donut-track {
   fill: none;
-  stroke-width: 22;
+  stroke-width: 20;
   stroke: rgba(255, 255, 255, 0.055);
 }
 
 .threat-donut-segment {
   fill: none;
-  stroke-width: 22.4;
+  stroke-width: 20.4;
   stroke-linecap: butt;
   stroke-linejoin: round;
 }
@@ -233,7 +231,7 @@
   text-anchor: middle;
   font-size: 13px;
   font-weight: 900;
-  letter-spacing: -0.08em;
+  letter-spacing: 0;
   fill: rgba(255, 255, 255, 0.42);
 }
 
@@ -242,10 +240,10 @@
 }
 
 .threat-donut-svg-percent {
-  font-size: 22px;
-  font-weight: 950;
-  line-height: 0.86;
-  letter-spacing: -0.08em;
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: 0;
   fill: #f4f4f4;
 }
 
@@ -254,8 +252,7 @@
   font-size: 8px;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .threat-donut-svg-name {
