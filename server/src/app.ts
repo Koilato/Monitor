@@ -6,6 +6,8 @@ import {
   buildAllFlowResponse,
   buildCountryHoverResponse,
   buildLatestContentResponse,
+  buildThreatIntelItemsFromIncidents,
+  buildThreatIntelResponse,
   buildThreatMapResponse,
 } from './service.js';
 import {
@@ -15,6 +17,7 @@ import {
   normalizeCountryCode,
   normalizeDate,
   normalizeQueryText,
+  normalizeSortOrder,
 } from './validation.js';
 
 validateMockIncidents(MOCK_INCIDENTS);
@@ -64,6 +67,28 @@ export function createApp() {
     res.json(
       buildLatestContentResponse(MOCK_LATEST_CONTENT, {
         category,
+        limit,
+        offset,
+      }),
+    );
+  });
+
+  app.get('/api/threat-intel', (req: Request, res: Response) => {
+    const sort = normalizeSortOrder(req.query.sort, 'sort', 'desc');
+    const limit = normalizePositiveInt(req.query.limit, 'limit', {
+      fallback: 30,
+      min: 1,
+      max: 100,
+    });
+    const offset = normalizePositiveInt(req.query.offset, 'offset', {
+      fallback: 0,
+      min: 0,
+      max: 1000,
+    });
+
+    res.json(
+      buildThreatIntelResponse(buildThreatIntelItemsFromIncidents(MOCK_INCIDENTS), {
+        sort,
         limit,
         offset,
       }),

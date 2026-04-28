@@ -3,6 +3,8 @@ import type {
   CountryHoverResponse,
   DateRange,
   LatestContentResponse,
+  ThreatIntelResponse,
+  ThreatIntelSortOrder,
   ThreatMapResponse,
 } from '@shared/types';
 
@@ -115,4 +117,32 @@ export async function fetchThreatMap(
   }
 
   return response.json() as Promise<ThreatMapResponse>;
+}
+
+export function buildThreatIntelUrl(
+  sort: ThreatIntelSortOrder,
+  limit: number,
+  offset = 0,
+): string {
+  const url = new URL('/api/threat-intel', API_BASE_URL);
+  url.searchParams.set('sort', sort);
+  url.searchParams.set('limit', String(limit));
+  url.searchParams.set('offset', String(offset));
+  return url.toString();
+}
+
+export async function fetchThreatIntel(
+  sort: ThreatIntelSortOrder,
+  limit: number,
+  offset = 0,
+  signal?: AbortSignal,
+): Promise<ThreatIntelResponse> {
+  const response = await fetch(buildThreatIntelUrl(sort, limit, offset), { signal });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(payload.error || '请求失败');
+  }
+
+  return response.json() as Promise<ThreatIntelResponse>;
 }

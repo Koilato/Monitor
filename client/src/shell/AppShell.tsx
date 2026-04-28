@@ -4,6 +4,7 @@ import { useMapDataSync } from 'map/hooks/useMapDataSync';
 import { ThreatIntelPanel } from 'shell/components/ThreatIntelPanel';
 import { ThreatTickerPanel } from 'shell/components/ThreatTickerPanel';
 import { TrafficStatsSection } from 'shell/components/TrafficStatsSection';
+import { useThreatIntelFeed } from 'shell/hooks/useThreatIntelFeed';
 import { useWorkspaceLayout } from 'shell/hooks/useWorkspaceLayout';
 import { useMapDebugSettings } from 'map/hooks/useMapDebugSettings';
 import { useMapUrlState } from 'map/hooks/useMapUrlState';
@@ -74,6 +75,11 @@ export function AppShell() {
     timeFilter: mapState.timeFilter,
     flowMode: mapState.flowMode,
   });
+  const threatIntelFeed = useThreatIntelFeed({
+    limit: 30,
+    refreshIntervalMs: 15000,
+    initialSortOrder: 'desc',
+  });
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -109,7 +115,16 @@ export function AppShell() {
         <div className="workspace-grid" ref={workspaceRef}>
           <section className="workspace-column workspace-column--left">
             <div className="workspace-pane workspace-pane--blank workspace-pane--left-top">
-              <ThreatIntelPanel />
+              <ThreatIntelPanel
+                items={threatIntelFeed.data?.items ?? []}
+                loading={threatIntelFeed.loading}
+                error={threatIntelFeed.error}
+                sortOrder={threatIntelFeed.sortOrder}
+                onSortOrderChange={threatIntelFeed.setSortOrder}
+                refreshEnabled={threatIntelFeed.refreshEnabled}
+                onRefreshEnabledChange={threatIntelFeed.setRefreshEnabled}
+                lastUpdatedAt={threatIntelFeed.lastUpdatedAt}
+              />
             </div>
             <div
               className="split-divider split-divider--horizontal"
@@ -121,7 +136,7 @@ export function AppShell() {
             <div
               className="workspace-pane workspace-pane--blank workspace-pane--left-bottom"
             >
-              <ThreatTickerPanel />
+              <ThreatTickerPanel items={threatIntelFeed.data?.items ?? []} />
             </div>
           </section>
 

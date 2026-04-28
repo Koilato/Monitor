@@ -93,3 +93,30 @@ export interface LatestContentResponse {
   offset: number;
   items: LatestContentItem[];
 }
+
+export type ThreatIntelSortOrder = 'asc' | 'desc';
+
+export interface ThreatIntelItem {
+  id: string;
+  tone: 'critical' | 'warning' | 'info';
+  level: string;
+  victim: string;
+  attacker: string;
+  source: string;
+  address: string;
+  occurredAt: string;
+}
+
+export interface ThreatIntelQuery {
+  sort: ThreatIntelSortOrder;
+  limit: number;
+  offset: number;
+}
+
+export interface ThreatIntelResponse {
+  sort: ThreatIntelSortOrder;
+  total: number;
+  limit: number;
+  offset: number;
+  items: ThreatIntelItem[];
+}

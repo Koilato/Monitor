@@ -95,3 +95,16 @@ export function normalizePositiveInt(
 
   return normalized;
 }
+
+export function normalizeSortOrder(value: unknown, fieldName: string, fallback: 'asc' | 'desc' = 'desc'): 'asc' | 'desc' {
+  if (value == null || value === '') {
+    return fallback;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === 'asc' || normalized === 'desc') {
+    return normalized;
+  }
+
+  throw new ValidationError('必须是 asc 或 desc');
+}

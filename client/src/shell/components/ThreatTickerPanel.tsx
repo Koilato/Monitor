@@ -1,25 +1,27 @@
-import { threatIntelMockData } from 'shell/lib/mock-threat-intel';
+import type { ThreatIntelItem } from '@shared/types';
+import { formatThreatIntelTimestamp } from 'shell/lib/threat-intel';
 
 type TickerDirection = 'up' | 'down';
 
-const tickerItems = threatIntelMockData.map((item) => ({
-  id: item.id,
-  tone: item.tone,
-  label: item.tone === 'critical'
-    ? '严重'
-    : item.tone === 'warning'
-      ? '告警'
-      : '提示',
-  text: `${item.victim} / ${item.attacker} / ${item.source}`,
-  timestamp: item.timestamp,
-}));
-
 interface ThreatTickerPanelProps {
+  items: ThreatIntelItem[];
   direction?: TickerDirection;
 }
 
 export function ThreatTickerPanel(props: ThreatTickerPanelProps) {
-  const { direction = 'down' } = props;
+  const { items, direction = 'down' } = props;
+
+  const tickerItems = items.map((item) => ({
+    id: item.id,
+    tone: item.tone,
+    label: item.tone === 'critical'
+      ? '严重'
+      : item.tone === 'warning'
+        ? '告警'
+        : '提示',
+    text: `${item.victim} / ${item.attacker} / ${item.source}`,
+    timestamp: item.occurredAt,
+  }));
 
   return (
     <section className="ticker-panel">
@@ -42,7 +44,7 @@ export function ThreatTickerPanel(props: ThreatTickerPanelProps) {
                 <article key={`${copyIndex}-${item.id}`} className="ticker-item">
                   <span className={`ticker-item-pill ticker-item-pill--${item.tone}`}>{item.label}</span>
                   <span className="ticker-item-text">{item.text}</span>
-                  <span className="ticker-item-time">{item.timestamp}</span>
+                  <span className="ticker-item-time">{formatThreatIntelTimestamp(item.timestamp)}</span>
                 </article>
               ))}
             </div>
