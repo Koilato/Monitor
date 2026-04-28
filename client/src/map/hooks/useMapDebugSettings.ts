@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
   ArcLengthPreset,
+  AttackArcBundleMode,
   AttackArcConfigState,
+  AttackArcCurveType,
   AttackArcDebugSettings,
   AttackArcLengthPresetSettings,
   AttackArcLengthThresholds,
@@ -32,8 +34,9 @@ import {
   THREAT_LINE_OPACITY,
 } from 'map/layers/tokens';
 
-const STORAGE_KEY = 'world-monitor.map-debug-settings.v18';
+const STORAGE_KEY = 'world-monitor.map-debug-settings.v19';
 const LEGACY_STORAGE_KEYS = [
+  'world-monitor.map-debug-settings.v18',
   'world-monitor.map-debug-settings.v17',
   'world-monitor.map-debug-settings.v16',
 ] as const;
@@ -84,6 +87,16 @@ const MIN_LINE_WIDTH = 0;
 const MAX_LINE_WIDTH = 10;
 const MIN_SEGMENT_COUNT = 12;
 const MAX_SEGMENT_COUNT = 240;
+const MIN_PATH_SAMPLING_COUNT = 12;
+const MAX_PATH_SAMPLING_COUNT = 360;
+const MIN_ARC_HEIGHT_PX = 0;
+const MAX_ARC_HEIGHT_PX = 500;
+const MIN_ARC_HEIGHT_RATIO = 0;
+const MAX_ARC_HEIGHT_RATIO = 0.8;
+const MIN_CONTROL_INSET_RATIO = 0.05;
+const MAX_CONTROL_INSET_RATIO = 0.95;
+const MIN_BUNDLE_HEIGHT_STEP_PX = -80;
+const MAX_BUNDLE_HEIGHT_STEP_PX = 80;
 const MIN_DURATION = 100;
 const MAX_DURATION = 20000;
 const MIN_REPLAY_DELAY = 1000;
@@ -176,6 +189,17 @@ function createDefaultLengthPresetSettings(
     curvatureRatio,
     lineWidth,
     segmentCount,
+    curveType: 'cubic',
+    pathSamplingCount: segmentCount,
+    minArcHeightPx: 24,
+    maxArcHeightPx: 180,
+    arcHeightRatio: curvatureRatio,
+    controlInsetRatio: 0.34,
+    lengthBasedProgress: true,
+    bundleMode: 'pulse-same-path',
+    bundleHeightStepPx: 3,
+    bundleAlphaStep: 0.08,
+    dedupeTargetRings: true,
     stages: {
       stage1: createDefaultStageSettings(),
       stage2: createDefaultStageSettings(),
@@ -356,6 +380,14 @@ function coerceHexColor(value: unknown, fallback: string): string {
 
 function coerceBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
+}
+
+function coerceCurveType(value: unknown, fallback: AttackArcCurveType): AttackArcCurveType {
+  return value === 'quadratic' || value === 'cubic' ? value : fallback;
+}
+
+function coerceBundleMode(value: unknown, fallback: AttackArcBundleMode): AttackArcBundleMode {
+  return value === 'split-path' || value === 'pulse-same-path' ? value : fallback;
 }
 
 function coerceTrafficStatsSettings(value: unknown): TrafficStatsDebugSettings {
@@ -552,6 +584,12 @@ function coerceLengthPresetSettings(
   const segmentCount = isFiniteNumber(record.segmentCount)
     ? Math.round(clampNumber(record.segmentCount, MIN_SEGMENT_COUNT, MAX_SEGMENT_COUNT))
     : fallback.segmentCount;
+  const minArcHeightPx = isFiniteNumber(record.minArcHeightPx)
+    ? clampNumber(record.minArcHeightPx, MIN_ARC_HEIGHT_PX, MAX_ARC_HEIGHT_PX)
+    : fallback.minArcHeightPx;
+  const maxArcHeightPx = isFiniteNumber(record.maxArcHeightPx)
+    ? Math.max(minArcHeightPx, clampNumber(record.maxArcHeightPx, MIN_ARC_HEIGHT_PX, MAX_ARC_HEIGHT_PX))
+    : fallback.maxArcHeightPx;
 
   return {
     bundleCount: isFiniteNumber(record.bundleCount)
@@ -583,6 +621,27 @@ function coerceLengthPresetSettings(
       : fallback.curvatureRatio,
     lineWidth,
     segmentCount,
+    curveType: coerceCurveType(record.curveType, fallback.curveType),
+    pathSamplingCount: isFiniteNumber(record.pathSamplingCount)
+      ? Math.round(clampNumber(record.pathSamplingCount, MIN_PATH_SAMPLING_COUNT, MAX_PATH_SAMPLING_COUNT))
+      : fallback.pathSamplingCount,
+    minArcHeightPx,
+    maxArcHeightPx,
+    arcHeightRatio: isFiniteNumber(record.arcHeightRatio)
+      ? clampNumber(record.arcHeightRatio, MIN_ARC_HEIGHT_RATIO, MAX_ARC_HEIGHT_RATIO)
+      : fallback.arcHeightRatio,
+    controlInsetRatio: isFiniteNumber(record.controlInsetRatio)
+      ? clampNumber(record.controlInsetRatio, MIN_CONTROL_INSET_RATIO, MAX_CONTROL_INSET_RATIO)
+      : fallback.controlInsetRatio,
+    lengthBasedProgress: coerceBoolean(record.lengthBasedProgress, fallback.lengthBasedProgress),
+    bundleMode: coerceBundleMode(record.bundleMode, fallback.bundleMode),
+    bundleHeightStepPx: isFiniteNumber(record.bundleHeightStepPx)
+      ? clampNumber(record.bundleHeightStepPx, MIN_BUNDLE_HEIGHT_STEP_PX, MAX_BUNDLE_HEIGHT_STEP_PX)
+      : fallback.bundleHeightStepPx,
+    bundleAlphaStep: isFiniteNumber(record.bundleAlphaStep)
+      ? clampNumber(record.bundleAlphaStep, MIN_ALPHA, MAX_ALPHA)
+      : fallback.bundleAlphaStep,
+    dedupeTargetRings: coerceBoolean(record.dedupeTargetRings, fallback.dedupeTargetRings),
     stages: coerceStageSettingsRecord(record.stages, fallback.stages),
   };
 }

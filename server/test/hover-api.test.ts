@@ -18,16 +18,19 @@ test('CN hover response includes the added China-targeted incidents', () => {
     endDate: null,
   });
 
-  assert.equal(result.total, 11);
+  assert.equal(result.total, 23);
   assert.deepEqual(
     result.flows.map((flow) => `${flow.attackerCountry}:${flow.count}`),
-    ['JP:5', 'US:5', 'RU:1'],
+    ['IT:12', 'JP:5', 'US:5', 'RU:1'],
   );
 });
 
 test('mock datasets pass runtime validation', () => {
   assert.doesNotThrow(() => validateMockIncidents(MOCK_INCIDENTS));
   assert.doesNotThrow(() => validateMockFeed(MOCK_LATEST_CONTENT));
+  assert.equal(MOCK_INCIDENTS.length, 223);
+  assert.equal(MOCK_INCIDENTS[0]?.date, '2026-04-01');
+  assert.equal(MOCK_INCIDENTS.at(-1)?.date, '2026-04-26');
 });
 
 test('US hover response returns 2 incidents with CN flow', () => {
@@ -37,10 +40,10 @@ test('US hover response returns 2 incidents with CN flow', () => {
     endDate: null,
   });
 
-  assert.equal(result.total, 2);
+  assert.equal(result.total, 15);
   assert.deepEqual(
     result.flows.map((flow) => `${flow.attackerCountry}:${flow.count}`),
-    ['CN:2'],
+    ['IN:13', 'CN:2'],
   );
 });
 
@@ -51,11 +54,12 @@ test('date range filter applies as a closed interval', () => {
     endDate: '2026-04-06',
   });
 
-  assert.equal(result.total, 4);
+  assert.equal(result.total, 7);
   assert.deepEqual(
     result.incidents.map((incident) => incident.uuid),
-    ['mock-003', 'mock-004', 'mock-005', 'mock-006'],
+    ['mock-003', 'mock-004', 'mock-005', 'mock-006', 'mock-047', 'mock-063', 'mock-079'],
   );
+  assert.ok(result.incidents.every((incident) => incident.date >= '2026-04-03' && incident.date <= '2026-04-06'));
 });
 
 test('today range returns the mock China incidents', () => {
@@ -64,10 +68,10 @@ test('today range returns the mock China incidents', () => {
     endDate: '2026-04-19',
   });
 
-  assert.equal(threatMap.total, 4);
+  assert.equal(threatMap.total, 11);
   assert.deepEqual(
     threatMap.countries.map((country) => `${country.country}:${country.eventLevel}:${country.incidentCount}`),
-    ['CN:high:3', 'DK:high:1'],
+    ['CN:high:3', 'DK:high:2', 'CA:high:1', 'ES:high:1', 'NL:high:1', 'DE:medium:1', 'FR:low:1', 'JP:low:1'],
   );
 });
 
@@ -92,12 +96,12 @@ test('all-flow response returns distinct lines with date metadata', () => {
   });
 
   assert.equal(result.total, result.flows.length);
-  assert.ok(result.flows.length > 0);
-  assert.equal(result.flows[0]?.attackerCountry, 'JP');
-  assert.equal(result.flows[0]?.victimCountry, 'CN');
-  assert.equal(result.flows[0]?.count, 5);
+  assert.equal(result.total, 29);
+  assert.equal(result.flows[0]?.attackerCountry, 'DE');
+  assert.equal(result.flows[0]?.victimCountry, 'GB');
+  assert.equal(result.flows[0]?.count, 11);
   assert.equal(result.flows[0]?.firstDate, '2026-04-01');
-  assert.equal(result.flows[0]?.lastDate, '2026-04-19');
+  assert.equal(result.flows[0]?.lastDate, '2026-04-22');
   assert.equal(result.flows.find((flow) => flow.attackerCountry === 'US' && flow.victimCountry === 'CN')?.count, 5);
   assert.equal(result.flows.find((flow) => flow.attackerCountry === 'CN' && flow.victimCountry === 'US')?.count, 2);
 });
@@ -110,7 +114,7 @@ test('threat map uses the highest incident severity as country event level', () 
 
   assert.deepEqual(
     threatMap.countries.map((country) => `${country.country}:${country.eventLevel}`),
-    ['CN:medium'],
+    ['CN:high', 'AU:high', 'CA:high', 'ES:high', 'NL:high', 'US:high', 'BE:medium', 'DE:medium', 'DK:medium', 'GB:medium', 'NO:medium', 'SG:medium', 'JP:low', 'FR:low', 'IT:low', 'SE:low'],
   );
 });
 
@@ -180,10 +184,10 @@ test('threat map response changes with the selected date range', () => {
     endDate: '2026-04-04',
   });
 
-  assert.equal(earlyRange.total, 4);
+  assert.equal(earlyRange.total, 47);
   assert.deepEqual(
     earlyRange.countries.map((country) => `${country.country}:${country.eventLevel}:${country.incidentCount}`),
-    ['CN:high:4'],
+    ['CN:high:7', 'AU:high:3', 'CA:high:3', 'US:high:3', 'ES:high:2', 'NL:high:2', 'BE:medium:3', 'DE:medium:3', 'GB:medium:3', 'NO:medium:3', 'DK:medium:2', 'SG:medium:2', 'IT:low:3', 'JP:low:3', 'SE:low:3', 'FR:low:2'],
   );
 
   const laterRange = buildThreatMapResponse(MOCK_INCIDENTS, {
@@ -191,10 +195,10 @@ test('threat map response changes with the selected date range', () => {
     endDate: '2026-04-08',
   });
 
-  assert.equal(laterRange.total, 8);
+  assert.equal(laterRange.total, 84);
   assert.deepEqual(
     laterRange.countries.map((country) => `${country.country}:${country.eventLevel}:${country.incidentCount}`),
-    ['CN:high:8'],
+    ['CN:high:13', 'AU:high:5', 'CA:high:5', 'US:high:5', 'ES:high:4', 'NL:high:4', 'BE:medium:5', 'DE:medium:5', 'GB:medium:5', 'NO:medium:5', 'SG:medium:5', 'DK:medium:4', 'IT:low:5', 'JP:low:5', 'SE:low:5', 'FR:low:4'],
   );
 });
 
@@ -215,10 +219,10 @@ test('HTTP API returns threat map data for the selected date range', async () =>
     const body = await response.json();
 
     assert.equal(response.status, 200);
-    assert.equal(body.total, 8);
+    assert.equal(body.total, 84);
     assert.deepEqual(
       body.countries.map((country: { country: string; eventLevel: string; incidentCount: number }) => `${country.country}:${country.eventLevel}:${country.incidentCount}`),
-      ['CN:high:8'],
+      ['CN:high:13', 'AU:high:5', 'CA:high:5', 'US:high:5', 'ES:high:4', 'NL:high:4', 'BE:medium:5', 'DE:medium:5', 'GB:medium:5', 'NO:medium:5', 'SG:medium:5', 'DK:medium:4', 'IT:low:5', 'JP:low:5', 'SE:low:5', 'FR:low:4'],
     );
   } finally {
     server.close();
@@ -243,8 +247,10 @@ test('HTTP API returns all-flow data for the selected date range', async () => {
     const body = await response.json();
 
     assert.equal(response.status, 200);
+    assert.equal(body.total, 29);
     assert.equal(body.total, body.flows.length);
-    assert.ok(body.flows.length > 0);
+    assert.equal(body.flows[0]?.attackerCountry, 'DE');
+    assert.equal(body.flows[0]?.victimCountry, 'GB');
   } finally {
     server.close();
     await once(server, 'close');

@@ -94,6 +94,8 @@ export interface CountryCenterPoint {
 export type ArcLengthPreset = 'short' | 'medium' | 'long';
 export type AttackArcStagePreset = 'stage1' | 'stage2' | 'stage3';
 export type AttackArcVisualLevel = 'low' | 'medium' | 'high';
+export type AttackArcCurveType = 'quadratic' | 'cubic';
+export type AttackArcBundleMode = 'split-path' | 'pulse-same-path';
 
 export interface AttackArcLengthThresholds {
   shortMax: number;
@@ -136,6 +138,17 @@ export interface AttackArcLengthPresetSettings {
   curvatureRatio: number;
   lineWidth: number;
   segmentCount: number;
+  curveType: AttackArcCurveType;
+  pathSamplingCount: number;
+  minArcHeightPx: number;
+  maxArcHeightPx: number;
+  arcHeightRatio: number;
+  controlInsetRatio: number;
+  lengthBasedProgress: boolean;
+  bundleMode: AttackArcBundleMode;
+  bundleHeightStepPx: number;
+  bundleAlphaStep: number;
+  dedupeTargetRings: boolean;
   stages: Record<AttackArcStagePreset, AttackArcStageSettings>;
 }
 

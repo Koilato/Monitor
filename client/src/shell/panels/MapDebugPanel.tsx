@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { getCountryCenterSource, getStaticCountryCenter } from 'map/lib/country-geometry';
 import type {
   ArcLengthPreset,
+  AttackArcBundleMode,
   AttackArcConfigState,
+  AttackArcCurveType,
   AttackArcStagePreset,
   AttackArcVisualLevel,
   CountryCenterPoint,
@@ -44,9 +46,24 @@ interface ColorFieldProps {
   onChange: (value: string) => void;
 }
 
+interface SelectFieldProps<T extends string> {
+  label: string;
+  value: T;
+  options: Array<{ label: string; value: T }>;
+  onChange: (value: T) => void;
+}
+
 const ARC_LENGTH_PRESETS: ArcLengthPreset[] = ['long', 'medium', 'short'];
 const ARC_STAGE_PRESETS: AttackArcStagePreset[] = ['stage1', 'stage2', 'stage3'];
 const ARC_VISUAL_LEVELS: AttackArcVisualLevel[] = ['high', 'medium', 'low'];
+const ARC_CURVE_TYPE_OPTIONS: Array<{ label: string; value: AttackArcCurveType }> = [
+  { label: '二次贝塞尔', value: 'quadratic' },
+  { label: '三次贝塞尔', value: 'cubic' },
+];
+const ARC_BUNDLE_MODE_OPTIONS: Array<{ label: string; value: AttackArcBundleMode }> = [
+  { label: '分离路径', value: 'split-path' },
+  { label: '同路径脉冲', value: 'pulse-same-path' },
+];
 
 function parseNumber(value: string): number {
   const next = Number(value);
@@ -104,6 +121,24 @@ function ColorField(props: ColorFieldProps) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />
+    </label>
+  );
+}
+
+function SelectField<T extends string>(props: SelectFieldProps<T>) {
+  const { label, value, options, onChange } = props;
+
+  return (
+    <label className="map-debug-field">
+      <span className="map-debug-field-label">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value as T)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
     </label>
   );
 }
@@ -885,7 +920,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
               <div className="map-debug-subsection">
                 <h4>公共弧线参数</h4>
                 <NumberField
-                  label="弧度"
+                  label="线束展开"
                   value={settings.attackArc.presets[preset].bundleSpreadRatio}
                   min={0.01}
                   max={0.5}
@@ -893,7 +928,7 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
                   onChange={(value) => updateAttackArcPreset(preset, { bundleSpreadRatio: value })}
                 />
                 <NumberField
-                  label="线条间距"
+                  label="弧线比例"
                   value={settings.attackArc.presets[preset].curvatureRatio}
                   min={0.01}
                   max={0.6}
@@ -915,6 +950,90 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
                   max={240}
                   step={1}
                   onChange={(value) => updateAttackArcPreset(preset, { segmentCount: value })}
+                />
+              </div>
+              <div className="map-debug-subsection">
+                <h4>路径模型</h4>
+                <SelectField
+                  label="曲线类型"
+                  value={settings.attackArc.presets[preset].curveType}
+                  options={ARC_CURVE_TYPE_OPTIONS}
+                  onChange={(value) => updateAttackArcPreset(preset, { curveType: value })}
+                />
+                <NumberField
+                  label="路径采样点"
+                  value={settings.attackArc.presets[preset].pathSamplingCount}
+                  min={12}
+                  max={360}
+                  step={1}
+                  onChange={(value) => updateAttackArcPreset(preset, { pathSamplingCount: value })}
+                />
+                <NumberField
+                  label="最小弧高 px"
+                  value={settings.attackArc.presets[preset].minArcHeightPx}
+                  min={0}
+                  max={500}
+                  step={1}
+                  onChange={(value) => updateAttackArcPreset(preset, { minArcHeightPx: value })}
+                />
+                <NumberField
+                  label="最大弧高 px"
+                  value={settings.attackArc.presets[preset].maxArcHeightPx}
+                  min={0}
+                  max={500}
+                  step={1}
+                  onChange={(value) => updateAttackArcPreset(preset, { maxArcHeightPx: value })}
+                />
+                <NumberField
+                  label="屏幕弧高比例"
+                  value={settings.attackArc.presets[preset].arcHeightRatio}
+                  min={0}
+                  max={0.8}
+                  step={0.01}
+                  onChange={(value) => updateAttackArcPreset(preset, { arcHeightRatio: value })}
+                />
+                <NumberField
+                  label="三次控制内收"
+                  value={settings.attackArc.presets[preset].controlInsetRatio}
+                  min={0.05}
+                  max={0.95}
+                  step={0.01}
+                  onChange={(value) => updateAttackArcPreset(preset, { controlInsetRatio: value })}
+                />
+                <CheckboxField
+                  label="按真实弧长推进"
+                  checked={settings.attackArc.presets[preset].lengthBasedProgress}
+                  onChange={(value) => updateAttackArcPreset(preset, { lengthBasedProgress: value })}
+                />
+              </div>
+              <div className="map-debug-subsection">
+                <h4>线束行为</h4>
+                <SelectField
+                  label="线束模式"
+                  value={settings.attackArc.presets[preset].bundleMode}
+                  options={ARC_BUNDLE_MODE_OPTIONS}
+                  onChange={(value) => updateAttackArcPreset(preset, { bundleMode: value })}
+                />
+                <NumberField
+                  label="线束弧高步进 px"
+                  value={settings.attackArc.presets[preset].bundleHeightStepPx}
+                  min={-80}
+                  max={80}
+                  step={1}
+                  onChange={(value) => updateAttackArcPreset(preset, { bundleHeightStepPx: value })}
+                />
+                <NumberField
+                  label="线束透明衰减"
+                  value={settings.attackArc.presets[preset].bundleAlphaStep}
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  onChange={(value) => updateAttackArcPreset(preset, { bundleAlphaStep: value })}
+                />
+                <CheckboxField
+                  label="同组终点环去重"
+                  checked={settings.attackArc.presets[preset].dedupeTargetRings}
+                  onChange={(value) => updateAttackArcPreset(preset, { dedupeTargetRings: value })}
                 />
               </div>
               <NumberField

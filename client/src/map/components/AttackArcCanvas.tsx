@@ -13,6 +13,13 @@ import {
   resolveAttackArcFrameWindow,
 } from 'map/lib/attack-arc-animation';
 import {
+  resolveArcPath,
+  slicePathByLength,
+  slicePathByT,
+  type ArcPathPoint,
+  type ScreenPoint,
+} from 'map/lib/attack-arc-path';
+import {
   createInitialFlowSchedule,
   type ScheduledFlowDatum,
 } from 'map/lib/flow-playback';
@@ -31,11 +38,6 @@ interface AttackArcCanvasProps {
   playbackMode: FlowPlaybackMode;
   themeRevision: number;
   debugSettings: MapDebugSettings;
-}
-
-interface ScreenPoint {
-  x: number;
-  y: number;
 }
 
 type BundledScheduledFlowDatum = ScheduledFlowDatum & ArcBundleMeta;
@@ -89,40 +91,34 @@ function resolveRingSpacing(ringRadius: number, ringCount: number, ringSpacing: 
   return Math.max(1, ringRadius / (ringCount + 1));
 }
 
-function bezierPoint(t: number, start: ScreenPoint, control: ScreenPoint, end: ScreenPoint): ScreenPoint {
-  const k = 1 - t;
-  return {
-    x: (k * k * start.x) + (2 * k * t * control.x) + (t * t * end.x),
-    y: (k * k * start.y) + (2 * k * t * control.y) + (t * t * end.y),
-  };
-}
-
-function resolveControlPoint(
-  start: ScreenPoint,
-  end: ScreenPoint,
-  bundleOffset: number,
-  curvatureRatio: number,
-): ScreenPoint {
-  const midX = (start.x + end.x) / 2;
-  const midY = (start.y + end.y) / 2;
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const length = Math.hypot(dx, dy) || 1;
-
-  let normalX = -dy / length;
-  let normalY = dx / length;
-  if (normalY > 0) {
-    normalX = -normalX;
-    normalY = -normalY;
+function drawArcPath(
+  context: CanvasRenderingContext2D,
+  points: ArcPathPoint[],
+  alpha: number,
+  lineWidth: number,
+  lineColor: string,
+) {
+  if (points.length < 2) {
+    return;
   }
 
-  const liftBase = length * curvatureRatio;
-  const lift = liftBase + (bundleOffset * liftBase * 0.3);
+  context.strokeStyle = `rgba(${hexToRgbString(lineColor)},${Math.max(0, Math.min(alpha, 1))})`;
+  context.lineWidth = lineWidth;
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.beginPath();
 
-  return {
-    x: midX + (normalX * lift),
-    y: midY + (normalY * lift),
-  };
+  const origin = points[0];
+  context.moveTo(origin.x, origin.y);
+  for (let index = 1; index < points.length; index += 1) {
+    const point = points[index];
+    if (!point) {
+      continue;
+    }
+    context.lineTo(point.x, point.y);
+  }
+
+  context.stroke();
 }
 
 function drawArc(
@@ -134,35 +130,22 @@ function drawArc(
   start: ScreenPoint,
   end: ScreenPoint,
   lineWidth: number,
-  segmentCount: number,
-  curvatureRatio: number,
   lineColor: string,
 ) {
-  const control = resolveControlPoint(start, end, attack.bundleOffset, curvatureRatio);
+  const path = resolveArcPath(start, end, attack.bundleOffset, attack);
+  const points = attack.lengthBasedProgress
+    ? slicePathByLength(path, startT, endT)
+    : slicePathByT(path, startT, endT);
   const widthBoost = Math.min(0.8, Math.max(0, attack.count - 1) * 0.08);
-  const clampedStartT = Math.min(Math.max(startT, 0), 1);
-  const clampedEndT = Math.min(Math.max(endT, 0), 1);
-  const windowLength = Math.max(0, clampedEndT - clampedStartT);
-  if (windowLength <= 0) {
-    return;
-  }
+  const bundleAlpha = Math.max(0, 1 - (attack.bundleIndex * attack.bundleAlphaStep));
 
-  context.strokeStyle = `rgba(${hexToRgbString(lineColor)},${Math.max(0, Math.min(alpha, 1))})`;
-  context.lineWidth = lineWidth + widthBoost;
-  context.lineCap = 'round';
-  context.beginPath();
-
-  const origin = bezierPoint(clampedStartT, start, control, end);
-  context.moveTo(origin.x, origin.y);
-
-  const steps = Math.max(2, Math.ceil(segmentCount * windowLength));
-  for (let index = 1; index <= steps; index += 1) {
-    const t = clampedStartT + (windowLength * (index / steps));
-    const point = bezierPoint(t, start, control, end);
-    context.lineTo(point.x, point.y);
-  }
-
-  context.stroke();
+  drawArcPath(
+    context,
+    points,
+    alpha * bundleAlpha,
+    lineWidth + widthBoost,
+    lineColor,
+  );
 }
 
 function drawTargetRings(
@@ -336,6 +319,7 @@ export function AttackArcCanvas({
       }
 
       const nextActiveAttacks: CanvasAttackRuntime[] = [];
+      const renderedRingGroups = new Set<string>();
 
       for (let index = 0; index < activeAttacks.length; index += 1) {
         const attack = activeAttacks[index];
@@ -376,17 +360,18 @@ export function AttackArcCanvas({
           attack,
           frameWindow.startT,
           frameWindow.endT,
-          frameWindow.alpha,
+          frameWindow.alpha * stageSettings.lineAlpha,
           start,
           end,
-          stageSettings.lineWidth * stageSettings.lineAlpha,
-          stageSettings.segmentCount,
-          stageSettings.curvatureRatio,
+          stageSettings.lineWidth,
           stageSettings.lineColor,
         );
         activeContext.restore();
 
-        if (frameWindow.phase !== 'flight') {
+        const shouldDrawRing = frameWindow.phase !== 'flight'
+          && (!attack.dedupeTargetRings || !renderedRingGroups.has(attack.groupKey));
+        if (shouldDrawRing) {
+          renderedRingGroups.add(attack.groupKey);
           drawTargetRings(
             activeContext,
             end,

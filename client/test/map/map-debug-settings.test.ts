@@ -39,6 +39,17 @@ function createExpectedPreset(
     curvatureRatio,
     lineWidth,
     segmentCount,
+    curveType: 'cubic' as const,
+    pathSamplingCount: segmentCount,
+    minArcHeightPx: 24,
+    maxArcHeightPx: 180,
+    arcHeightRatio: curvatureRatio,
+    controlInsetRatio: 0.34,
+    lengthBasedProgress: true,
+    bundleMode: 'pulse-same-path' as const,
+    bundleHeightStepPx: 3,
+    bundleAlphaStep: 0.08,
+    dedupeTargetRings: true,
     stages: {
       stage1: { ...stage },
       stage2: { ...stage },
@@ -326,6 +337,77 @@ test('coerceMapDebugSettings clamps attack arc line width to 0-10', () => {
 
   assert.equal(lowSettings.attackArc.presets.short.lineWidth, 0);
   assert.equal(highSettings.attackArc.presets.short.lineWidth, 10);
+});
+
+test('coerceMapDebugSettings normalizes attack arc path controls', () => {
+  const settings = coerceMapDebugSettings({
+    attackArc: {
+      presets: {
+        medium: {
+          curveType: 'bad',
+          pathSamplingCount: 999,
+          minArcHeightPx: 240,
+          maxArcHeightPx: 120,
+          arcHeightRatio: 9,
+          controlInsetRatio: 2,
+          lengthBasedProgress: false,
+          bundleMode: 'split-path',
+          bundleHeightStepPx: -999,
+          bundleAlphaStep: 9,
+          dedupeTargetRings: false,
+        },
+      },
+    },
+  });
+
+  assert.equal(settings.attackArc.presets.medium.curveType, 'cubic');
+  assert.equal(settings.attackArc.presets.medium.pathSamplingCount, 360);
+  assert.equal(settings.attackArc.presets.medium.minArcHeightPx, 240);
+  assert.equal(settings.attackArc.presets.medium.maxArcHeightPx, 240);
+  assert.equal(settings.attackArc.presets.medium.arcHeightRatio, 0.8);
+  assert.equal(settings.attackArc.presets.medium.controlInsetRatio, 0.95);
+  assert.equal(settings.attackArc.presets.medium.lengthBasedProgress, false);
+  assert.equal(settings.attackArc.presets.medium.bundleMode, 'split-path');
+  assert.equal(settings.attackArc.presets.medium.bundleHeightStepPx, -80);
+  assert.equal(settings.attackArc.presets.medium.bundleAlphaStep, 1);
+  assert.equal(settings.attackArc.presets.medium.dedupeTargetRings, false);
+});
+
+test('coerceStoredMapDebugSettings fills path fields for legacy complete attack arc config', () => {
+  const legacyPreset = createExpectedPreset(0.09, 0.14, 1.6, 72);
+  const {
+    curveType: _curveType,
+    pathSamplingCount: _pathSamplingCount,
+    minArcHeightPx: _minArcHeightPx,
+    maxArcHeightPx: _maxArcHeightPx,
+    arcHeightRatio: _arcHeightRatio,
+    controlInsetRatio: _controlInsetRatio,
+    lengthBasedProgress: _lengthBasedProgress,
+    bundleMode: _bundleMode,
+    bundleHeightStepPx: _bundleHeightStepPx,
+    bundleAlphaStep: _bundleAlphaStep,
+    dedupeTargetRings: _dedupeTargetRings,
+    ...oldPreset
+  } = legacyPreset;
+
+  const result = coerceStoredMapDebugSettings({
+    attackArc: {
+      lengthThresholds: {
+        shortMax: 20,
+        mediumMax: 60,
+      },
+      presets: {
+        short: oldPreset,
+        medium: oldPreset,
+        long: oldPreset,
+      },
+    },
+  });
+
+  assert.equal(result.attackArcConfigState.isValid, true);
+  assert.equal(result.settings.attackArc.presets.short.curveType, 'cubic');
+  assert.equal(result.settings.attackArc.presets.short.lengthBasedProgress, true);
+  assert.equal(result.settings.attackArc.presets.short.bundleMode, 'pulse-same-path');
 });
 
 test('coerceMapDebugSettings clamps base country outline settings', () => {
