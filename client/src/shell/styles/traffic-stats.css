@@ -8,7 +8,8 @@
   grid-template-columns:
     minmax(var(--traffic-trend-width, 500px), 1.08fr)
     minmax(var(--traffic-bars-width, 800px), 1.74fr)
-    minmax(var(--traffic-summary-width, 236px), 0.82fr);
+    minmax(var(--traffic-summary-width, 236px), 0.82fr)
+    minmax(var(--traffic-economic-width, 260px), 0.86fr);
   gap: 1px;
   overflow: hidden;
   position: relative;
@@ -33,6 +34,122 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.024), rgba(255, 255, 255, 0)),
     var(--bg-secondary);
+}
+
+.traffic-stats-panel--economic {
+  overflow: hidden;
+}
+
+.traffic-economic-card {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 6px 14px;
+  transition: background-color 140ms var(--ease-standard);
+}
+
+.traffic-economic-card + .traffic-economic-card {
+  border-top: 1px solid rgba(159, 179, 190, 0.12);
+}
+
+.traffic-economic-card--max:hover {
+  background: rgba(255, 29, 36, 0.05);
+}
+
+.traffic-economic-card--avg:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.traffic-economic-card--median:hover {
+  background: rgba(168, 85, 247, 0.05);
+}
+
+.traffic-economic-card__kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 2px;
+  font-size: calc(9px * var(--traffic-ui-scale));
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.traffic-economic-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.traffic-economic-card--max .traffic-economic-icon,
+.traffic-economic-card--max .traffic-economic-card__value {
+  color: #ff4d4d;
+}
+
+.traffic-economic-card--avg .traffic-economic-icon,
+.traffic-economic-card--avg .traffic-economic-card__value {
+  color: #f5f5f5;
+}
+
+.traffic-economic-card--median .traffic-economic-icon,
+.traffic-economic-card--median .traffic-economic-card__value {
+  color: rgba(168, 85, 247, 0.92);
+}
+
+.traffic-economic-card__value-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+}
+
+.traffic-economic-card__value-group {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  margin-left: -2px;
+  min-width: 0;
+}
+
+.traffic-economic-card__value {
+  font-size: calc(28px * var(--traffic-summary-value-scale));
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
+}
+
+.traffic-economic-card__unit {
+  font-size: calc(8px * var(--traffic-ui-scale));
+  font-weight: 800;
+  opacity: 0.3;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.traffic-economic-card__bar {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 2px;
+  margin-bottom: 6px;
+  opacity: 0.4;
+}
+
+.traffic-economic-card__bar--max {
+  background: rgba(255, 77, 77, 0.8);
+}
+
+.traffic-economic-card__bar--avg {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.traffic-economic-card__bar--median {
+  background: rgba(168, 85, 247, 0.75);
 }
 
 .traffic-panel-header {
@@ -268,7 +385,8 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
   }
 
-  .traffic-stats-panel--summary {
+  .traffic-stats-panel--summary,
+  .traffic-stats-panel--economic {
     grid-column: 1 / -1;
   }
 }
@@ -300,5 +418,13 @@
   .threat-donut-chart {
     min-height: 136px;
     width: min(100%, 270px);
+  }
+
+  .traffic-economic-card {
+    padding: 12px 16px;
+  }
+
+  .traffic-economic-card__value {
+    font-size: 24px;
   }
 }

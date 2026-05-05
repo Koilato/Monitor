@@ -1,7 +1,7 @@
-import type { HoverIncident, LatestContentItem } from '../../shared/types.js';
+import type { HoverIncidentSeed, LatestContentItemSeed } from '../../shared/types.js';
 import { ValidationError, normalizeCountryCode, normalizeDate } from './validation.js';
 
-const INCIDENT_SEVERITIES = new Set<HoverIncident['details']['severity']>([
+const INCIDENT_SEVERITIES = new Set<HoverIncidentSeed['details']['severity']>([
   'low',
   'medium',
   'high',
@@ -20,7 +20,7 @@ function assertIncident(incident: unknown, index: number): void {
     throw new ValidationError(`第 ${index + 1} 条事件必须是对象`);
   }
 
-  const row = incident as Partial<HoverIncident>;
+  const row = incident as Partial<HoverIncidentSeed>;
   const prefix = `incident[${index}]`;
 
   assertNonEmptyString(row.uuid, `${prefix}.uuid`);
@@ -32,11 +32,11 @@ function assertIncident(incident: unknown, index: number): void {
     throw new ValidationError(`第 ${index + 1} 条事件的详情必须是对象`);
   }
 
-  const details = row.details as Partial<HoverIncident['details']>;
+  const details = row.details as Partial<HoverIncidentSeed['details']>;
   assertNonEmptyString(details.title, `${prefix}.details.title`);
   assertNonEmptyString(details.summary, `${prefix}.details.summary`);
 
-  if (!INCIDENT_SEVERITIES.has(details.severity as HoverIncident['details']['severity'])) {
+  if (!INCIDENT_SEVERITIES.has(details.severity as HoverIncidentSeed['details']['severity'])) {
     throw new ValidationError(`第 ${index + 1} 条事件的严重级别必须是低、中或高`);
   }
 }
@@ -46,7 +46,7 @@ function assertLatestContentItem(item: unknown, index: number): void {
     throw new ValidationError(`第 ${index + 1} 条内容必须是对象`);
   }
 
-  const row = item as Partial<LatestContentItem>;
+  const row = item as Partial<LatestContentItemSeed>;
   const prefix = `latestContent[${index}]`;
 
   assertNonEmptyString(row.id, `${prefix}.id`);
@@ -60,7 +60,7 @@ function assertLatestContentItem(item: unknown, index: number): void {
   }
 }
 
-export function validateMockIncidents(incidents: HoverIncident[]): void {
+export function validateMockIncidents(incidents: HoverIncidentSeed[]): void {
   if (!Array.isArray(incidents) || incidents.length === 0) {
     throw new ValidationError('模拟事件数据必须是非空数组');
   }
@@ -78,7 +78,7 @@ export function validateMockIncidents(incidents: HoverIncident[]): void {
   });
 }
 
-export function validateMockFeed(items: LatestContentItem[]): void {
+export function validateMockFeed(items: LatestContentItemSeed[]): void {
   if (!Array.isArray(items) || items.length === 0) {
     throw new ValidationError('模拟内容数据必须是非空数组');
   }

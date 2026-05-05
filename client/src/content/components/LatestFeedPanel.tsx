@@ -15,7 +15,7 @@ function formatUtcTimestamp(value: string): string {
     minute: '2-digit',
     hour12: false,
     timeZone: 'UTC',
-  }).format(new Date(value))} 协调世界时`;
+  }).format(new Date(value))} `;
 }
 
 function formatCategoryLabel(category: string): string {

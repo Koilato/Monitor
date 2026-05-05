@@ -25,6 +25,12 @@ const TONE_COLOR_MAP: Record<TrafficStatTone, string> = {
   neutral: 'rgba(185,198,204,0.16)',
 };
 
+const RANSOMWARE_STATS = {
+  max: 3850000000,
+  median: 24500000,
+  avg: 186000000,
+} as const;
+
 const THREAT_TREND_DATA: ThreatTrendDatum[] = [
   { date: '04-21', high: 16, medium: 10, low: 7 },
   { date: '04-22', high: 13, medium: 12, low: 11 },
@@ -47,6 +53,10 @@ function formatPercent(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
 
+function formatRansomAmount(value: number): string {
+  return (value / 1000000).toFixed(2);
+}
+
 interface SvgPoint {
   x: number;
   y: number;
@@ -66,6 +76,56 @@ interface ThreatDonutSegment {
   percentY: number;
   nameY: number;
   countY: number;
+}
+
+function TrendUpIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="traffic-economic-icon">
+      <path
+        d="M2.5 11.5h11M3.5 10l3.4-3.4 2.2 2.2L13 5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.6 5H13v2.4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ActivityIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="traffic-economic-icon">
+      <path
+        d="M2.5 8h2.4l1.4-3.2 2.2 6 1.6-3 1 2.2H13.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BarChart3Icon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="traffic-economic-icon">
+      <path d="M3 3.5v9" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M3 12.5h10" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <rect x="5" y="8.5" width="1.8" height="4" rx="0.8" fill="currentColor" />
+      <rect x="8.1" y="6.2" width="1.8" height="6.3" rx="0.8" fill="currentColor" opacity="0.8" />
+      <rect x="11.2" y="4.4" width="1.8" height="8.1" rx="0.8" fill="currentColor" opacity="0.6" />
+    </svg>
+  );
 }
 
 function resolveTickFontSize(uiScale: number, scale = 1): number {
@@ -373,6 +433,60 @@ function renderThreatSummary() {
   );
 }
 
+function renderEconomicKpisPanel() {
+  return (
+    <div className="traffic-stats-panel traffic-stats-panel--economic" aria-label="赎金经济指标">
+      <div className="traffic-economic-card traffic-economic-card--max">
+        <div className="traffic-economic-card__kicker">
+          <TrendUpIcon />
+          <span>最高赎金支出</span>
+        </div>
+        <div className="traffic-economic-card__value-row">
+          <div className="traffic-economic-card__value-group">
+            <span className="traffic-economic-card__value traffic-economic-card__value--max">
+              ￥{formatRansomAmount(RANSOMWARE_STATS.max)}
+            </span>
+            <span className="traffic-economic-card__unit traffic-economic-card__unit--max">B</span>
+          </div>
+          <div className="traffic-economic-card__bar traffic-economic-card__bar--max" />
+        </div>
+      </div>
+
+      <div className="traffic-economic-card traffic-economic-card--avg">
+        <div className="traffic-economic-card__kicker">
+          <ActivityIcon />
+          <span>平均赎金支出</span>
+        </div>
+        <div className="traffic-economic-card__value-row">
+          <div className="traffic-economic-card__value-group">
+            <span className="traffic-economic-card__value traffic-economic-card__value--avg">
+              ￥{formatRansomAmount(RANSOMWARE_STATS.avg)}
+            </span>
+            <span className="traffic-economic-card__unit traffic-economic-card__unit--avg">B</span>
+          </div>
+          <div className="traffic-economic-card__bar traffic-economic-card__bar--avg" />
+        </div>
+      </div>
+
+      <div className="traffic-economic-card traffic-economic-card--median">
+        <div className="traffic-economic-card__kicker">
+          <BarChart3Icon />
+          <span>中位金额请求</span>
+        </div>
+        <div className="traffic-economic-card__value-row">
+          <div className="traffic-economic-card__value-group">
+            <span className="traffic-economic-card__value traffic-economic-card__value--median">
+              ￥{formatRansomAmount(RANSOMWARE_STATS.median)}
+            </span>
+            <span className="traffic-economic-card__unit traffic-economic-card__unit--median">B</span>
+          </div>
+          <div className="traffic-economic-card__bar traffic-economic-card__bar--median" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TrafficStatsSection(props: TrafficStatsSectionProps) {
   const { sectionRef, data, loading, error, settings } = props;
   const summary = buildTrafficStats(data, {
@@ -391,6 +505,7 @@ export function TrafficStatsSection(props: TrafficStatsSectionProps) {
         ['--traffic-trend-width' as string]: `${settings.trendPanelWidth}px`,
         ['--traffic-bars-width' as string]: `${settings.barsPanelWidth}px`,
         ['--traffic-summary-width' as string]: `${settings.originsPanelWidth}px`,
+        ['--traffic-economic-width' as string]: '260px',
         ['--traffic-panel-padding-x' as string]: `${settings.panelPaddingX}px`,
         ['--traffic-panel-padding-top' as string]: `${settings.panelPaddingTop}px`,
         ['--traffic-panel-padding-bottom' as string]: `${settings.panelPaddingBottom}px`,
@@ -400,6 +515,7 @@ export function TrafficStatsSection(props: TrafficStatsSectionProps) {
       {renderThreatTrend(settings)}
       {renderTrafficVolumePanel(summary.bars, settings, isLoading, error, hasData, summary.totalVolume)}
       {renderThreatSummary()}
+      {renderEconomicKpisPanel()}
     </section>
   );
 }

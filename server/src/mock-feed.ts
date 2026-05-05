@@ -1,6 +1,6 @@
-import type { LatestContentItem } from '../../shared/types.js';
+import type { LatestContentItemSeed } from '../../shared/types.js';
 
-export const MOCK_LATEST_CONTENT: LatestContentItem[] = [
+export const MOCK_LATEST_CONTENT: LatestContentItemSeed[] = [
   {
     id: 'sql-010',
     category: 'sql',

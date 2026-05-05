@@ -14,9 +14,16 @@ const API_BASE_URL = (import.meta as ImportMeta & {
   };
 }).env?.VITE_API_BASE_URL ?? 'http://localhost:8787';
 
+async function parseError(response: Response): Promise<Error> {
+  const payload = await response.json().catch(() => ({ error: { message: response.statusText } }));
+  const message = typeof payload?.error === 'string'
+    ? payload.error
+    : payload?.error?.message ?? response.statusText;
+  return new Error(message || '请求失败');
+}
+
 export function buildCountryHoverUrl(victimCountry: string, range: DateRange): string {
-  const url = new URL('/api/map/country-hover', API_BASE_URL);
-  url.searchParams.set('victimCountry', victimCountry);
+  const url = new URL(`/api/v1/map/countries/${victimCountry}`, API_BASE_URL);
   if (range.startDate) {
     url.searchParams.set('startDate', range.startDate);
   }
@@ -34,15 +41,14 @@ export async function fetchCountryHover(
   const response = await fetch(buildCountryHoverUrl(victimCountry, range), { signal });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(payload.error || '请求失败');
+    throw await parseError(response);
   }
 
   return response.json() as Promise<CountryHoverResponse>;
 }
 
 export function buildAllFlowsUrl(range: DateRange): string {
-  const url = new URL('/api/map/all-flows', API_BASE_URL);
+  const url = new URL('/api/v1/map/flows', API_BASE_URL);
   if (range.startDate) {
     url.searchParams.set('startDate', range.startDate);
   }
@@ -59,8 +65,7 @@ export async function fetchAllFlows(
   const response = await fetch(buildAllFlowsUrl(range), { signal });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(payload.error || '请求失败');
+    throw await parseError(response);
   }
 
   return response.json() as Promise<AllFlowResponse>;
@@ -71,7 +76,7 @@ export function buildLatestContentUrl(
   limit: number,
   offset = 0,
 ): string {
-  const url = new URL('/api/content/latest', API_BASE_URL);
+  const url = new URL('/api/v1/content/feed', API_BASE_URL);
   url.searchParams.set('category', category);
   url.searchParams.set('limit', String(limit));
   url.searchParams.set('offset', String(offset));
@@ -87,15 +92,14 @@ export async function fetchLatestContent(
   const response = await fetch(buildLatestContentUrl(category, limit, offset), { signal });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(payload.error || '请求失败');
+    throw await parseError(response);
   }
 
   return response.json() as Promise<LatestContentResponse>;
 }
 
 export function buildThreatMapUrl(range: DateRange): string {
-  const url = new URL('/api/map/threat-map', API_BASE_URL);
+  const url = new URL('/api/v1/map/summary', API_BASE_URL);
   if (range.startDate) {
     url.searchParams.set('startDate', range.startDate);
   }
@@ -112,8 +116,7 @@ export async function fetchThreatMap(
   const response = await fetch(buildThreatMapUrl(range), { signal });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(payload.error || '请求失败');
+    throw await parseError(response);
   }
 
   return response.json() as Promise<ThreatMapResponse>;
@@ -124,7 +127,7 @@ export function buildThreatIntelUrl(
   limit: number,
   offset = 0,
 ): string {
-  const url = new URL('/api/threat-intel', API_BASE_URL);
+  const url = new URL('/api/v1/intel/feed', API_BASE_URL);
   url.searchParams.set('sort', sort);
   url.searchParams.set('limit', String(limit));
   url.searchParams.set('offset', String(offset));
@@ -140,8 +143,7 @@ export async function fetchThreatIntel(
   const response = await fetch(buildThreatIntelUrl(sort, limit, offset), { signal });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(payload.error || '请求失败');
+    throw await parseError(response);
   }
 
   return response.json() as Promise<ThreatIntelResponse>;

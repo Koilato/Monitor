@@ -8,7 +8,7 @@ import {
 } from '../../src/shell/lib/threat-intel';
 
 test('formatThreatIntelTimestamp normalizes UTC output for the panel', () => {
-  assert.equal(formatThreatIntelTimestamp('2026-04-23T09:56:03Z'), '2026-04-23 09:56:03 协调世界时');
+  assert.equal(formatThreatIntelTimestamp('2026-04-23T09:56:03Z'), '2026-04-23 09:56:03 ');
 });
 
 test('toggleThreatIntelSortOrder flips between ascending and descending', () => {

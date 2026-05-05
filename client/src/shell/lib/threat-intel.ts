@@ -10,7 +10,7 @@ export function formatThreatIntelTimestamp(value: string): string {
     second: '2-digit',
     hour12: false,
     timeZone: 'UTC',
-  }).format(new Date(value)).replace(/\//g, '-')} 协调世界时`;
+  }).format(new Date(value)).replace(/\//g, '-')} `;
 }
 
 export function toggleThreatIntelSortOrder(order: ThreatIntelSortOrder): ThreatIntelSortOrder {

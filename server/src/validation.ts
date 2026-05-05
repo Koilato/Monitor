@@ -108,3 +108,24 @@ export function normalizeSortOrder(value: unknown, fieldName: string, fallback: 
 
   throw new ValidationError('必须是 asc 或 desc');
 }
+
+export function normalizeOptionalCountryCode(value: unknown, fieldName: string): string | null {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  return normalizeCountryCode(value, fieldName);
+}
+
+export function normalizeSeverity(value: unknown, fieldName: string): 'low' | 'medium' | 'high' | null {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (normalized === 'low' || normalized === 'medium' || normalized === 'high') {
+    return normalized;
+  }
+
+  throw new ValidationError(`${fieldName} 必须是 low、medium 或 high`);
+}

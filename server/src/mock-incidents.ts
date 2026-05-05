@@ -1,6 +1,6 @@
-import type { HoverIncident } from '../../shared/types.js';
+import type { HoverIncidentSeed } from '../../shared/types.js';
 
-const BASE_MOCK_INCIDENTS: HoverIncident[] = [
+const BASE_MOCK_INCIDENTS: HoverIncidentSeed[] = [
   {
     uuid: 'mock-001',
     date: '2026-04-01',
@@ -319,7 +319,7 @@ const VICTIM_SEQUENCE = [
   'ES',
 ];
 
-const SEVERITY_SEQUENCE: HoverIncident['details']['severity'][] = [
+const SEVERITY_SEQUENCE: HoverIncidentSeed['details']['severity'][] = [
   'low',
   'medium',
   'high',
@@ -402,7 +402,7 @@ function buildDateSchedule(total: number): string[] {
   return schedule;
 }
 
-function buildGeneratedIncidents(): HoverIncident[] {
+function buildGeneratedIncidents(): HoverIncidentSeed[] {
   const dates = buildDateSchedule(200);
 
   return dates.map((date, index) => {
@@ -430,7 +430,7 @@ function buildGeneratedIncidents(): HoverIncident[] {
   });
 }
 
-export const MOCK_INCIDENTS: HoverIncident[] = [
+export const MOCK_INCIDENTS: HoverIncidentSeed[] = [
   ...BASE_MOCK_INCIDENTS,
   ...buildGeneratedIncidents(),
 ];

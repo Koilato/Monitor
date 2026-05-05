@@ -1,61 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
+import { createServer, type Server } from 'node:http';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { once } from 'node:events';
-
 import { createApp } from '../src/app.js';
-import { buildThreatIntelItemsFromIncidents, buildThreatIntelResponse } from '../src/service.js';
-import { MOCK_INCIDENTS } from '../src/mock-incidents.js';
+import { createServerRuntime, type ServerRuntime } from '../src/runtime.js';
 
-test('threat intel items are derived from all mock incidents', () => {
-  const items = buildThreatIntelItemsFromIncidents(MOCK_INCIDENTS);
-
-  assert.equal(items.length, MOCK_INCIDENTS.length);
-  assert.equal(items[0]?.id, MOCK_INCIDENTS[0]?.uuid);
-  assert.equal(items[0]?.tone, 'warning');
-  assert.equal(items[0]?.level, '警告');
-  assert.equal(items[0]?.attacker, '日本');
-  assert.equal(items[0]?.address, '中国');
-  assert.match(items[0]?.source ?? '', /^\d+\.\d+\.x\.x \(JP\)$/);
-  assert.match(items[0]?.occurredAt ?? '', /^2026-04-01T\d{2}:\d{2}:\d{2}Z$/);
-});
-
-test('threat intel response defaults to newest-first order', () => {
-  const items = buildThreatIntelItemsFromIncidents(MOCK_INCIDENTS);
-  const result = buildThreatIntelResponse(items, {
-    sort: 'desc',
-    limit: 20,
-    offset: 0,
-  });
-
-  assert.equal(result.total, MOCK_INCIDENTS.length);
-  assert.equal(result.items.length, 20);
-  assert.ok(result.items[0]?.occurredAt >= result.items[1]!.occurredAt);
-  assert.ok(result.items[0]?.occurredAt.startsWith('2026-04-26T'));
-});
-
-test('threat intel response supports ascending order and offset', () => {
-  const items = buildThreatIntelItemsFromIncidents(MOCK_INCIDENTS);
-  const firstPage = buildThreatIntelResponse(items, {
-    sort: 'asc',
-    limit: 20,
-    offset: 0,
-  });
-  const secondPage = buildThreatIntelResponse(items, {
-    sort: 'asc',
-    limit: 20,
-    offset: 20,
-  });
-
-  assert.equal(firstPage.total, MOCK_INCIDENTS.length);
-  assert.equal(firstPage.items.length, 20);
-  assert.equal(secondPage.items.length, 20);
-  assert.ok(firstPage.items[0]?.occurredAt.startsWith('2026-04-01T'));
-  assert.notEqual(firstPage.items[0]?.id, secondPage.items[0]?.id);
-});
-
-test('HTTP API returns twenty threat intel rows from the incident pool', async () => {
-  const server = createServer(createApp());
+async function startTestServer(): Promise<{
+  baseUrl: string;
+  server: Server;
+  runtime: ServerRuntime;
+  cleanup: () => Promise<void>;
+}> {
+  const workingDir = mkdtempSync(join(tmpdir(), 'worldmonitor-server-'));
+  const dbPath = join(workingDir, 'worldmonitor.sqlite');
+  const runtime = createServerRuntime({ path: dbPath });
+  const server = createServer(createApp({ runtime }));
   server.listen(0);
   await once(server, 'listening');
 
@@ -64,42 +26,107 @@ test('HTTP API returns twenty threat intel rows from the incident pool', async (
     throw new Error('Failed to get dynamic port');
   }
 
+  return {
+    baseUrl: `http://127.0.0.1:${address.port}`,
+    server,
+    runtime,
+    cleanup: async () => {
+      server.close();
+      await once(server, 'close');
+      runtime.close();
+      rmSync(workingDir, { recursive: true, force: true });
+    },
+  };
+}
+
+test('threat intel endpoint serves newest-first data from SQLite', async () => {
+  const context = await startTestServer();
+
   try {
-    const response = await fetch(`http://127.0.0.1:${address.port}/api/threat-intel?limit=20`);
+    const response = await fetch(`${context.baseUrl}/api/v1/intel/feed?limit=20`);
     const body = await response.json();
 
     assert.equal(response.status, 200);
     assert.equal(body.sort, 'desc');
-    assert.equal(body.total, MOCK_INCIDENTS.length);
+    assert.equal(body.total, 223);
     assert.equal(body.items.length, 20);
-    assert.ok(body.items[0].occurredAt.startsWith('2026-04-26T'));
+    assert.match(body.items[0].occurredAt, /^2026-04-26T/);
+    assert.equal(body.generatedAt.length > 0, true);
   } finally {
-    server.close();
-    await once(server, 'close');
+    await context.cleanup();
   }
 });
 
-test('HTTP API supports ascending threat intel pagination', async () => {
-  const server = createServer(createApp());
-  server.listen(0);
-  await once(server, 'listening');
-
-  const address = server.address();
-  if (!address || typeof address === 'string') {
-    throw new Error('Failed to get dynamic port');
-  }
+test('threat intel endpoint supports ascending pagination and filters', async () => {
+  const context = await startTestServer();
 
   try {
-    const response = await fetch(`http://127.0.0.1:${address.port}/api/threat-intel?sort=asc&limit=20&offset=20`);
+    const response = await fetch(`${context.baseUrl}/api/v1/intel/feed?sort=asc&limit=5&offset=2&victimCountry=CN&severity=high`);
     const body = await response.json();
 
     assert.equal(response.status, 200);
     assert.equal(body.sort, 'asc');
-    assert.equal(body.total, MOCK_INCIDENTS.length);
-    assert.equal(body.items.length, 20);
-    assert.ok(body.items[0].occurredAt >= '2026-04-01T00:00:00Z');
+    assert.equal(body.items.length, 5);
+    assert.ok(body.items.every((item: { victimCountry: string; severity: string }) => item.victimCountry === 'CN' && item.severity === 'high'));
   } finally {
-    server.close();
-    await once(server, 'close');
+    await context.cleanup();
+  }
+});
+
+test('latest content endpoint serves seeded database rows', async () => {
+  const context = await startTestServer();
+
+  try {
+    const response = await fetch(`${context.baseUrl}/api/v1/content/feed?category=sql&limit=2&offset=1`);
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.category, 'sql');
+    assert.equal(body.total, 5);
+    assert.deepEqual(body.items.map((item: { id: string }) => item.id), ['sql-009', 'sql-008']);
+  } finally {
+    await context.cleanup();
+  }
+});
+
+test('manual incident import tolerates partial failures and deduplicates repeated rows', () => {
+  const workingDir = mkdtempSync(join(tmpdir(), 'worldmonitor-server-'));
+  const dbPath = join(workingDir, 'worldmonitor.sqlite');
+  const runtime = createServerRuntime({ path: dbPath });
+
+  try {
+    const beforeCount = runtime.repository.countIncidents();
+    const result = runtime.ingestService.importIncidents([
+      {
+        externalId: 'manual-001',
+        occurredAt: '2026-05-01T01:02:03Z',
+        attackerCountry: 'US',
+        victimCountry: 'CN',
+        severity: 'high',
+        title: 'Manual incident',
+        summary: 'Imported from manual test payload',
+      },
+      {
+        externalId: 'manual-001',
+        occurredAt: '2026-05-01T01:02:03Z',
+        attackerCountry: 'US',
+        victimCountry: 'CN',
+        severity: 'high',
+        title: 'Manual incident',
+        summary: 'Imported from manual test payload',
+      },
+      {
+        externalId: '',
+      },
+    ], 'manual_import', 'Manual Import');
+
+    assert.equal(result.status, 'partial_success');
+    assert.equal(result.totalCount, 3);
+    assert.equal(result.successCount, 1);
+    assert.equal(result.failureCount, 1);
+    assert.equal(runtime.repository.countIncidents(), beforeCount + 1);
+  } finally {
+    runtime.close();
+    rmSync(workingDir, { recursive: true, force: true });
   }
 });

@@ -97,7 +97,7 @@ export function AppShell() {
             <span className="panel-title">全球信号地图</span>
             <span className="panel-count">{panelCount}</span>
           </div>
-          <div className="header-clock">{clock} 协调世界时</div>
+          <div className="header-clock">{clock} </div>
           <AppToolbar
             timeFilter={mapState.timeFilter}
             flowMode={mapState.flowMode}
