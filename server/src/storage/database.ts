@@ -1,10 +1,14 @@
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
 export interface DatabaseOptions {
   path?: string;
 }
+
+const CURRENT_DIR = dirname(fileURLToPath(import.meta.url));
+const DEFAULT_DB_PATH = resolve(CURRENT_DIR, '../../data/worldmonitor.sqlite');
 
 export function resolveDatabasePath(pathOverride?: string): string {
   if (pathOverride) {
@@ -15,7 +19,7 @@ export function resolveDatabasePath(pathOverride?: string): string {
     return resolve(process.env.WORLDMONITOR_DB_PATH);
   }
 
-  return resolve(process.cwd(), 'server/data/worldmonitor.sqlite');
+  return DEFAULT_DB_PATH;
 }
 
 export function openDatabase(options: DatabaseOptions = {}): DatabaseSync {

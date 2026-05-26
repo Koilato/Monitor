@@ -6,11 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
-    "preview": "vite preview",
-    "test": "tsx --test test/**/*.test.ts",
-    "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed",
-    "test:e2e:install": "playwright install chromium"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@mapbox/polylabel": "^1.0.2",
@@ -20,7 +16,6 @@
     "recharts": "^2.15.4"
   },
   "devDependencies": {
-    "@playwright/test": "^1.52.0",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^22.15.0",
     "@types/react": "^19.2.2",

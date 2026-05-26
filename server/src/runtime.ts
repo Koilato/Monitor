@@ -4,8 +4,7 @@ import { initializeSchema } from './storage/schema.js';
 import { createRepository } from './storage/repository.js';
 import { createIngestService } from './ingest/service.js';
 import { createComputeService } from './compute/service.js';
-import { MOCK_INCIDENTS } from './mock-incidents.js';
-import { MOCK_LATEST_CONTENT } from './mock-feed.js';
+import { loadSeedFixtures } from './fixtures/loader.js';
 
 export interface ServerRuntime {
   db: DatabaseSync;
@@ -22,10 +21,11 @@ export function createServerRuntime(options: DatabaseOptions = {}): ServerRuntim
   const repository = createRepository(db);
   const ingestService = createIngestService(db, repository);
   const computeService = createComputeService(repository);
+  const fixtures = loadSeedFixtures();
 
   ingestService.ensureSeedData({
-    incidents: MOCK_INCIDENTS,
-    contentItems: MOCK_LATEST_CONTENT,
+    incidents: fixtures.incidents,
+    contentItems: fixtures.contentItems,
   });
 
   return {

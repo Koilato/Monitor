@@ -5,30 +5,43 @@
 ## Structure
 
 - `client/`：Vite + React + TypeScript 前端界面
-- `server/`：Express + TypeScript 模拟 API
-- `shared/`：共享的响应与查询类型
+- `server/`：Express + TypeScript + SQLite 后端
+- `server/fixtures/`：初始化 seed 数据
+- `shared/`：共享响应与查询类型
 
-## Run
+## Install
 
-只需要在仓库根目录安装依赖：
+在仓库根目录安装依赖：
 
 ```bash
 npm install
 ```
 
-不要在 `client/` 或 `server/` 目录中单独执行 `npm install`，仓库根目录的 `package-lock.json` 是唯一受支持的锁文件。
+## Run
 
-启动模拟 API：
+推荐直接一键启动前后端：
+
+```bash
+npm run dev
+```
+
+如果你需要分开调试，也可以分别启动。
+
+启动后端：
 
 ```bash
 npm run dev:server
 ```
 
-在另一个终端启动前端界面：
+在另一个终端启动前端：
 
 ```bash
 npm run dev:client
 ```
+
+前端默认连接 `http://localhost:8787`。
+
+## Build
 
 构建前后端：
 
@@ -36,10 +49,32 @@ npm run dev:client
 npm run build
 ```
 
-运行测试：
+或分别构建：
 
 ```bash
-npm run test
+npm run build:server
+npm run build:client
 ```
 
-前端默认连接 `http://localhost:8787`。
+## Seed And Import
+
+后端会在空 SQLite 数据库启动时自动从 `server/fixtures/` 导入示例数据。
+
+你也可以手动执行：
+
+```bash
+npm run seed
+```
+
+导入外部 JSON：
+
+```bash
+npm run import:incidents -- /absolute/path/incidents.json
+npm run import:content -- /absolute/path/content-items.json
+```
+
+重建聚合表：
+
+```bash
+npm run rebuild:aggregates
+```

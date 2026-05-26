@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { loadSeedFixtures } from './fixtures/loader.js';
 import { createServerRuntime } from './runtime.js';
-import { MOCK_INCIDENTS } from './mock-incidents.js';
-import { MOCK_LATEST_CONTENT } from './mock-feed.js';
 
 function readJsonArray(pathArg: string | undefined, label: string): unknown[] {
   if (!pathArg) {
@@ -20,11 +19,12 @@ function readJsonArray(pathArg: string | undefined, label: string): unknown[] {
 function main(): void {
   const [, , command, maybePath] = process.argv;
   const runtime = createServerRuntime();
+  const fixtures = loadSeedFixtures();
 
   try {
     if (command === 'seed') {
-      const incidents = runtime.ingestService.importIncidents(MOCK_INCIDENTS, 'mock_seed', 'Mock Seed');
-      const content = runtime.ingestService.importContent(MOCK_LATEST_CONTENT, 'mock_seed', 'Mock Seed');
+      const incidents = runtime.ingestService.importIncidents(fixtures.incidents, 'fixture_seed', 'Fixture Seed');
+      const content = runtime.ingestService.importContent(fixtures.contentItems, 'fixture_seed', 'Fixture Seed');
       console.log(JSON.stringify({ incidents, content }, null, 2));
       return;
     }

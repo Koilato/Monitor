@@ -1,0 +1,2455 @@
+[
+  {
+    "uuid": "mock-001",
+    "date": "2026-04-01",
+    "attackerCountry": "JP",
+    "victimCountry": "CN",
+    "details": {
+      "title": "日本对沿海网络的探测",
+      "summary": "针对中国东部某公共部门子网的模拟侦察流量。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-002",
+    "date": "2026-04-02",
+    "attackerCountry": "JP",
+    "victimCountry": "CN",
+    "details": {
+      "title": "日本对物流供应商的钓鱼活动",
+      "summary": "面向一家航运服务供应商的凭据窃取行动。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-003",
+    "date": "2026-04-03",
+    "attackerCountry": "JP",
+    "victimCountry": "CN",
+    "details": {
+      "title": "日本对区域门户的利用尝试",
+      "summary": "在一个暴露的 Web 应用上观察到自动化利用扫描。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-004",
+    "date": "2026-04-04",
+    "attackerCountry": "JP",
+    "victimCountry": "CN",
+    "details": {
+      "title": "日本对电信边缘的干扰",
+      "summary": "针对省级电信边缘节点的短暂干扰尝试。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-005",
+    "date": "2026-04-05",
+    "attackerCountry": "US",
+    "victimCountry": "CN",
+    "details": {
+      "title": "美国对云租户的扫描突发",
+      "summary": "在一个部署于中国的云租户上检测到模拟扫描波次。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-006",
+    "date": "2026-04-06",
+    "attackerCountry": "US",
+    "victimCountry": "CN",
+    "details": {
+      "title": "美国对制造节点的入侵",
+      "summary": "针对制造控制网关的提权尝试。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-007",
+    "date": "2026-04-07",
+    "attackerCountry": "US",
+    "victimCountry": "CN",
+    "details": {
+      "title": "美国向高校邮件系统投递载荷",
+      "summary": "针对高校邮件集群的恶意附件活动。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-008",
+    "date": "2026-04-08",
+    "attackerCountry": "US",
+    "victimCountry": "CN",
+    "details": {
+      "title": "美国横向移动模拟",
+      "summary": "针对中国企业身份提供方的多阶段访问尝试。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-009",
+    "date": "2026-04-09",
+    "attackerCountry": "CN",
+    "victimCountry": "US",
+    "details": {
+      "title": "中国对美国承包商的鱼叉式钓鱼",
+      "summary": "定向钓鱼邮件发往一家与国防相关的美国承包商。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-010",
+    "date": "2026-04-10",
+    "attackerCountry": "CN",
+    "victimCountry": "US",
+    "details": {
+      "title": "中国对美国 SaaS 控制平面的攻击",
+      "summary": "针对美国 SaaS 管理端点的模拟账户接管活动。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-011",
+    "date": "2026-04-11",
+    "attackerCountry": "RU",
+    "victimCountry": "JP",
+    "details": {
+      "title": "俄罗斯对零售门户的凭据喷洒",
+      "summary": "在日本零售身份服务上观察到高频登录尝试。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-012",
+    "date": "2026-04-12",
+    "attackerCountry": "KR",
+    "victimCountry": "SG",
+    "details": {
+      "title": "韩国对金融站点的网页篡改尝试",
+      "summary": "短暂的篡改流量指向了新加坡某金融服务落地页。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-013",
+    "date": "2026-04-13",
+    "attackerCountry": "IN",
+    "victimCountry": "AU",
+    "details": {
+      "title": "印度向教育网络投递恶意软件",
+      "summary": "可疑压缩附件被发送到澳大利亚一所大学的子网。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-014",
+    "date": "2026-04-14",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对媒体主机的扫描突发",
+      "summary": "在英国托管的媒体后端上观察到自动端口扫描。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-015",
+    "date": "2026-04-15",
+    "attackerCountry": "BR",
+    "victimCountry": "CA",
+    "details": {
+      "title": "巴西对云管理端的入侵尝试",
+      "summary": "针对加拿大云管理控制台的提权与令牌重放模拟。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-016",
+    "date": "2026-04-16",
+    "attackerCountry": "FR",
+    "victimCountry": "NL",
+    "details": {
+      "title": "法国面向物流人员的钓鱼波次",
+      "summary": "定向钓鱼邮件指向荷兰某企业物流团队。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-017",
+    "date": "2026-04-17",
+    "attackerCountry": "ES",
+    "victimCountry": "SE",
+    "details": {
+      "title": "西班牙对 API 网关的机器人活动",
+      "summary": "机器人驱动的请求洪泛命中了瑞典公共 API 网关。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-018",
+    "date": "2026-04-18",
+    "attackerCountry": "IT",
+    "victimCountry": "NO",
+    "details": {
+      "title": "意大利对能源仪表盘的利用探测",
+      "summary": "服务于挪威能源运营方的暴露仪表盘遭到利用探测。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-019",
+    "date": "2026-04-19",
+    "attackerCountry": "PL",
+    "victimCountry": "DK",
+    "details": {
+      "title": "波兰对 SaaS 租户的密码攻击",
+      "summary": "重复密码猜测针对丹麦某 SaaS 租户账户组。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-019a",
+    "date": "2026-04-19",
+    "attackerCountry": "RU",
+    "victimCountry": "CN",
+    "details": {
+      "title": "俄罗斯对中国门户的入侵突发",
+      "summary": "针对中国公共门户的严重入侵尝试模拟。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-019b",
+    "date": "2026-04-19",
+    "attackerCountry": "US",
+    "victimCountry": "CN",
+    "details": {
+      "title": "美国对中国云节点的凭据窃取尝试",
+      "summary": "一条中危凭据窃取尝试指向了中国托管的云节点。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-019c",
+    "date": "2026-04-19",
+    "attackerCountry": "JP",
+    "victimCountry": "CN",
+    "details": {
+      "title": "日本对中国平台的扫描清扫",
+      "summary": "低危侦察流量被导向一个中国平台端点。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-020",
+    "date": "2026-04-20",
+    "attackerCountry": "TR",
+    "victimCountry": "BE",
+    "details": {
+      "title": "土耳其对政府门户的侦察",
+      "summary": "针对比利时政府门户的低慢速侦察模拟。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-021",
+    "date": "2026-04-01",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本云租户资产的扫描",
+      "summary": "模拟攻击流量在短时间内密集出现，中国的模拟活动指向日本的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-022",
+    "date": "2026-04-01",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国身份服务入口的钓鱼",
+      "summary": "持续的自动化请求命中了暴露面，美国的模拟活动指向德国的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-023",
+    "date": "2026-04-01",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大控制台服务的入侵尝试",
+      "summary": "一次低噪声的渗透前探测被记录，日本的模拟活动指向加拿大的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-024",
+    "date": "2026-04-01",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威边缘节点节点的凭据喷洒",
+      "summary": "短暂的高频探测覆盖了关键入口，俄罗斯的模拟活动指向挪威的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-025",
+    "date": "2026-04-01",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利数据节点资产的横向移动",
+      "summary": "观察到与身份相关的异常访问尝试，韩国的模拟活动指向意大利的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-026",
+    "date": "2026-04-01",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国云租户入口的利用探测",
+      "summary": "一条定向样本被发送到目标环境，印度的模拟活动指向美国的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-027",
+    "date": "2026-04-01",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国身份服务服务的机器人洪泛",
+      "summary": "模拟攻击流量在短时间内密集出现，德国的模拟活动指向英国的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-028",
+    "date": "2026-04-01",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚控制台节点的载荷投递",
+      "summary": "持续的自动化请求命中了暴露面，法国的模拟活动指向澳大利亚的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-029",
+    "date": "2026-04-01",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典边缘节点资产的权限提升",
+      "summary": "一次低噪声的渗透前探测被记录，巴西的模拟活动指向瑞典的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-030",
+    "date": "2026-04-01",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时数据节点入口的会话劫持",
+      "summary": "短暂的高频探测覆盖了关键入口，西班牙的模拟活动指向比利时的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-031",
+    "date": "2026-04-01",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国云租户服务的扫描",
+      "summary": "观察到与身份相关的异常访问尝试，意大利的模拟活动指向中国的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-032",
+    "date": "2026-04-01",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡身份服务节点的钓鱼",
+      "summary": "一条定向样本被发送到目标环境，波兰的模拟活动指向新加坡的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-033",
+    "date": "2026-04-02",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国控制台资产的入侵尝试",
+      "summary": "模拟攻击流量在短时间内密集出现，土耳其的模拟活动指向法国的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-034",
+    "date": "2026-04-02",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰边缘节点入口的凭据喷洒",
+      "summary": "持续的自动化请求命中了暴露面，加拿大的模拟活动指向荷兰的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-035",
+    "date": "2026-04-02",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦数据节点服务的横向移动",
+      "summary": "一次低噪声的渗透前探测被记录，澳大利亚的模拟活动指向丹麦的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-036",
+    "date": "2026-04-02",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙云租户节点的利用探测",
+      "summary": "短暂的高频探测覆盖了关键入口，荷兰的模拟活动指向西班牙的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-037",
+    "date": "2026-04-02",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本身份服务资产的机器人洪泛",
+      "summary": "观察到与身份相关的异常访问尝试，中国的模拟活动指向日本的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-038",
+    "date": "2026-04-02",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国控制台入口的载荷投递",
+      "summary": "一条定向样本被发送到目标环境，美国的模拟活动指向德国的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-039",
+    "date": "2026-04-02",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大边缘节点服务的权限提升",
+      "summary": "模拟攻击流量在短时间内密集出现，日本的模拟活动指向加拿大的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-040",
+    "date": "2026-04-02",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威数据节点节点的会话劫持",
+      "summary": "持续的自动化请求命中了暴露面，俄罗斯的模拟活动指向挪威的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-041",
+    "date": "2026-04-02",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利云租户资产的扫描",
+      "summary": "一次低噪声的渗透前探测被记录，韩国的模拟活动指向意大利的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-042",
+    "date": "2026-04-02",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国身份服务入口的钓鱼",
+      "summary": "短暂的高频探测覆盖了关键入口，印度的模拟活动指向美国的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-043",
+    "date": "2026-04-02",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国控制台服务的入侵尝试",
+      "summary": "观察到与身份相关的异常访问尝试，德国的模拟活动指向英国的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-044",
+    "date": "2026-04-03",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚边缘节点节点的凭据喷洒",
+      "summary": "一条定向样本被发送到目标环境，法国的模拟活动指向澳大利亚的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-045",
+    "date": "2026-04-03",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典数据节点资产的横向移动",
+      "summary": "模拟攻击流量在短时间内密集出现，巴西的模拟活动指向瑞典的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-046",
+    "date": "2026-04-03",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时云租户入口的利用探测",
+      "summary": "持续的自动化请求命中了暴露面，西班牙的模拟活动指向比利时的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-047",
+    "date": "2026-04-03",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国身份服务服务的机器人洪泛",
+      "summary": "一次低噪声的渗透前探测被记录，意大利的模拟活动指向中国的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-048",
+    "date": "2026-04-03",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡控制台节点的载荷投递",
+      "summary": "短暂的高频探测覆盖了关键入口，波兰的模拟活动指向新加坡的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-049",
+    "date": "2026-04-03",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国边缘节点资产的权限提升",
+      "summary": "观察到与身份相关的异常访问尝试，土耳其的模拟活动指向法国的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-050",
+    "date": "2026-04-03",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰数据节点入口的会话劫持",
+      "summary": "一条定向样本被发送到目标环境，加拿大的模拟活动指向荷兰的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-051",
+    "date": "2026-04-03",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦云租户服务的扫描",
+      "summary": "模拟攻击流量在短时间内密集出现，澳大利亚的模拟活动指向丹麦的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-052",
+    "date": "2026-04-03",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙身份服务节点的钓鱼",
+      "summary": "持续的自动化请求命中了暴露面，荷兰的模拟活动指向西班牙的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-053",
+    "date": "2026-04-03",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本控制台资产的入侵尝试",
+      "summary": "一次低噪声的渗透前探测被记录，中国的模拟活动指向日本的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-054",
+    "date": "2026-04-04",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国边缘节点入口的凭据喷洒",
+      "summary": "短暂的高频探测覆盖了关键入口，美国的模拟活动指向德国的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-055",
+    "date": "2026-04-04",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大数据节点服务的横向移动",
+      "summary": "观察到与身份相关的异常访问尝试，日本的模拟活动指向加拿大的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-056",
+    "date": "2026-04-04",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威云租户节点的利用探测",
+      "summary": "一条定向样本被发送到目标环境，俄罗斯的模拟活动指向挪威的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-057",
+    "date": "2026-04-04",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利身份服务资产的机器人洪泛",
+      "summary": "模拟攻击流量在短时间内密集出现，韩国的模拟活动指向意大利的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-058",
+    "date": "2026-04-04",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国控制台入口的载荷投递",
+      "summary": "持续的自动化请求命中了暴露面，印度的模拟活动指向美国的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-059",
+    "date": "2026-04-04",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国边缘节点服务的权限提升",
+      "summary": "一次低噪声的渗透前探测被记录，德国的模拟活动指向英国的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-060",
+    "date": "2026-04-04",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚数据节点节点的会话劫持",
+      "summary": "短暂的高频探测覆盖了关键入口，法国的模拟活动指向澳大利亚的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-061",
+    "date": "2026-04-04",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典云租户资产的扫描",
+      "summary": "观察到与身份相关的异常访问尝试，巴西的模拟活动指向瑞典的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-062",
+    "date": "2026-04-04",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时身份服务入口的钓鱼",
+      "summary": "一条定向样本被发送到目标环境，西班牙的模拟活动指向比利时的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-063",
+    "date": "2026-04-04",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国控制台服务的入侵尝试",
+      "summary": "模拟攻击流量在短时间内密集出现，意大利的模拟活动指向中国的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-064",
+    "date": "2026-04-05",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡边缘节点节点的凭据喷洒",
+      "summary": "持续的自动化请求命中了暴露面，波兰的模拟活动指向新加坡的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-065",
+    "date": "2026-04-05",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国数据节点资产的横向移动",
+      "summary": "一次低噪声的渗透前探测被记录，土耳其的模拟活动指向法国的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-066",
+    "date": "2026-04-05",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰云租户入口的利用探测",
+      "summary": "短暂的高频探测覆盖了关键入口，加拿大的模拟活动指向荷兰的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-067",
+    "date": "2026-04-05",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦身份服务服务的机器人洪泛",
+      "summary": "观察到与身份相关的异常访问尝试，澳大利亚的模拟活动指向丹麦的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-068",
+    "date": "2026-04-05",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙控制台节点的载荷投递",
+      "summary": "一条定向样本被发送到目标环境，荷兰的模拟活动指向西班牙的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-069",
+    "date": "2026-04-05",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本边缘节点资产的权限提升",
+      "summary": "模拟攻击流量在短时间内密集出现，中国的模拟活动指向日本的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-070",
+    "date": "2026-04-05",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国数据节点入口的会话劫持",
+      "summary": "持续的自动化请求命中了暴露面，美国的模拟活动指向德国的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-071",
+    "date": "2026-04-05",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大云租户服务的扫描",
+      "summary": "一次低噪声的渗透前探测被记录，日本的模拟活动指向加拿大的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-072",
+    "date": "2026-04-05",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威身份服务节点的钓鱼",
+      "summary": "短暂的高频探测覆盖了关键入口，俄罗斯的模拟活动指向挪威的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-073",
+    "date": "2026-04-06",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利控制台资产的入侵尝试",
+      "summary": "观察到与身份相关的异常访问尝试，韩国的模拟活动指向意大利的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-074",
+    "date": "2026-04-06",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国边缘节点入口的凭据喷洒",
+      "summary": "一条定向样本被发送到目标环境，印度的模拟活动指向美国的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-075",
+    "date": "2026-04-06",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国数据节点服务的横向移动",
+      "summary": "模拟攻击流量在短时间内密集出现，德国的模拟活动指向英国的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-076",
+    "date": "2026-04-06",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚云租户节点的利用探测",
+      "summary": "持续的自动化请求命中了暴露面，法国的模拟活动指向澳大利亚的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-077",
+    "date": "2026-04-06",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典身份服务资产的机器人洪泛",
+      "summary": "一次低噪声的渗透前探测被记录，巴西的模拟活动指向瑞典的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-078",
+    "date": "2026-04-06",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时控制台入口的载荷投递",
+      "summary": "短暂的高频探测覆盖了关键入口，西班牙的模拟活动指向比利时的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-079",
+    "date": "2026-04-06",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国边缘节点服务的权限提升",
+      "summary": "观察到与身份相关的异常访问尝试，意大利的模拟活动指向中国的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-080",
+    "date": "2026-04-06",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡数据节点节点的会话劫持",
+      "summary": "一条定向样本被发送到目标环境，波兰的模拟活动指向新加坡的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-081",
+    "date": "2026-04-06",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国云租户资产的扫描",
+      "summary": "模拟攻击流量在短时间内密集出现，土耳其的模拟活动指向法国的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-082",
+    "date": "2026-04-07",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰身份服务入口的钓鱼",
+      "summary": "持续的自动化请求命中了暴露面，加拿大的模拟活动指向荷兰的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-083",
+    "date": "2026-04-07",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦控制台服务的入侵尝试",
+      "summary": "一次低噪声的渗透前探测被记录，澳大利亚的模拟活动指向丹麦的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-084",
+    "date": "2026-04-07",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙边缘节点节点的凭据喷洒",
+      "summary": "短暂的高频探测覆盖了关键入口，荷兰的模拟活动指向西班牙的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-085",
+    "date": "2026-04-07",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本数据节点资产的横向移动",
+      "summary": "观察到与身份相关的异常访问尝试，中国的模拟活动指向日本的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-086",
+    "date": "2026-04-07",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国云租户入口的利用探测",
+      "summary": "一条定向样本被发送到目标环境，美国的模拟活动指向德国的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-087",
+    "date": "2026-04-07",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大身份服务服务的机器人洪泛",
+      "summary": "模拟攻击流量在短时间内密集出现，日本的模拟活动指向加拿大的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-088",
+    "date": "2026-04-07",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威控制台节点的载荷投递",
+      "summary": "持续的自动化请求命中了暴露面，俄罗斯的模拟活动指向挪威的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-089",
+    "date": "2026-04-07",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利边缘节点资产的权限提升",
+      "summary": "一次低噪声的渗透前探测被记录，韩国的模拟活动指向意大利的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-090",
+    "date": "2026-04-08",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国数据节点入口的会话劫持",
+      "summary": "短暂的高频探测覆盖了关键入口，印度的模拟活动指向美国的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-091",
+    "date": "2026-04-08",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国云租户服务的扫描",
+      "summary": "观察到与身份相关的异常访问尝试，德国的模拟活动指向英国的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-092",
+    "date": "2026-04-08",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚身份服务节点的钓鱼",
+      "summary": "一条定向样本被发送到目标环境，法国的模拟活动指向澳大利亚的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-093",
+    "date": "2026-04-08",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典控制台资产的入侵尝试",
+      "summary": "模拟攻击流量在短时间内密集出现，巴西的模拟活动指向瑞典的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-094",
+    "date": "2026-04-08",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时边缘节点入口的凭据喷洒",
+      "summary": "持续的自动化请求命中了暴露面，西班牙的模拟活动指向比利时的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-095",
+    "date": "2026-04-08",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国数据节点服务的横向移动",
+      "summary": "一次低噪声的渗透前探测被记录，意大利的模拟活动指向中国的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-096",
+    "date": "2026-04-08",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡云租户节点的利用探测",
+      "summary": "短暂的高频探测覆盖了关键入口，波兰的模拟活动指向新加坡的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-097",
+    "date": "2026-04-09",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国身份服务资产的机器人洪泛",
+      "summary": "观察到与身份相关的异常访问尝试，土耳其的模拟活动指向法国的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-098",
+    "date": "2026-04-09",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰控制台入口的载荷投递",
+      "summary": "一条定向样本被发送到目标环境，加拿大的模拟活动指向荷兰的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-099",
+    "date": "2026-04-09",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦边缘节点服务的权限提升",
+      "summary": "模拟攻击流量在短时间内密集出现，澳大利亚的模拟活动指向丹麦的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-100",
+    "date": "2026-04-09",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙数据节点节点的会话劫持",
+      "summary": "持续的自动化请求命中了暴露面，荷兰的模拟活动指向西班牙的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-101",
+    "date": "2026-04-09",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本云租户资产的扫描",
+      "summary": "一次低噪声的渗透前探测被记录，中国的模拟活动指向日本的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-102",
+    "date": "2026-04-09",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国身份服务入口的钓鱼",
+      "summary": "短暂的高频探测覆盖了关键入口，美国的模拟活动指向德国的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-103",
+    "date": "2026-04-10",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大控制台服务的入侵尝试",
+      "summary": "观察到与身份相关的异常访问尝试，日本的模拟活动指向加拿大的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-104",
+    "date": "2026-04-10",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威边缘节点节点的凭据喷洒",
+      "summary": "一条定向样本被发送到目标环境，俄罗斯的模拟活动指向挪威的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-105",
+    "date": "2026-04-10",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利数据节点资产的横向移动",
+      "summary": "模拟攻击流量在短时间内密集出现，韩国的模拟活动指向意大利的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-106",
+    "date": "2026-04-10",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国云租户入口的利用探测",
+      "summary": "持续的自动化请求命中了暴露面，印度的模拟活动指向美国的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-107",
+    "date": "2026-04-10",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国身份服务服务的机器人洪泛",
+      "summary": "一次低噪声的渗透前探测被记录，德国的模拟活动指向英国的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-108",
+    "date": "2026-04-11",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚控制台节点的载荷投递",
+      "summary": "短暂的高频探测覆盖了关键入口，法国的模拟活动指向澳大利亚的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-109",
+    "date": "2026-04-11",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典边缘节点资产的权限提升",
+      "summary": "观察到与身份相关的异常访问尝试，巴西的模拟活动指向瑞典的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-110",
+    "date": "2026-04-11",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时数据节点入口的会话劫持",
+      "summary": "一条定向样本被发送到目标环境，西班牙的模拟活动指向比利时的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-111",
+    "date": "2026-04-11",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国云租户服务的扫描",
+      "summary": "模拟攻击流量在短时间内密集出现，意大利的模拟活动指向中国的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-112",
+    "date": "2026-04-11",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡身份服务节点的钓鱼",
+      "summary": "持续的自动化请求命中了暴露面，波兰的模拟活动指向新加坡的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-113",
+    "date": "2026-04-12",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国控制台资产的入侵尝试",
+      "summary": "一次低噪声的渗透前探测被记录，土耳其的模拟活动指向法国的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-114",
+    "date": "2026-04-12",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰边缘节点入口的凭据喷洒",
+      "summary": "短暂的高频探测覆盖了关键入口，加拿大的模拟活动指向荷兰的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-115",
+    "date": "2026-04-12",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦数据节点服务的横向移动",
+      "summary": "观察到与身份相关的异常访问尝试，澳大利亚的模拟活动指向丹麦的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-116",
+    "date": "2026-04-12",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙云租户节点的利用探测",
+      "summary": "一条定向样本被发送到目标环境，荷兰的模拟活动指向西班牙的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-117",
+    "date": "2026-04-13",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本身份服务资产的机器人洪泛",
+      "summary": "模拟攻击流量在短时间内密集出现，中国的模拟活动指向日本的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-118",
+    "date": "2026-04-13",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国控制台入口的载荷投递",
+      "summary": "持续的自动化请求命中了暴露面，美国的模拟活动指向德国的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-119",
+    "date": "2026-04-13",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大边缘节点服务的权限提升",
+      "summary": "一次低噪声的渗透前探测被记录，日本的模拟活动指向加拿大的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-120",
+    "date": "2026-04-13",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威数据节点节点的会话劫持",
+      "summary": "短暂的高频探测覆盖了关键入口，俄罗斯的模拟活动指向挪威的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-121",
+    "date": "2026-04-14",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利云租户资产的扫描",
+      "summary": "观察到与身份相关的异常访问尝试，韩国的模拟活动指向意大利的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-122",
+    "date": "2026-04-14",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国身份服务入口的钓鱼",
+      "summary": "一条定向样本被发送到目标环境，印度的模拟活动指向美国的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-123",
+    "date": "2026-04-14",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国控制台服务的入侵尝试",
+      "summary": "模拟攻击流量在短时间内密集出现，德国的模拟活动指向英国的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-124",
+    "date": "2026-04-14",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚边缘节点节点的凭据喷洒",
+      "summary": "持续的自动化请求命中了暴露面，法国的模拟活动指向澳大利亚的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-125",
+    "date": "2026-04-15",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典数据节点资产的横向移动",
+      "summary": "一次低噪声的渗透前探测被记录，巴西的模拟活动指向瑞典的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-126",
+    "date": "2026-04-15",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时云租户入口的利用探测",
+      "summary": "短暂的高频探测覆盖了关键入口，西班牙的模拟活动指向比利时的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-127",
+    "date": "2026-04-15",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国身份服务服务的机器人洪泛",
+      "summary": "观察到与身份相关的异常访问尝试，意大利的模拟活动指向中国的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-128",
+    "date": "2026-04-15",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡控制台节点的载荷投递",
+      "summary": "一条定向样本被发送到目标环境，波兰的模拟活动指向新加坡的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-129",
+    "date": "2026-04-16",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国边缘节点资产的权限提升",
+      "summary": "模拟攻击流量在短时间内密集出现，土耳其的模拟活动指向法国的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-130",
+    "date": "2026-04-16",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰数据节点入口的会话劫持",
+      "summary": "持续的自动化请求命中了暴露面，加拿大的模拟活动指向荷兰的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-131",
+    "date": "2026-04-16",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦云租户服务的扫描",
+      "summary": "一次低噪声的渗透前探测被记录，澳大利亚的模拟活动指向丹麦的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-132",
+    "date": "2026-04-16",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙身份服务节点的钓鱼",
+      "summary": "短暂的高频探测覆盖了关键入口，荷兰的模拟活动指向西班牙的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-133",
+    "date": "2026-04-16",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本控制台资产的入侵尝试",
+      "summary": "观察到与身份相关的异常访问尝试，中国的模拟活动指向日本的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-134",
+    "date": "2026-04-17",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国边缘节点入口的凭据喷洒",
+      "summary": "一条定向样本被发送到目标环境，美国的模拟活动指向德国的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-135",
+    "date": "2026-04-17",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大数据节点服务的横向移动",
+      "summary": "模拟攻击流量在短时间内密集出现，日本的模拟活动指向加拿大的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-136",
+    "date": "2026-04-17",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威云租户节点的利用探测",
+      "summary": "持续的自动化请求命中了暴露面，俄罗斯的模拟活动指向挪威的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-137",
+    "date": "2026-04-17",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利身份服务资产的机器人洪泛",
+      "summary": "一次低噪声的渗透前探测被记录，韩国的模拟活动指向意大利的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-138",
+    "date": "2026-04-17",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国控制台入口的载荷投递",
+      "summary": "短暂的高频探测覆盖了关键入口，印度的模拟活动指向美国的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-139",
+    "date": "2026-04-18",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国边缘节点服务的权限提升",
+      "summary": "观察到与身份相关的异常访问尝试，德国的模拟活动指向英国的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-140",
+    "date": "2026-04-18",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚数据节点节点的会话劫持",
+      "summary": "一条定向样本被发送到目标环境，法国的模拟活动指向澳大利亚的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-141",
+    "date": "2026-04-18",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典云租户资产的扫描",
+      "summary": "模拟攻击流量在短时间内密集出现，巴西的模拟活动指向瑞典的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-142",
+    "date": "2026-04-18",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时身份服务入口的钓鱼",
+      "summary": "持续的自动化请求命中了暴露面，西班牙的模拟活动指向比利时的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-143",
+    "date": "2026-04-18",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国控制台服务的入侵尝试",
+      "summary": "一次低噪声的渗透前探测被记录，意大利的模拟活动指向中国的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-144",
+    "date": "2026-04-18",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡边缘节点节点的凭据喷洒",
+      "summary": "短暂的高频探测覆盖了关键入口，波兰的模拟活动指向新加坡的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-145",
+    "date": "2026-04-19",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国数据节点资产的横向移动",
+      "summary": "观察到与身份相关的异常访问尝试，土耳其的模拟活动指向法国的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-146",
+    "date": "2026-04-19",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰云租户入口的利用探测",
+      "summary": "一条定向样本被发送到目标环境，加拿大的模拟活动指向荷兰的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-147",
+    "date": "2026-04-19",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦身份服务服务的机器人洪泛",
+      "summary": "模拟攻击流量在短时间内密集出现，澳大利亚的模拟活动指向丹麦的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-148",
+    "date": "2026-04-19",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙控制台节点的载荷投递",
+      "summary": "持续的自动化请求命中了暴露面，荷兰的模拟活动指向西班牙的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-149",
+    "date": "2026-04-19",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本边缘节点资产的权限提升",
+      "summary": "一次低噪声的渗透前探测被记录，中国的模拟活动指向日本的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-150",
+    "date": "2026-04-19",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国数据节点入口的会话劫持",
+      "summary": "短暂的高频探测覆盖了关键入口，美国的模拟活动指向德国的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-151",
+    "date": "2026-04-19",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大云租户服务的扫描",
+      "summary": "观察到与身份相关的异常访问尝试，日本的模拟活动指向加拿大的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-152",
+    "date": "2026-04-20",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威身份服务节点的钓鱼",
+      "summary": "一条定向样本被发送到目标环境，俄罗斯的模拟活动指向挪威的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-153",
+    "date": "2026-04-20",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利控制台资产的入侵尝试",
+      "summary": "模拟攻击流量在短时间内密集出现，韩国的模拟活动指向意大利的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-154",
+    "date": "2026-04-20",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国边缘节点入口的凭据喷洒",
+      "summary": "持续的自动化请求命中了暴露面，印度的模拟活动指向美国的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-155",
+    "date": "2026-04-20",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国数据节点服务的横向移动",
+      "summary": "一次低噪声的渗透前探测被记录，德国的模拟活动指向英国的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-156",
+    "date": "2026-04-20",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚云租户节点的利用探测",
+      "summary": "短暂的高频探测覆盖了关键入口，法国的模拟活动指向澳大利亚的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-157",
+    "date": "2026-04-20",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典身份服务资产的机器人洪泛",
+      "summary": "观察到与身份相关的异常访问尝试，巴西的模拟活动指向瑞典的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-158",
+    "date": "2026-04-20",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时控制台入口的载荷投递",
+      "summary": "一条定向样本被发送到目标环境，西班牙的模拟活动指向比利时的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-159",
+    "date": "2026-04-20",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国边缘节点服务的权限提升",
+      "summary": "模拟攻击流量在短时间内密集出现，意大利的模拟活动指向中国的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-160",
+    "date": "2026-04-21",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡数据节点节点的会话劫持",
+      "summary": "持续的自动化请求命中了暴露面，波兰的模拟活动指向新加坡的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-161",
+    "date": "2026-04-21",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国云租户资产的扫描",
+      "summary": "一次低噪声的渗透前探测被记录，土耳其的模拟活动指向法国的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-162",
+    "date": "2026-04-21",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰身份服务入口的钓鱼",
+      "summary": "短暂的高频探测覆盖了关键入口，加拿大的模拟活动指向荷兰的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-163",
+    "date": "2026-04-21",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦控制台服务的入侵尝试",
+      "summary": "观察到与身份相关的异常访问尝试，澳大利亚的模拟活动指向丹麦的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-164",
+    "date": "2026-04-21",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙边缘节点节点的凭据喷洒",
+      "summary": "一条定向样本被发送到目标环境，荷兰的模拟活动指向西班牙的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-165",
+    "date": "2026-04-21",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本数据节点资产的横向移动",
+      "summary": "模拟攻击流量在短时间内密集出现，中国的模拟活动指向日本的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-166",
+    "date": "2026-04-21",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国云租户入口的利用探测",
+      "summary": "持续的自动化请求命中了暴露面，美国的模拟活动指向德国的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-167",
+    "date": "2026-04-21",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大身份服务服务的机器人洪泛",
+      "summary": "一次低噪声的渗透前探测被记录，日本的模拟活动指向加拿大的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-168",
+    "date": "2026-04-21",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威控制台节点的载荷投递",
+      "summary": "短暂的高频探测覆盖了关键入口，俄罗斯的模拟活动指向挪威的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-169",
+    "date": "2026-04-22",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利边缘节点资产的权限提升",
+      "summary": "观察到与身份相关的异常访问尝试，韩国的模拟活动指向意大利的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-170",
+    "date": "2026-04-22",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国数据节点入口的会话劫持",
+      "summary": "一条定向样本被发送到目标环境，印度的模拟活动指向美国的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-171",
+    "date": "2026-04-22",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国云租户服务的扫描",
+      "summary": "模拟攻击流量在短时间内密集出现，德国的模拟活动指向英国的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-172",
+    "date": "2026-04-22",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚身份服务节点的钓鱼",
+      "summary": "持续的自动化请求命中了暴露面，法国的模拟活动指向澳大利亚的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-173",
+    "date": "2026-04-22",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典控制台资产的入侵尝试",
+      "summary": "一次低噪声的渗透前探测被记录，巴西的模拟活动指向瑞典的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-174",
+    "date": "2026-04-22",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时边缘节点入口的凭据喷洒",
+      "summary": "短暂的高频探测覆盖了关键入口，西班牙的模拟活动指向比利时的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-175",
+    "date": "2026-04-22",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国数据节点服务的横向移动",
+      "summary": "观察到与身份相关的异常访问尝试，意大利的模拟活动指向中国的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-176",
+    "date": "2026-04-22",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡云租户节点的利用探测",
+      "summary": "一条定向样本被发送到目标环境，波兰的模拟活动指向新加坡的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-177",
+    "date": "2026-04-22",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国身份服务资产的机器人洪泛",
+      "summary": "模拟攻击流量在短时间内密集出现，土耳其的模拟活动指向法国的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-178",
+    "date": "2026-04-23",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰控制台入口的载荷投递",
+      "summary": "持续的自动化请求命中了暴露面，加拿大的模拟活动指向荷兰的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-179",
+    "date": "2026-04-23",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦边缘节点服务的权限提升",
+      "summary": "一次低噪声的渗透前探测被记录，澳大利亚的模拟活动指向丹麦的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-180",
+    "date": "2026-04-23",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙数据节点节点的会话劫持",
+      "summary": "短暂的高频探测覆盖了关键入口，荷兰的模拟活动指向西班牙的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-181",
+    "date": "2026-04-23",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本云租户资产的扫描",
+      "summary": "观察到与身份相关的异常访问尝试，中国的模拟活动指向日本的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-182",
+    "date": "2026-04-23",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国身份服务入口的钓鱼",
+      "summary": "一条定向样本被发送到目标环境，美国的模拟活动指向德国的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-183",
+    "date": "2026-04-23",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大控制台服务的入侵尝试",
+      "summary": "模拟攻击流量在短时间内密集出现，日本的模拟活动指向加拿大的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-184",
+    "date": "2026-04-23",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威边缘节点节点的凭据喷洒",
+      "summary": "持续的自动化请求命中了暴露面，俄罗斯的模拟活动指向挪威的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-185",
+    "date": "2026-04-23",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利数据节点资产的横向移动",
+      "summary": "一次低噪声的渗透前探测被记录，韩国的模拟活动指向意大利的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-186",
+    "date": "2026-04-23",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国云租户入口的利用探测",
+      "summary": "短暂的高频探测覆盖了关键入口，印度的模拟活动指向美国的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-187",
+    "date": "2026-04-23",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国身份服务服务的机器人洪泛",
+      "summary": "观察到与身份相关的异常访问尝试，德国的模拟活动指向英国的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-188",
+    "date": "2026-04-24",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚控制台节点的载荷投递",
+      "summary": "一条定向样本被发送到目标环境，法国的模拟活动指向澳大利亚的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-189",
+    "date": "2026-04-24",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典边缘节点资产的权限提升",
+      "summary": "模拟攻击流量在短时间内密集出现，巴西的模拟活动指向瑞典的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-190",
+    "date": "2026-04-24",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时数据节点入口的会话劫持",
+      "summary": "持续的自动化请求命中了暴露面，西班牙的模拟活动指向比利时的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-191",
+    "date": "2026-04-24",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国云租户服务的扫描",
+      "summary": "一次低噪声的渗透前探测被记录，意大利的模拟活动指向中国的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-192",
+    "date": "2026-04-24",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡身份服务节点的钓鱼",
+      "summary": "短暂的高频探测覆盖了关键入口，波兰的模拟活动指向新加坡的身份服务，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-193",
+    "date": "2026-04-24",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国控制台资产的入侵尝试",
+      "summary": "观察到与身份相关的异常访问尝试，土耳其的模拟活动指向法国的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-194",
+    "date": "2026-04-24",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰边缘节点入口的凭据喷洒",
+      "summary": "一条定向样本被发送到目标环境，加拿大的模拟活动指向荷兰的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-195",
+    "date": "2026-04-24",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦数据节点服务的横向移动",
+      "summary": "模拟攻击流量在短时间内密集出现，澳大利亚的模拟活动指向丹麦的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-196",
+    "date": "2026-04-24",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙云租户节点的利用探测",
+      "summary": "持续的自动化请求命中了暴露面，荷兰的模拟活动指向西班牙的云租户，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-197",
+    "date": "2026-04-24",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本身份服务资产的机器人洪泛",
+      "summary": "一次低噪声的渗透前探测被记录，中国的模拟活动指向日本的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-198",
+    "date": "2026-04-25",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国控制台入口的载荷投递",
+      "summary": "短暂的高频探测覆盖了关键入口，美国的模拟活动指向德国的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-199",
+    "date": "2026-04-25",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大边缘节点服务的权限提升",
+      "summary": "观察到与身份相关的异常访问尝试，日本的模拟活动指向加拿大的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-200",
+    "date": "2026-04-25",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威数据节点节点的会话劫持",
+      "summary": "一条定向样本被发送到目标环境，俄罗斯的模拟活动指向挪威的数据节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-201",
+    "date": "2026-04-25",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利云租户资产的扫描",
+      "summary": "模拟攻击流量在短时间内密集出现，韩国的模拟活动指向意大利的云租户，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-202",
+    "date": "2026-04-25",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国身份服务入口的钓鱼",
+      "summary": "持续的自动化请求命中了暴露面，印度的模拟活动指向美国的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-203",
+    "date": "2026-04-25",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国控制台服务的入侵尝试",
+      "summary": "一次低噪声的渗透前探测被记录，德国的模拟活动指向英国的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-204",
+    "date": "2026-04-25",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚边缘节点节点的凭据喷洒",
+      "summary": "短暂的高频探测覆盖了关键入口，法国的模拟活动指向澳大利亚的边缘节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-205",
+    "date": "2026-04-25",
+    "attackerCountry": "BR",
+    "victimCountry": "SE",
+    "details": {
+      "title": "巴西对瑞典数据节点资产的横向移动",
+      "summary": "观察到与身份相关的异常访问尝试，巴西的模拟活动指向瑞典的数据节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-206",
+    "date": "2026-04-25",
+    "attackerCountry": "ES",
+    "victimCountry": "BE",
+    "details": {
+      "title": "西班牙对比利时云租户入口的利用探测",
+      "summary": "一条定向样本被发送到目标环境，西班牙的模拟活动指向比利时的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-207",
+    "date": "2026-04-25",
+    "attackerCountry": "IT",
+    "victimCountry": "CN",
+    "details": {
+      "title": "意大利对中国身份服务服务的机器人洪泛",
+      "summary": "模拟攻击流量在短时间内密集出现，意大利的模拟活动指向中国的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-208",
+    "date": "2026-04-25",
+    "attackerCountry": "PL",
+    "victimCountry": "SG",
+    "details": {
+      "title": "波兰对新加坡控制台节点的载荷投递",
+      "summary": "持续的自动化请求命中了暴露面，波兰的模拟活动指向新加坡的控制台，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-209",
+    "date": "2026-04-26",
+    "attackerCountry": "TR",
+    "victimCountry": "FR",
+    "details": {
+      "title": "土耳其对法国边缘节点资产的权限提升",
+      "summary": "一次低噪声的渗透前探测被记录，土耳其的模拟活动指向法国的边缘节点，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-210",
+    "date": "2026-04-26",
+    "attackerCountry": "CA",
+    "victimCountry": "NL",
+    "details": {
+      "title": "加拿大对荷兰数据节点入口的会话劫持",
+      "summary": "短暂的高频探测覆盖了关键入口，加拿大的模拟活动指向荷兰的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-211",
+    "date": "2026-04-26",
+    "attackerCountry": "AU",
+    "victimCountry": "DK",
+    "details": {
+      "title": "澳大利亚对丹麦云租户服务的扫描",
+      "summary": "观察到与身份相关的异常访问尝试，澳大利亚的模拟活动指向丹麦的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-212",
+    "date": "2026-04-26",
+    "attackerCountry": "NL",
+    "victimCountry": "ES",
+    "details": {
+      "title": "荷兰对西班牙身份服务节点的钓鱼",
+      "summary": "一条定向样本被发送到目标环境，荷兰的模拟活动指向西班牙的身份服务，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-213",
+    "date": "2026-04-26",
+    "attackerCountry": "CN",
+    "victimCountry": "JP",
+    "details": {
+      "title": "中国对日本控制台资产的入侵尝试",
+      "summary": "模拟攻击流量在短时间内密集出现，中国的模拟活动指向日本的控制台，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-214",
+    "date": "2026-04-26",
+    "attackerCountry": "US",
+    "victimCountry": "DE",
+    "details": {
+      "title": "美国对德国边缘节点入口的凭据喷洒",
+      "summary": "持续的自动化请求命中了暴露面，美国的模拟活动指向德国的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-215",
+    "date": "2026-04-26",
+    "attackerCountry": "JP",
+    "victimCountry": "CA",
+    "details": {
+      "title": "日本对加拿大数据节点服务的横向移动",
+      "summary": "一次低噪声的渗透前探测被记录，日本的模拟活动指向加拿大的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-216",
+    "date": "2026-04-26",
+    "attackerCountry": "RU",
+    "victimCountry": "NO",
+    "details": {
+      "title": "俄罗斯对挪威云租户节点的利用探测",
+      "summary": "短暂的高频探测覆盖了关键入口，俄罗斯的模拟活动指向挪威的云租户，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-217",
+    "date": "2026-04-26",
+    "attackerCountry": "KR",
+    "victimCountry": "IT",
+    "details": {
+      "title": "韩国对意大利身份服务资产的机器人洪泛",
+      "summary": "观察到与身份相关的异常访问尝试，韩国的模拟活动指向意大利的身份服务，呈现low级别风险。",
+      "severity": "low"
+    }
+  },
+  {
+    "uuid": "mock-218",
+    "date": "2026-04-26",
+    "attackerCountry": "IN",
+    "victimCountry": "US",
+    "details": {
+      "title": "印度对美国控制台入口的载荷投递",
+      "summary": "一条定向样本被发送到目标环境，印度的模拟活动指向美国的控制台，呈现high级别风险。",
+      "severity": "high"
+    }
+  },
+  {
+    "uuid": "mock-219",
+    "date": "2026-04-26",
+    "attackerCountry": "DE",
+    "victimCountry": "GB",
+    "details": {
+      "title": "德国对英国边缘节点服务的权限提升",
+      "summary": "模拟攻击流量在短时间内密集出现，德国的模拟活动指向英国的边缘节点，呈现medium级别风险。",
+      "severity": "medium"
+    }
+  },
+  {
+    "uuid": "mock-220",
+    "date": "2026-04-26",
+    "attackerCountry": "FR",
+    "victimCountry": "AU",
+    "details": {
+      "title": "法国对澳大利亚数据节点节点的会话劫持",
+      "summary": "持续的自动化请求命中了暴露面，法国的模拟活动指向澳大利亚的数据节点，呈现high级别风险。",
+      "severity": "high"
+    }
+  }
+]
