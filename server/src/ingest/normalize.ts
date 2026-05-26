@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { EventLevel, HoverIncidentSeed, LatestContentItemSeed } from '../../../shared/types.js';
+import type { EventLevel, HoverIncidentSeed } from '../../../shared/types.js';
 
 export interface NormalizedIncident {
   id: string;
@@ -9,20 +9,11 @@ export interface NormalizedIncident {
   attackerCountry: string;
   victimCountry: string;
   severity: EventLevel;
+  ransomAmount: number;
   title: string;
   summary: string;
   sourceLabel: string;
   sourceAddress: string;
-  dedupeKey: string;
-}
-
-export interface NormalizedContentItem {
-  id: string;
-  externalId: string;
-  category: string;
-  title: string;
-  summary: string;
-  publishedAt: string;
   dedupeKey: string;
 }
 
@@ -55,6 +46,30 @@ function ensureEventLevel(value: unknown): EventLevel {
     return value;
   }
   throw new Error('severity must be one of low, medium or high');
+}
+
+function ensureNonNegativeInteger(value: unknown, fieldName: string): number {
+  const amount = Number(value);
+  if (!Number.isSafeInteger(amount) || amount < 0) {
+    throw new Error(`${fieldName} must be a non-negative integer`);
+  }
+  return amount;
+}
+
+function buildRansomAmount(externalId: string, severity: EventLevel, attackerCountry: string, victimCountry: string): number {
+  const hash = hashText(`${externalId}:${attackerCountry}:${victimCountry}:ransom`);
+  const severityBase: Record<EventLevel, number> = {
+    low: 12000000,
+    medium: 86000000,
+    high: 360000000,
+  };
+  const severitySpread: Record<EventLevel, number> = {
+    low: 58000000,
+    medium: 220000000,
+    high: 1480000000,
+  };
+
+  return severityBase[severity] + (hash % severitySpread[severity]);
 }
 
 function ensureIsoTimestamp(value: string, fieldName: string): string {
@@ -108,6 +123,9 @@ export function normalizeIncidentInput(record: unknown): NormalizedIncident {
     row.sourceAddress ?? buildSourceAddress(externalId, attackerCountry),
     'incident.sourceAddress',
   );
+  const ransomAmount = row.ransomAmount == null
+    ? buildRansomAmount(externalId, severity, attackerCountry, victimCountry)
+    : ensureNonNegativeInteger(row.ransomAmount, 'incident.ransomAmount');
 
   return {
     id: externalId,
@@ -117,36 +135,11 @@ export function normalizeIncidentInput(record: unknown): NormalizedIncident {
     attackerCountry,
     victimCountry,
     severity,
+    ransomAmount,
     title,
     summary,
     sourceLabel,
     sourceAddress,
     dedupeKey: buildDedupeKey([externalId, attackerCountry, victimCountry, occurredAt]),
-  };
-}
-
-export function normalizeContentInput(record: unknown): NormalizedContentItem {
-  if (typeof record !== 'object' || record === null) {
-    throw new Error('content record must be an object');
-  }
-
-  const row = record as Partial<LatestContentItemSeed> & Record<string, unknown>;
-  const externalId = ensureNonEmptyString(row.id ?? row.externalId, 'content.externalId');
-  const category = ensureNonEmptyString(row.category, 'content.category').toLowerCase();
-  const title = ensureNonEmptyString(row.title, 'content.title');
-  const summary = ensureNonEmptyString(row.summary, 'content.summary');
-  const publishedAt = ensureIsoTimestamp(
-    ensureNonEmptyString(row.publishedAt ?? row.createdAt, 'content.publishedAt'),
-    'content.publishedAt',
-  );
-
-  return {
-    id: externalId,
-    externalId,
-    category,
-    title,
-    summary,
-    publishedAt,
-    dedupeKey: buildDedupeKey([externalId, category, publishedAt]),
   };
 }

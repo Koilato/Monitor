@@ -1,4 +1,4 @@
-import type { AllFlowResponse } from '@shared/types';
+import type { AllFlowResponse, ThreatMapResponse } from '@shared/types';
 import { getChineseCountryName } from 'map/lib/country-names-zh';
 
 export type TrafficStatTone = 'critical' | 'warning' | 'info' | 'neutral';
@@ -16,13 +16,6 @@ export interface TrafficStatsSummary {
   totalVolume: number;
   bars: TrafficStatItem[];
   origins: TrafficStatItem[];
-}
-
-export interface ThreatTrendDatum {
-  date: string;
-  high: number;
-  medium: number;
-  low: number;
 }
 
 export interface ThreatFrequencyTotals {
@@ -100,11 +93,11 @@ export function buildTrafficStats(
   };
 }
 
-export function summarizeThreatFrequency(data: ThreatTrendDatum[]): ThreatFrequencyTotals {
-  return data.reduce<ThreatFrequencyTotals>((totals, item) => ({
-    high: totals.high + item.high,
-    medium: totals.medium + item.medium,
-    low: totals.low + item.low,
+export function summarizeThreatFrequency(data: ThreatMapResponse | null): ThreatFrequencyTotals {
+  return (data?.countries ?? []).reduce<ThreatFrequencyTotals>((totals, item) => ({
+    high: totals.high + item.severityCounts.high,
+    medium: totals.medium + item.severityCounts.medium,
+    low: totals.low + item.severityCounts.low,
   }), {
     high: 0,
     medium: 0,

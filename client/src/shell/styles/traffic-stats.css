@@ -1,5 +1,5 @@
 .traffic-stats-section {
-  flex: 0 0 var(--latest-feed-height, 160px);
+  flex: 0 0 var(--traffic-stats-height, 160px);
   min-height: 100px;
   border: 1px solid var(--border);
   border-top: none;

@@ -2,10 +2,11 @@ import type {
   AllFlowResponse,
   CountryHoverResponse,
   DateRange,
-  LatestContentResponse,
+  RansomwareKpiResponse,
   ThreatIntelResponse,
   ThreatIntelSortOrder,
   ThreatMapResponse,
+  ThreatTrendResponse,
 } from '@shared/types';
 
 const API_BASE_URL = (import.meta as ImportMeta & {
@@ -71,33 +72,6 @@ export async function fetchAllFlows(
   return response.json() as Promise<AllFlowResponse>;
 }
 
-export function buildLatestContentUrl(
-  category: string,
-  limit: number,
-  offset = 0,
-): string {
-  const url = new URL('/api/v1/content/feed', API_BASE_URL);
-  url.searchParams.set('category', category);
-  url.searchParams.set('limit', String(limit));
-  url.searchParams.set('offset', String(offset));
-  return url.toString();
-}
-
-export async function fetchLatestContent(
-  category: string,
-  limit: number,
-  offset = 0,
-  signal?: AbortSignal,
-): Promise<LatestContentResponse> {
-  const response = await fetch(buildLatestContentUrl(category, limit, offset), { signal });
-
-  if (!response.ok) {
-    throw await parseError(response);
-  }
-
-  return response.json() as Promise<LatestContentResponse>;
-}
-
 export function buildThreatMapUrl(range: DateRange): string {
   const url = new URL('/api/v1/map/summary', API_BASE_URL);
   if (range.startDate) {
@@ -120,6 +94,54 @@ export async function fetchThreatMap(
   }
 
   return response.json() as Promise<ThreatMapResponse>;
+}
+
+export function buildThreatTrendUrl(range: DateRange): string {
+  const url = new URL('/api/v1/map/trends', API_BASE_URL);
+  if (range.startDate) {
+    url.searchParams.set('startDate', range.startDate);
+  }
+  if (range.endDate) {
+    url.searchParams.set('endDate', range.endDate);
+  }
+  return url.toString();
+}
+
+export async function fetchThreatTrend(
+  range: DateRange,
+  signal?: AbortSignal,
+): Promise<ThreatTrendResponse> {
+  const response = await fetch(buildThreatTrendUrl(range), { signal });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return response.json() as Promise<ThreatTrendResponse>;
+}
+
+export function buildRansomwareKpisUrl(range: DateRange): string {
+  const url = new URL('/api/v1/map/ransomware-kpis', API_BASE_URL);
+  if (range.startDate) {
+    url.searchParams.set('startDate', range.startDate);
+  }
+  if (range.endDate) {
+    url.searchParams.set('endDate', range.endDate);
+  }
+  return url.toString();
+}
+
+export async function fetchRansomwareKpis(
+  range: DateRange,
+  signal?: AbortSignal,
+): Promise<RansomwareKpiResponse> {
+  const response = await fetch(buildRansomwareKpisUrl(range), { signal });
+
+  if (!response.ok) {
+    throw await parseError(response);
+  }
+
+  return response.json() as Promise<RansomwareKpiResponse>;
 }
 
 export function buildThreatIntelUrl(

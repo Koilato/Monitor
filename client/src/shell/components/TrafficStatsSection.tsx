@@ -1,11 +1,10 @@
-import type { AllFlowResponse } from '@shared/types';
+import type { AllFlowResponse, RansomwareKpiResponse, ThreatMapResponse, ThreatTrendResponse } from '@shared/types';
 import type { RefObject } from 'react';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import type { TrafficStatsDebugSettings } from 'map/state/map-types';
 import {
   buildTrafficStats,
   summarizeThreatFrequency,
-  type ThreatTrendDatum,
   type TrafficStatItem,
   type TrafficStatTone,
 } from 'shell/lib/traffic-stats';
@@ -13,6 +12,15 @@ import {
 interface TrafficStatsSectionProps {
   sectionRef: RefObject<HTMLElement | null>;
   data: AllFlowResponse | null;
+  threatData: ThreatMapResponse | null;
+  threatLoading: boolean;
+  threatError: string | null;
+  trendData: ThreatTrendResponse | null;
+  trendLoading: boolean;
+  trendError: string | null;
+  ransomwareKpis: RansomwareKpiResponse | null;
+  ransomwareKpisLoading: boolean;
+  ransomwareKpisError: string | null;
   loading: boolean;
   error: string | null;
   settings: TrafficStatsDebugSettings;
@@ -24,22 +32,6 @@ const TONE_COLOR_MAP: Record<TrafficStatTone, string> = {
   info: '#14b8a6',
   neutral: 'rgba(185,198,204,0.16)',
 };
-
-const RANSOMWARE_STATS = {
-  max: 3850000000,
-  median: 24500000,
-  avg: 186000000,
-} as const;
-
-const THREAT_TREND_DATA: ThreatTrendDatum[] = [
-  { date: '04-21', high: 16, medium: 10, low: 7 },
-  { date: '04-22', high: 13, medium: 12, low: 11 },
-  { date: '04-23', high: 18, medium: 14, low: 9 },
-  { date: '04-24', high: 11, medium: 16, low: 12 },
-  { date: '04-25', high: 19, medium: 13, low: 15 },
-  { date: '04-26', high: 9, medium: 11, low: 8 },
-  { date: '04-27', high: 15, medium: 9, low: 10 },
-];
 
 function formatCount(value: number): string {
   return new Intl.NumberFormat('zh-CN').format(value);
@@ -54,7 +46,21 @@ function formatPercent(value: number): string {
 }
 
 function formatRansomAmount(value: number): string {
-  return (value / 1000000).toFixed(2);
+  return (value / 1000000000).toFixed(2);
+}
+
+function formatDateTick(value: string): string {
+  return value.slice(5);
+}
+
+function formatKpiValue(value: number | null | undefined, loading: boolean, error: string | null): string {
+  if (error) {
+    return '错误';
+  }
+  if (loading || value == null) {
+    return loading ? '...' : '--';
+  }
+  return formatRansomAmount(value);
 }
 
 interface SvgPoint {
@@ -231,10 +237,16 @@ function buildThreatDonutSegments(
   });
 }
 
-function renderThreatTrend(settings: TrafficStatsDebugSettings) {
+function renderThreatTrend(
+  settings: TrafficStatsDebugSettings,
+  data: ThreatTrendResponse | null,
+  isLoading: boolean,
+  error: string | null,
+) {
+  const days = data?.days ?? [];
   const axisFontSize = resolveTickFontSize(settings.uiScale, settings.trendAxisLabelScale);
   const yAxisWidth = resolveYAxisWidth(
-    Math.max(...THREAT_TREND_DATA.map((item) => Math.max(item.high, item.medium, item.low))),
+    Math.max(0, ...days.map((item) => Math.max(item.high, item.medium, item.low))),
     axisFontSize,
   );
 
@@ -262,58 +274,67 @@ function renderThreatTrend(settings: TrafficStatsDebugSettings) {
       </header>
 
       <div className="traffic-panel-body traffic-panel-body--trend">
-        <div className="threat-trend-chart">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={THREAT_TREND_DATA} margin={{ top: 10, right: 4, left: 0, bottom: 2 }}>
-            <CartesianGrid vertical={false} stroke="rgba(159,179,190,0.1)" strokeDasharray="2 6" />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              width={yAxisWidth}
-              tickMargin={8}
-              tick={{ fill: 'rgba(255,255,255,0.34)', fontSize: axisFontSize, fontWeight: 700 }}
-            />
-            <XAxis
-              dataKey="date"
-              axisLine={false}
-              tickLine={false}
-              dy={8}
-              tickMargin={4}
-              tick={{ fill: 'rgba(255,255,255,0.28)', fontSize: axisFontSize, fontWeight: 700 }}
-            />
-            <Area
-              type="monotone"
-              dataKey="high"
-              stroke="var(--threat-high)"
-              fill="var(--threat-high)"
-              fillOpacity={Math.min(settings.trendAreaOpacity, 0.18)}
-              strokeWidth={settings.trendStrokeWidth}
-              dot={false}
-              activeDot={false}
-            />
-            <Area
-              type="monotone"
-              dataKey="medium"
-              stroke="var(--threat-medium)"
-              fill="var(--threat-medium)"
-              fillOpacity={Math.min(settings.trendAreaOpacity, 0.18)}
-              strokeWidth={settings.trendStrokeWidth}
-              dot={false}
-              activeDot={false}
-            />
-            <Area
-              type="monotone"
-              dataKey="low"
-              stroke="var(--threat-low)"
-              fill="var(--threat-low)"
-              fillOpacity={Math.min(settings.trendAreaOpacity, 0.18)}
-              strokeWidth={settings.trendStrokeWidth}
-              dot={false}
-              activeDot={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+        {isLoading ? (
+          <div className="traffic-panel-empty">正在汇总当前时间范围的趋势数据...</div>
+        ) : error ? (
+          <div className="traffic-panel-empty traffic-panel-empty--error">{error}</div>
+        ) : days.length > 0 ? (
+          <div className="threat-trend-chart">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={days} margin={{ top: 10, right: 4, left: 0, bottom: 2 }}>
+                <CartesianGrid vertical={false} stroke="rgba(159,179,190,0.1)" strokeDasharray="2 6" />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  width={yAxisWidth}
+                  tickMargin={8}
+                  tick={{ fill: 'rgba(255,255,255,0.34)', fontSize: axisFontSize, fontWeight: 700 }}
+                />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatDateTick}
+                  axisLine={false}
+                  tickLine={false}
+                  dy={8}
+                  tickMargin={4}
+                  tick={{ fill: 'rgba(255,255,255,0.28)', fontSize: axisFontSize, fontWeight: 700 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="high"
+                  stroke="var(--threat-high)"
+                  fill="var(--threat-high)"
+                  fillOpacity={Math.min(settings.trendAreaOpacity, 0.18)}
+                  strokeWidth={settings.trendStrokeWidth}
+                  dot={false}
+                  activeDot={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="medium"
+                  stroke="var(--threat-medium)"
+                  fill="var(--threat-medium)"
+                  fillOpacity={Math.min(settings.trendAreaOpacity, 0.18)}
+                  strokeWidth={settings.trendStrokeWidth}
+                  dot={false}
+                  activeDot={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="low"
+                  stroke="var(--threat-low)"
+                  fill="var(--threat-low)"
+                  fillOpacity={Math.min(settings.trendAreaOpacity, 0.18)}
+                  strokeWidth={settings.trendStrokeWidth}
+                  dot={false}
+                  activeDot={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="traffic-panel-empty">当前时间范围内没有可展示的趋势数据。</div>
+        )}
       </div>
     </div>
   );
@@ -386,8 +407,12 @@ function renderTrafficVolumePanel(
   );
 }
 
-function renderThreatSummary() {
-  const totals = summarizeThreatFrequency(THREAT_TREND_DATA);
+function renderThreatSummary(
+  threatData: ThreatMapResponse | null,
+  isLoading: boolean,
+  error: string | null,
+) {
+  const totals = summarizeThreatFrequency(threatData);
   const summaryItems = buildThreatDonutSegments(totals);
 
   return (
@@ -400,7 +425,12 @@ function renderThreatSummary() {
       </header>
 
       <div className="traffic-panel-body traffic-panel-body--summary">
-        <div className="threat-donut-wrap">
+        {isLoading ? (
+          <div className="traffic-panel-empty">正在汇总当前时间范围的威胁统计...</div>
+        ) : error ? (
+          <div className="traffic-panel-empty traffic-panel-empty--error">{error}</div>
+        ) : summaryItems.length > 0 ? (
+          <div className="threat-donut-wrap">
           <svg className="threat-donut-chart" viewBox="0 0 236 170" role="img" aria-label="高危、中危、低危威胁占比">
             <circle className="threat-donut-track" cx="100" cy="88" r="58" />
             {summaryItems.map((item) => (
@@ -427,13 +457,20 @@ function renderThreatSummary() {
               </g>
             ))}
           </svg>
-        </div>
+          </div>
+        ) : (
+          <div className="traffic-panel-empty">当前时间范围内没有可展示的威胁统计。</div>
+        )}
       </div>
     </div>
   );
 }
 
-function renderEconomicKpisPanel() {
+function renderEconomicKpisPanel(
+  data: RansomwareKpiResponse | null,
+  isLoading: boolean,
+  error: string | null,
+) {
   return (
     <div className="traffic-stats-panel traffic-stats-panel--economic" aria-label="赎金经济指标">
       <div className="traffic-economic-card traffic-economic-card--max">
@@ -444,7 +481,7 @@ function renderEconomicKpisPanel() {
         <div className="traffic-economic-card__value-row">
           <div className="traffic-economic-card__value-group">
             <span className="traffic-economic-card__value traffic-economic-card__value--max">
-              ￥{formatRansomAmount(RANSOMWARE_STATS.max)}
+              ￥{formatKpiValue(data?.max, isLoading, error)}
             </span>
             <span className="traffic-economic-card__unit traffic-economic-card__unit--max">B</span>
           </div>
@@ -460,7 +497,7 @@ function renderEconomicKpisPanel() {
         <div className="traffic-economic-card__value-row">
           <div className="traffic-economic-card__value-group">
             <span className="traffic-economic-card__value traffic-economic-card__value--avg">
-              ￥{formatRansomAmount(RANSOMWARE_STATS.avg)}
+              ￥{formatKpiValue(data?.avg, isLoading, error)}
             </span>
             <span className="traffic-economic-card__unit traffic-economic-card__unit--avg">B</span>
           </div>
@@ -476,7 +513,7 @@ function renderEconomicKpisPanel() {
         <div className="traffic-economic-card__value-row">
           <div className="traffic-economic-card__value-group">
             <span className="traffic-economic-card__value traffic-economic-card__value--median">
-              ￥{formatRansomAmount(RANSOMWARE_STATS.median)}
+              ￥{formatKpiValue(data?.median, isLoading, error)}
             </span>
             <span className="traffic-economic-card__unit traffic-economic-card__unit--median">B</span>
           </div>
@@ -488,7 +525,22 @@ function renderEconomicKpisPanel() {
 }
 
 export function TrafficStatsSection(props: TrafficStatsSectionProps) {
-  const { sectionRef, data, loading, error, settings } = props;
+  const {
+    sectionRef,
+    data,
+    threatData,
+    threatLoading,
+    threatError,
+    trendData,
+    trendLoading,
+    trendError,
+    ransomwareKpis,
+    ransomwareKpisLoading,
+    ransomwareKpisError,
+    loading,
+    error,
+    settings,
+  } = props;
   const summary = buildTrafficStats(data, {
     barLimit: settings.barCount,
     listLimit: settings.originCount,
@@ -512,10 +564,10 @@ export function TrafficStatsSection(props: TrafficStatsSectionProps) {
         ['--traffic-summary-value-scale' as string]: String(settings.summaryValueScale),
       }}
     >
-      {renderThreatTrend(settings)}
+      {renderThreatTrend(settings, trendData, trendLoading, trendError)}
       {renderTrafficVolumePanel(summary.bars, settings, isLoading, error, hasData, summary.totalVolume)}
-      {renderThreatSummary()}
-      {renderEconomicKpisPanel()}
+      {renderThreatSummary(threatData, threatLoading, threatError)}
+      {renderEconomicKpisPanel(ransomwareKpis, ransomwareKpisLoading, ransomwareKpisError)}
     </section>
   );
 }

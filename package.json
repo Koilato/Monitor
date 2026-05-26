@@ -16,7 +16,6 @@
     "build": "npm run build:server && npm run build:client",
     "seed": "npm --workspace server run seed",
     "import:incidents": "npm --workspace server run import:incidents",
-    "import:content": "npm --workspace server run import:content",
     "rebuild:aggregates": "npm --workspace server run rebuild:aggregates"
   },
   "devDependencies": {

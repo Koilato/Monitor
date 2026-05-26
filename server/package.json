@@ -9,7 +9,6 @@
     "build": "tsc -p tsconfig.json",
     "seed": "tsx src/tasks.ts seed",
     "import:incidents": "tsx src/tasks.ts import-incidents",
-    "import:content": "tsx src/tasks.ts import-content",
     "rebuild:aggregates": "tsx src/tasks.ts rebuild-aggregates"
   },
   "dependencies": {

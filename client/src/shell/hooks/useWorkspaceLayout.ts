@@ -120,7 +120,7 @@ export function applyWorkspaceLayoutCssVars(
     `${snapshot.clampedLeftBottomHeight}px`,
   );
   targets.latestSection?.style.setProperty(
-    '--latest-feed-height',
+    '--traffic-stats-height',
     `${snapshot.clampedLatestSectionHeight}px`,
   );
 }

@@ -7,7 +7,6 @@ import {
   normalizeDate,
   normalizeOptionalCountryCode,
   normalizePositiveInt,
-  normalizeQueryText,
   normalizeSeverity,
   normalizeSortOrder,
 } from './validation.js';
@@ -58,26 +57,6 @@ export function createApp(options: CreateAppOptions = {}) {
     }));
   });
 
-  app.get('/api/v1/content/feed', (req, res) => {
-    const category = normalizeQueryText(req.query.category, 'category', 'sql').toLowerCase();
-    const limit = normalizePositiveInt(req.query.limit, 'limit', {
-      fallback: 5,
-      min: 1,
-      max: 50,
-    });
-    const offset = normalizePositiveInt(req.query.offset, 'offset', {
-      fallback: 0,
-      min: 0,
-      max: 100000,
-    });
-
-    res.json(runtime.computeService.getLatestContentFeed({
-      category,
-      limit,
-      offset,
-    }));
-  });
-
   app.get('/api/v1/intel/feed', (req, res) => {
     const sort = normalizeSortOrder(req.query.sort, 'sort', 'desc');
     const limit = normalizePositiveInt(req.query.limit, 'limit', {
@@ -115,6 +94,28 @@ export function createApp(options: CreateAppOptions = {}) {
     assertDateRange(startDate, endDate);
 
     res.json(runtime.computeService.getThreatMapSummary({
+      startDate,
+      endDate,
+    }));
+  });
+
+  app.get('/api/v1/map/trends', (req, res) => {
+    const startDate = normalizeDate(req.query.startDate, 'startDate');
+    const endDate = normalizeDate(req.query.endDate, 'endDate');
+    assertDateRange(startDate, endDate);
+
+    res.json(runtime.computeService.getThreatTrend({
+      startDate,
+      endDate,
+    }));
+  });
+
+  app.get('/api/v1/map/ransomware-kpis', (req, res) => {
+    const startDate = normalizeDate(req.query.startDate, 'startDate');
+    const endDate = normalizeDate(req.query.endDate, 'endDate');
+    assertDateRange(startDate, endDate);
+
+    res.json(runtime.computeService.getRansomwareKpis({
       startDate,
       endDate,
     }));

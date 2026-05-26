@@ -6,7 +6,7 @@
 
 - `client/`：Vite + React + TypeScript 前端界面
 - `server/`：Express + TypeScript + SQLite 后端
-- `server/fixtures/`：初始化 seed 数据
+- `server/fixtures/incidents.json`：初始化 seed 数据
 - `shared/`：共享响应与查询类型
 
 ## Install
@@ -58,7 +58,7 @@ npm run build:client
 
 ## Seed And Import
 
-后端会在空 SQLite 数据库启动时自动从 `server/fixtures/` 导入示例数据。
+后端会在空 SQLite 数据库启动时自动从 `server/fixtures/incidents.json` 导入示例数据。SQLite 数据库文件会生成在 `server/data/`，属于本地运行时文件，不提交到仓库。
 
 你也可以手动执行：
 
@@ -70,7 +70,6 @@ npm run seed
 
 ```bash
 npm run import:incidents -- /absolute/path/incidents.json
-npm run import:content -- /absolute/path/content-items.json
 ```
 
 重建聚合表：

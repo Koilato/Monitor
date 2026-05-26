@@ -12,7 +12,6 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      content: path.resolve(__dirname, './src/content'),
       map: path.resolve(__dirname, './src/map'),
       shared: path.resolve(__dirname, './src/shared'),
       shell: path.resolve(__dirname, './src/shell'),

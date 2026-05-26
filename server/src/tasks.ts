@@ -24,20 +24,13 @@ function main(): void {
   try {
     if (command === 'seed') {
       const incidents = runtime.ingestService.importIncidents(fixtures.incidents, 'fixture_seed', 'Fixture Seed');
-      const content = runtime.ingestService.importContent(fixtures.contentItems, 'fixture_seed', 'Fixture Seed');
-      console.log(JSON.stringify({ incidents, content }, null, 2));
+      console.log(JSON.stringify({ incidents }, null, 2));
       return;
     }
 
     if (command === 'import-incidents') {
       const records = readJsonArray(maybePath, command);
       console.log(JSON.stringify(runtime.ingestService.importIncidents(records, 'manual_import', 'Manual Import'), null, 2));
-      return;
-    }
-
-    if (command === 'import-content') {
-      const records = readJsonArray(maybePath, command);
-      console.log(JSON.stringify(runtime.ingestService.importContent(records, 'manual_import', 'Manual Import'), null, 2));
       return;
     }
 

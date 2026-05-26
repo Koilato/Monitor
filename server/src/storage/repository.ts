@@ -12,23 +12,11 @@ export interface IncidentRow {
   attackerCountry: string;
   victimCountry: string;
   severity: EventLevel;
+  ransomAmount: number;
   title: string;
   summary: string;
   sourceLabel: string;
   sourceAddress: string;
-  dedupeKey: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ContentRow {
-  id: string;
-  externalId: string;
-  category: string;
-  title: string;
-  summary: string;
-  publishedAt: string;
-  sourceId: number;
   dedupeKey: string;
   createdAt: string;
   updatedAt: string;
@@ -78,6 +66,7 @@ export function createRepository(db: DatabaseSync) {
       attacker_country,
       victim_country,
       severity,
+      ransom_amount,
       title,
       summary,
       source_label,
@@ -85,24 +74,9 @@ export function createRepository(db: DatabaseSync) {
       dedupe_key,
       created_at,
       updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  const insertContent = db.prepare(`
-    INSERT OR IGNORE INTO content_items (
-      id,
-      external_id,
-      category,
-      title,
-      summary,
-      published_at,
-      source_id,
-      dedupe_key,
-      created_at,
-      updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const countIncidents = db.prepare('SELECT COUNT(*) AS total FROM incidents');
-  const countContent = db.prepare('SELECT COUNT(*) AS total FROM content_items');
 
   return {
     getOrCreateSourceId(code: string, label = code): number {
@@ -143,6 +117,7 @@ export function createRepository(db: DatabaseSync) {
         record.attackerCountry,
         record.victimCountry,
         record.severity,
+        record.ransomAmount,
         record.title,
         record.summary,
         record.sourceLabel,
@@ -155,29 +130,8 @@ export function createRepository(db: DatabaseSync) {
       return { inserted: afterChanges.count > 0 };
     },
 
-    insertContent(record: ContentRow): BatchInsertResult {
-      insertContent.run(
-        record.id,
-        record.externalId,
-        record.category,
-        record.title,
-        record.summary,
-        record.publishedAt,
-        record.sourceId,
-        record.dedupeKey,
-        record.createdAt,
-        record.updatedAt,
-      );
-      const afterChanges = db.prepare('SELECT changes() AS count').get() as { count: number };
-      return { inserted: afterChanges.count > 0 };
-    },
-
     countIncidents(): number {
       return Number((countIncidents.get() as { total: number }).total);
-    },
-
-    countContent(): number {
-      return Number((countContent.get() as { total: number }).total);
     },
 
     all<T>(sql: string, params: SQLiteValue[] = []): T[] {

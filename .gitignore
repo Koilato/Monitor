@@ -5,5 +5,7 @@ client/dist/
 server/dist/
 client/package-lock.json
 server/package-lock.json
+server/data/
+server/server/data/
 .DS_Store
 .worktrees/

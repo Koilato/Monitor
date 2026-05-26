@@ -18,6 +18,7 @@ export interface HoverIncidentSeed {
   date: string;
   attackerCountry: CountryCode;
   victimCountry: CountryCode;
+  ransomAmount?: number;
   details: IncidentDetails;
 }
 
@@ -52,6 +53,7 @@ export interface HoverIncident {
   attackerCountry: CountryCode;
   victimCountry: CountryCode;
   severity: EventLevel;
+  ransomAmount: number;
   title: string;
   summary: string;
   details: IncidentDetails;
@@ -95,36 +97,28 @@ export interface ThreatMapResponse {
   generatedAt: string;
 }
 
-export interface LatestContentItemSeed {
-  id: string;
-  category: string;
-  title: string;
-  summary: string;
-  createdAt: string;
-}
-
-export interface LatestContentItem {
-  id: string;
-  externalId: string;
-  category: string;
-  title: string;
-  summary: string;
-  publishedAt: string;
-  createdAt: string;
-}
-
-export interface LatestContentQuery {
-  category: string;
-  limit: number;
-  offset: number;
-}
-
-export interface LatestContentResponse {
-  category: string;
+export interface ThreatTrendDay {
+  date: string;
+  low: number;
+  medium: number;
+  high: number;
   total: number;
-  limit: number;
-  offset: number;
-  items: LatestContentItem[];
+}
+
+export interface ThreatTrendResponse {
+  startDate: string | null;
+  endDate: string | null;
+  total: number;
+  days: ThreatTrendDay[];
+  generatedAt: string;
+}
+
+export interface RansomwareKpiResponse {
+  startDate: string | null;
+  endDate: string | null;
+  max: number | null;
+  median: number | null;
+  avg: number | null;
   generatedAt: string;
 }
 

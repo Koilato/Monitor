@@ -65,6 +65,14 @@ export function AppShell() {
     allFlowLoading,
     allFlowError,
     threatData,
+    threatLoading,
+    threatError,
+    trendData,
+    ransomwareKpis,
+    trendLoading,
+    trendError,
+    ransomwareKpisLoading,
+    ransomwareKpisError,
     loading,
     error,
     panelCount,
@@ -185,15 +193,24 @@ export function AppShell() {
               className="split-divider split-divider--horizontal"
               role="separator"
               aria-orientation="horizontal"
-              aria-label="调整地图和最新信息流大小"
+              aria-label="调整地图和数据看板大小"
               onMouseDown={handleRightDividerMouseDown}
             />
 
             <TrafficStatsSection
               sectionRef={latestSectionRef}
               data={allFlowData}
+              threatData={threatData}
+              threatLoading={threatLoading}
+              threatError={threatError}
+              trendData={trendData}
+              ransomwareKpis={ransomwareKpis}
               loading={allFlowLoading}
               error={allFlowError}
+              trendLoading={trendLoading}
+              trendError={trendError}
+              ransomwareKpisLoading={ransomwareKpisLoading}
+              ransomwareKpisError={ransomwareKpisError}
               settings={debugSettings.trafficStats}
             />
           </section>

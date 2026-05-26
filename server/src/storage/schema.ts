@@ -1,5 +1,10 @@
 import type { DatabaseSync } from 'node:sqlite';
 
+function tableHasColumn(db: DatabaseSync, tableName: string, columnName: string): boolean {
+  const rows = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+  return rows.some((row) => row.name === columnName);
+}
+
 export function initializeSchema(db: DatabaseSync): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS incident_sources (
@@ -32,23 +37,11 @@ export function initializeSchema(db: DatabaseSync): void {
       attacker_country TEXT NOT NULL,
       victim_country TEXT NOT NULL,
       severity TEXT NOT NULL,
+      ransom_amount INTEGER NOT NULL DEFAULT 0,
       title TEXT NOT NULL,
       summary TEXT NOT NULL,
       source_label TEXT NOT NULL,
       source_address TEXT NOT NULL,
-      dedupe_key TEXT NOT NULL UNIQUE,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS content_items (
-      id TEXT PRIMARY KEY,
-      external_id TEXT NOT NULL,
-      category TEXT NOT NULL,
-      title TEXT NOT NULL,
-      summary TEXT NOT NULL,
-      published_at TEXT NOT NULL,
-      source_id INTEGER NOT NULL REFERENCES incident_sources(id),
       dedupe_key TEXT NOT NULL UNIQUE,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -79,10 +72,13 @@ export function initializeSchema(db: DatabaseSync): void {
     CREATE INDEX IF NOT EXISTS idx_incidents_victim_date ON incidents(victim_country, occurred_date DESC);
     CREATE INDEX IF NOT EXISTS idx_incidents_attacker_victim_date ON incidents(attacker_country, victim_country, occurred_date DESC);
     CREATE INDEX IF NOT EXISTS idx_incidents_severity_date ON incidents(severity, occurred_date DESC);
-    CREATE INDEX IF NOT EXISTS idx_content_items_category_published_at ON content_items(category, published_at DESC);
     CREATE INDEX IF NOT EXISTS idx_country_daily_stats_date_country ON country_daily_stats(occurred_date, victim_country);
     CREATE INDEX IF NOT EXISTS idx_country_flow_daily_stats_date_victim_attacker ON country_flow_daily_stats(occurred_date, victim_country, attacker_country);
   `);
+
+  if (!tableHasColumn(db, 'incidents', 'ransom_amount')) {
+    db.exec('ALTER TABLE incidents ADD COLUMN ransom_amount INTEGER NOT NULL DEFAULT 0');
+  }
 }
 
 export function rebuildAggregateTables(db: DatabaseSync): void {
