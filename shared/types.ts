@@ -39,6 +39,8 @@ export interface HoverFlow {
   attackerCountry: CountryCode;
   victimCountry: CountryCode;
   count: number;
+  severityCounts: ThreatSeverityCounts;
+  flowLevel: EventLevel;
   uuids: string[];
   firstDate: string | null;
   lastDate: string | null;

@@ -26,6 +26,7 @@ export function createServerRuntime(options: DatabaseOptions = {}): ServerRuntim
   ingestService.ensureSeedData({
     incidents: fixtures.incidents,
   });
+  ingestService.rebuildAggregates();
 
   return {
     db,

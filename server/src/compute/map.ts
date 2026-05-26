@@ -184,6 +184,10 @@ export function createMapComputeService(repository: StorageRepository) {
         attacker_country: string;
         victim_country: string;
         incident_count: number;
+        low_count: number;
+        medium_count: number;
+        high_count: number;
+        event_level: EventLevel;
         first_date: string;
         last_date: string;
       }>(
@@ -191,6 +195,14 @@ export function createMapComputeService(repository: StorageRepository) {
           attacker_country,
           victim_country,
           SUM(incident_count) AS incident_count,
+          SUM(low_count) AS low_count,
+          SUM(medium_count) AS medium_count,
+          SUM(high_count) AS high_count,
+          CASE
+            WHEN MAX(CASE event_level WHEN 'low' THEN 1 WHEN 'medium' THEN 2 WHEN 'high' THEN 3 END) = 3 THEN 'high'
+            WHEN MAX(CASE event_level WHEN 'low' THEN 1 WHEN 'medium' THEN 2 WHEN 'high' THEN 3 END) = 2 THEN 'medium'
+            ELSE 'low'
+          END AS event_level,
           MIN(first_date) AS first_date,
           MAX(last_date) AS last_date
         FROM country_flow_daily_stats
@@ -226,6 +238,8 @@ export function createMapComputeService(repository: StorageRepository) {
         attackerCountry: row.attacker_country,
         victimCountry: row.victim_country,
         count: row.incident_count,
+        severityCounts: mapSeverityCounts(row),
+        flowLevel: row.event_level,
         uuids: incidents
           .filter((incident) => incident.attackerCountry === row.attacker_country)
           .map((incident) => incident.id),
@@ -252,6 +266,10 @@ export function createMapComputeService(repository: StorageRepository) {
         attacker_country: string;
         victim_country: string;
         incident_count: number;
+        low_count: number;
+        medium_count: number;
+        high_count: number;
+        event_level: EventLevel;
         first_date: string;
         last_date: string;
       }>(
@@ -259,6 +277,14 @@ export function createMapComputeService(repository: StorageRepository) {
           attacker_country,
           victim_country,
           SUM(incident_count) AS incident_count,
+          SUM(low_count) AS low_count,
+          SUM(medium_count) AS medium_count,
+          SUM(high_count) AS high_count,
+          CASE
+            WHEN MAX(CASE event_level WHEN 'low' THEN 1 WHEN 'medium' THEN 2 WHEN 'high' THEN 3 END) = 3 THEN 'high'
+            WHEN MAX(CASE event_level WHEN 'low' THEN 1 WHEN 'medium' THEN 2 WHEN 'high' THEN 3 END) = 2 THEN 'medium'
+            ELSE 'low'
+          END AS event_level,
           MIN(first_date) AS first_date,
           MAX(last_date) AS last_date
         FROM country_flow_daily_stats
@@ -271,6 +297,8 @@ export function createMapComputeService(repository: StorageRepository) {
         attackerCountry: row.attacker_country,
         victimCountry: row.victim_country,
         count: row.incident_count,
+        severityCounts: mapSeverityCounts(row),
+        flowLevel: row.event_level,
         uuids: [],
         firstDate: row.first_date,
         lastDate: row.last_date,

@@ -1,4 +1,4 @@
-import type { HoverFlow, ThreatMapResponse } from '@shared/types';
+import type { HoverFlow } from '@shared/types';
 
 import { getCountryCentroid } from 'map/lib/country-geometry';
 import { resolveThreatVisualLevel, type ThreatVisualLevel } from 'map/layers/tokens';
@@ -184,7 +184,6 @@ function createBundledArcMeta(bundleCount: number): ArcBundleMeta[] {
 
 async function resolveBundledArcFlows(
   data: FlowArcSource | null,
-  threatData: ThreatMapResponse | null,
   arcSettings: AttackArcDebugSettings,
 ): Promise<Array<ResolvedArcFlow | null>> {
   if (!data) {
@@ -203,8 +202,7 @@ async function resolveBundledArcFlows(
     const distance = resolveFlowDistance(sourcePosition, targetPosition);
     const lengthPreset = resolveArcLengthPreset(distance, arcSettings.lengthThresholds);
     const geometryPreset: AttackArcLengthPresetSettings = arcSettings.presets[lengthPreset];
-    const eventLevel: EventLevel =
-      threatData?.countries.find((country) => country.country === flow.victimCountry)?.eventLevel ?? 'low';
+    const eventLevel: EventLevel = flow.flowLevel;
     return {
       flowKey: getFlowKey(flow.attackerCountry, flow.victimCountry),
       sourcePosition,
@@ -283,7 +281,6 @@ function expandBundledArcData<T>(
 
 export async function buildTwoDArcData(
   data: FlowArcSource | null,
-  threatData: ThreatMapResponse | null,
   arcSettings: AttackArcDebugSettings,
 ): Promise<BundledTwoDArcDatum[]> {
   if (!data) {
@@ -292,7 +289,6 @@ export async function buildTwoDArcData(
 
   const resolvedFlows = await resolveBundledArcFlows(
     data,
-    threatData,
     arcSettings,
   );
 
@@ -351,7 +347,6 @@ export async function buildTwoDArcData(
 
 export async function buildCanvasArcData(
   data: FlowArcSource | null,
-  threatData: ThreatMapResponse | null,
   arcSettings: AttackArcDebugSettings,
 ): Promise<BundledCanvasArcDatum[]> {
   if (!data) {
@@ -360,7 +355,6 @@ export async function buildCanvasArcData(
 
   const resolvedFlows = await resolveBundledArcFlows(
     data,
-    threatData,
     arcSettings,
   );
 

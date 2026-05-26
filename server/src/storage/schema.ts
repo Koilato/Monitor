@@ -6,6 +6,8 @@ function tableHasColumn(db: DatabaseSync, tableName: string, columnName: string)
 }
 
 export function initializeSchema(db: DatabaseSync): void {
+  let shouldRebuildFlowAggregates = false;
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS incident_sources (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,6 +65,10 @@ export function initializeSchema(db: DatabaseSync): void {
       attacker_country TEXT NOT NULL,
       victim_country TEXT NOT NULL,
       incident_count INTEGER NOT NULL,
+      low_count INTEGER NOT NULL,
+      medium_count INTEGER NOT NULL,
+      high_count INTEGER NOT NULL,
+      event_level TEXT NOT NULL,
       first_date TEXT NOT NULL,
       last_date TEXT NOT NULL,
       PRIMARY KEY (occurred_date, attacker_country, victim_country)
@@ -78,6 +84,26 @@ export function initializeSchema(db: DatabaseSync): void {
 
   if (!tableHasColumn(db, 'incidents', 'ransom_amount')) {
     db.exec('ALTER TABLE incidents ADD COLUMN ransom_amount INTEGER NOT NULL DEFAULT 0');
+  }
+  if (!tableHasColumn(db, 'country_flow_daily_stats', 'low_count')) {
+    db.exec('ALTER TABLE country_flow_daily_stats ADD COLUMN low_count INTEGER NOT NULL DEFAULT 0');
+    shouldRebuildFlowAggregates = true;
+  }
+  if (!tableHasColumn(db, 'country_flow_daily_stats', 'medium_count')) {
+    db.exec('ALTER TABLE country_flow_daily_stats ADD COLUMN medium_count INTEGER NOT NULL DEFAULT 0');
+    shouldRebuildFlowAggregates = true;
+  }
+  if (!tableHasColumn(db, 'country_flow_daily_stats', 'high_count')) {
+    db.exec('ALTER TABLE country_flow_daily_stats ADD COLUMN high_count INTEGER NOT NULL DEFAULT 0');
+    shouldRebuildFlowAggregates = true;
+  }
+  if (!tableHasColumn(db, 'country_flow_daily_stats', 'event_level')) {
+    db.exec('ALTER TABLE country_flow_daily_stats ADD COLUMN event_level TEXT NOT NULL DEFAULT \'low\'');
+    shouldRebuildFlowAggregates = true;
+  }
+
+  if (shouldRebuildFlowAggregates) {
+    rebuildAggregateTables(db);
   }
 }
 
@@ -116,6 +142,10 @@ export function rebuildAggregateTables(db: DatabaseSync): void {
       attacker_country,
       victim_country,
       incident_count,
+      low_count,
+      medium_count,
+      high_count,
+      event_level,
       first_date,
       last_date
     )
@@ -124,6 +154,14 @@ export function rebuildAggregateTables(db: DatabaseSync): void {
       attacker_country,
       victim_country,
       COUNT(*) AS incident_count,
+      SUM(CASE WHEN severity = 'low' THEN 1 ELSE 0 END) AS low_count,
+      SUM(CASE WHEN severity = 'medium' THEN 1 ELSE 0 END) AS medium_count,
+      SUM(CASE WHEN severity = 'high' THEN 1 ELSE 0 END) AS high_count,
+      CASE
+        WHEN MAX(CASE severity WHEN 'low' THEN 1 WHEN 'medium' THEN 2 WHEN 'high' THEN 3 END) = 3 THEN 'high'
+        WHEN MAX(CASE severity WHEN 'low' THEN 1 WHEN 'medium' THEN 2 WHEN 'high' THEN 3 END) = 2 THEN 'medium'
+        ELSE 'low'
+      END AS event_level,
       MIN(occurred_date) AS first_date,
       MAX(occurred_date) AS last_date
     FROM incidents
