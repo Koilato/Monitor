@@ -38,6 +38,11 @@ import {
   THREAT_PATTERN_LAYER_ID,
 } from 'map/layers/patterns';
 import { getThreatVisualToken, type ThreatVisualLevel } from 'map/layers/tokens';
+import {
+  deckColorToRgbaString,
+  rgbaStringToDeckColor,
+  scaleDeckColorAlpha,
+} from 'shared/styles/color-utils';
 import type { FlowPlaybackMode } from 'map/state/map-state';
 import type {
   AttackArcStagePreset,
@@ -62,12 +67,21 @@ type CanvasAttackRuntime = BundledScheduledFlowDatum & {
   groupKey: string;
 };
 
+interface ActiveCountryThreat {
+  level: Exclude<ThreatVisualLevel, 'none'>;
+  alpha: number;
+}
+
 const VISUAL_LEVEL_PRIORITY: Record<Exclude<ThreatVisualLevel, 'none'>, number> = {
   low: 1,
   medium: 2,
   high: 3,
   critical: 4,
 };
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
 
 function hexToRgbString(value: string): string {
   const normalized = value.trim().replace('#', '');
@@ -238,11 +252,11 @@ function countActiveGroupsByLength(
 }
 
 function buildActiveCountryExpression(
-  countryLevels: Map<string, Exclude<ThreatVisualLevel, 'none'>>,
-  resolveValue: (level: Exclude<ThreatVisualLevel, 'none'>) => string,
+  countryThreats: Map<string, ActiveCountryThreat>,
+  resolveValue: (threat: ActiveCountryThreat) => string,
   fallbackValue: string,
 ) {
-  if (countryLevels.size === 0) {
+  if (countryThreats.size === 0) {
     return fallbackValue;
   }
 
@@ -250,65 +264,91 @@ function buildActiveCountryExpression(
     'match',
     ['get', 'ISO3166-1-Alpha-2'],
   ];
-  const entries = [...countryLevels.entries()].sort(([left], [right]) => left.localeCompare(right));
+  const entries = [...countryThreats.entries()].sort(([left], [right]) => left.localeCompare(right));
 
-  for (const [countryCode, level] of entries) {
-    expression.push(countryCode, resolveValue(level));
+  for (const [countryCode, threat] of entries) {
+    expression.push(countryCode, resolveValue(threat));
   }
 
   expression.push(fallbackValue);
   return expression;
 }
 
-function resolveActiveCountryLevels(attacks: CanvasAttackRuntime[]) {
-  const countryLevels = new Map<string, Exclude<ThreatVisualLevel, 'none'>>();
-
-  for (const attack of attacks) {
-    if (attack.visualLevel === 'none') {
-      continue;
-    }
-
-    for (const countryCode of [attack.attackerCountry, attack.victimCountry]) {
-      const currentLevel = countryLevels.get(countryCode);
-      if (!currentLevel || VISUAL_LEVEL_PRIORITY[attack.visualLevel] > VISUAL_LEVEL_PRIORITY[currentLevel]) {
-        countryLevels.set(countryCode, attack.visualLevel);
-      }
-    }
-  }
-
-  return countryLevels;
+function quantizeAlpha(value: number): number {
+  return Math.round(clamp(value, 0, 1) * 20) / 20;
 }
 
-function serializeCountryLevels(countryLevels: Map<string, Exclude<ThreatVisualLevel, 'none'>>): string {
-  return [...countryLevels.entries()]
+function scaleRgbaAlpha(color: string, alpha: number): string {
+  return deckColorToRgbaString(scaleDeckColorAlpha(rgbaStringToDeckColor(color), alpha));
+}
+
+function resolveCountryStageAlpha(frameWindow: ReturnType<typeof resolveAttackArcFrameWindow>): number {
+  if (frameWindow.phase === 'flight') {
+    return quantizeAlpha(frameWindow.endT);
+  }
+
+  if (frameWindow.phase === 'hold') {
+    return 1;
+  }
+
+  return quantizeAlpha(frameWindow.alpha);
+}
+
+function mergeActiveCountryThreat(
+  countryThreats: Map<string, ActiveCountryThreat>,
+  attack: CanvasAttackRuntime,
+  alpha: number,
+) {
+  if (attack.visualLevel === 'none' || alpha <= 0) {
+    return;
+  }
+
+  for (const countryCode of [attack.attackerCountry, attack.victimCountry]) {
+    const current = countryThreats.get(countryCode);
+    const currentPriority = current ? VISUAL_LEVEL_PRIORITY[current.level] : 0;
+    const nextPriority = VISUAL_LEVEL_PRIORITY[attack.visualLevel];
+
+    if (!current || nextPriority > currentPriority || (nextPriority === currentPriority && alpha > current.alpha)) {
+      countryThreats.set(countryCode, {
+        level: attack.visualLevel,
+        alpha,
+      });
+    }
+  }
+}
+
+function serializeCountryThreats(countryThreats: Map<string, ActiveCountryThreat>): string {
+  return [...countryThreats.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([countryCode, level]) => `${countryCode}:${level}`)
+    .map(([countryCode, threat]) => `${countryCode}:${threat.level}:${threat.alpha.toFixed(2)}`)
     .join('|');
 }
 
 function applyDynamicThreatCountryState(
   map: maplibregl.Map,
-  countryLevels: Map<string, Exclude<ThreatVisualLevel, 'none'>>,
+  countryThreats: Map<string, ActiveCountryThreat>,
   _debugSettings: MapDebugSettings,
 ) {
   const fillExpression = buildActiveCountryExpression(
-    countryLevels,
-    (level) => getThreatVisualToken(level).fill,
+    countryThreats,
+    (threat) => scaleRgbaAlpha(getThreatVisualToken(threat.level).fill, threat.alpha),
     'rgba(0,0,0,0)',
   );
   const outlineExpression = buildActiveCountryExpression(
-    countryLevels,
-    (level) => getThreatVisualToken(level).stroke,
+    countryThreats,
+    (threat) => scaleRgbaAlpha(getThreatVisualToken(threat.level).stroke, threat.alpha),
     'rgba(0,0,0,0)',
   );
   const glowExpression = buildActiveCountryExpression(
-    countryLevels,
-    (level) => getThreatVisualToken(level).glow,
+    countryThreats,
+    (threat) => scaleRgbaAlpha(getThreatVisualToken(threat.level).glow, threat.alpha),
     'rgba(0,0,0,0)',
   );
   const patternExpression = buildActiveCountryExpression(
-    countryLevels,
-    (level) => resolveThreatPatternImageId(level, true),
+    countryThreats,
+    (threat) => (threat.alpha >= 0.5
+      ? resolveThreatPatternImageId(threat.level, true)
+      : COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID),
     COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID,
   );
 
@@ -484,6 +524,7 @@ export function AttackArcCanvas({
       }
 
       const nextActiveAttacks: CanvasAttackRuntime[] = [];
+      const nextCountryThreats = new Map<string, ActiveCountryThreat>();
       const renderedRingGroups = new Set<string>();
 
       for (let index = 0; index < activeAttacks.length; index += 1) {
@@ -513,6 +554,7 @@ export function AttackArcCanvas({
           resolvePhaseStage(frameWindow.phase),
           attack.visualStyle,
         );
+        mergeActiveCountryThreat(nextCountryThreats, attack, resolveCountryStageAlpha(frameWindow));
         const sourcePoint = mapRef.current.project(attack.source);
         const targetPoint = mapRef.current.project(attack.target);
         const start = { x: sourcePoint.x, y: sourcePoint.y };
@@ -557,10 +599,9 @@ export function AttackArcCanvas({
       activeAttacks.length = 0;
       activeAttacks.push(...nextActiveAttacks);
 
-      const activeCountryLevels = resolveActiveCountryLevels(nextActiveAttacks);
-      const nextCountrySignature = serializeCountryLevels(activeCountryLevels);
+      const nextCountrySignature = serializeCountryThreats(nextCountryThreats);
       if (nextCountrySignature !== lastCountrySignature) {
-        applyDynamicThreatCountryState(mapRef.current, activeCountryLevels, debugSettings);
+        applyDynamicThreatCountryState(mapRef.current, nextCountryThreats, debugSettings);
         lastCountrySignature = nextCountrySignature;
       }
 
