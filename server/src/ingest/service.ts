@@ -76,9 +76,9 @@ export function createIngestService(
           rebuildAggregateTables(repository);
         });
 
-        const totalCount = incidents.length;
         const successCount = incidents.length;
-        const failureCount = 0;
+        const failureCount = errors.length;
+        const totalCount = successCount + failureCount;
         const status = resolveStatus(totalCount, successCount, failureCount);
 
         repository.insertIngestBatch({

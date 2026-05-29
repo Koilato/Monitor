@@ -1,0 +1,200 @@
+- generic [active] [ref=e1]:
+  - main [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: 全球信号地图
+        - generic [ref=e8]: "187"
+      - generic: 2026-05-29 03:22:31
+      - generic [ref=e9]:
+        - group "时间预设" [ref=e10]:
+          - button "1天" [ref=e11] [cursor=pointer]
+          - button "2天" [ref=e12] [cursor=pointer]
+          - button "7天" [ref=e13] [cursor=pointer]
+        - group "流向播放模式" [ref=e14]:
+          - button "全部流量" [ref=e15] [cursor=pointer]
+          - button "先进先出" [disabled] [pressed] [ref=e16]
+          - button "按国家" [disabled] [ref=e17]
+          - button "按时间" [disabled] [ref=e18]
+        - generic [ref=e19]:
+          - generic [ref=e20]: 开始
+          - textbox "开始" [ref=e21]: 2026-05-19
+        - generic [ref=e22]:
+          - generic [ref=e23]: 结束
+          - textbox "结束" [ref=e24]: 2026-05-28
+        - button "调试模式" [ref=e25] [cursor=pointer]
+        - status "信号控制台 指标统计中 全球地图 实时 地图引擎 状态" [ref=e26]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: 信号控制台
+            - generic [ref=e31]: 指标统计中
+          - generic [ref=e32]:
+            - generic [ref=e33]: 全球地图
+            - generic [ref=e34]: 实时 / 地图引擎 / 状态
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - generic [ref=e41]: 威胁观察列表
+              - generic [ref=e42]: 真实接口 / 左上面板
+            - generic [ref=e43]:
+              - generic [ref=e44]: 倒序 · 正在加载
+              - generic [ref=e45]: 更新 待刷新
+          - group "威胁列表控制" [ref=e46]:
+            - group "排序切换" [ref=e47]:
+              - button "正序" [ref=e48] [cursor=pointer]
+              - button "倒序" [pressed] [ref=e49] [cursor=pointer]
+            - button "自动滚动 关" [ref=e50] [cursor=pointer]
+            - button "定时刷新 关" [ref=e51] [cursor=pointer]
+          - generic [ref=e53]: 正在加载威胁列表...
+          - generic [ref=e54]:
+            - generic [ref=e55]: 严重
+            - generic [ref=e56]: 告警
+            - generic [ref=e57]: 情报
+        - separator "调整左侧面板大小" [ref=e58]
+        - generic [ref=e60]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: 新闻事件板
+            - generic [ref=e64]: 公众号文章
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - link "NEWS 13万条奔驰英国车主数据被黑客出售，个人隐私与车辆信息或遭泄露 微信公众号" [ref=e68] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/vtx5RH-_PbEmfiWN4vCFCQ
+                - generic [ref=e69]: NEWS
+                - generic [ref=e70]: 13万条奔驰英国车主数据被黑客出售，个人隐私与车辆信息或遭泄露
+                - generic [ref=e71]: 微信公众号
+              - link "NEWS 特朗普家族旗下手机品牌数据泄露，近万名预购用户信息被公开 微信公众号" [ref=e72] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/kuRHCTKQkdyaqvOJXhzrEg
+                - generic [ref=e73]: NEWS
+                - generic [ref=e74]: 特朗普家族旗下手机品牌数据泄露，近万名预购用户信息被公开
+                - generic [ref=e75]: 微信公众号
+              - link "NEWS 多起高危投毒事件连环爆发！AI开发生态正沦为供应链攻击新入口 微信公众号" [ref=e76] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/zojFIDb7Po33_unFWBKkyQ
+                - generic [ref=e77]: NEWS
+                - generic [ref=e78]: 多起高危投毒事件连环爆发！AI开发生态正沦为供应链攻击新入口
+                - generic [ref=e79]: 微信公众号
+              - link "NEWS 1小时投毒639个恶意版本！开源供应链攻击再度爆发 微信公众号" [ref=e80] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/luwibRXde9E9Kens00mqTA
+                - generic [ref=e81]: NEWS
+                - generic [ref=e82]: 1小时投毒639个恶意版本！开源供应链攻击再度爆发
+                - generic [ref=e83]: 微信公众号
+              - link "NEWS 时装品牌Zara近20万用户信息遭泄露，9500万条真实订单与售后记录被公开 微信公众号" [ref=e84] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/WBkCiVY04kJi-EnpG8NHdA
+                - generic [ref=e85]: NEWS
+                - generic [ref=e86]: 时装品牌Zara近20万用户信息遭泄露，9500万条真实订单与售后记录被公开
+                - generic [ref=e87]: 微信公众号
+              - link "NEWS 勒索攻击从入侵到全线感染最快仅需51秒！单次事件平均损失243万美元 微信公众号" [ref=e88] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/X1qjFFEBzjHD_wxqHOEYeA
+                - generic [ref=e89]: NEWS
+                - generic [ref=e90]: 勒索攻击从入侵到全线感染最快仅需51秒！单次事件平均损失243万美元
+                - generic [ref=e91]: 微信公众号
+            - generic [ref=e92]:
+              - link [ref=e93] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/vtx5RH-_PbEmfiWN4vCFCQ
+                - generic [ref=e94]: NEWS
+                - generic [ref=e95]: 13万条奔驰英国车主数据被黑客出售，个人隐私与车辆信息或遭泄露
+                - generic [ref=e96]: 微信公众号
+              - link [ref=e97] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/kuRHCTKQkdyaqvOJXhzrEg
+                - generic [ref=e98]: NEWS
+                - generic [ref=e99]: 特朗普家族旗下手机品牌数据泄露，近万名预购用户信息被公开
+                - generic [ref=e100]: 微信公众号
+              - link [ref=e101] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/zojFIDb7Po33_unFWBKkyQ
+                - generic [ref=e102]: NEWS
+                - generic [ref=e103]: 多起高危投毒事件连环爆发！AI开发生态正沦为供应链攻击新入口
+                - generic [ref=e104]: 微信公众号
+              - link [ref=e105] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/luwibRXde9E9Kens00mqTA
+                - generic [ref=e106]: NEWS
+                - generic [ref=e107]: 1小时投毒639个恶意版本！开源供应链攻击再度爆发
+                - generic [ref=e108]: 微信公众号
+              - link [ref=e109] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/WBkCiVY04kJi-EnpG8NHdA
+                - generic [ref=e110]: NEWS
+                - generic [ref=e111]: 时装品牌Zara近20万用户信息遭泄露，9500万条真实订单与售后记录被公开
+                - generic [ref=e112]: 微信公众号
+              - link [ref=e113] [cursor=pointer]:
+                - /url: https://mp.weixin.qq.com/s/X1qjFFEBzjHD_wxqHOEYeA
+                - generic [ref=e114]: NEWS
+                - generic [ref=e115]: 勒索攻击从入侵到全线感染最快仅需51秒！单次事件平均损失243万美元
+                - generic [ref=e116]: 微信公众号
+      - separator "调整左右栏大小" [ref=e117]
+      - generic [ref=e118]:
+        - generic [ref=e120]:
+          - generic [ref=e122]:
+            - region "Map" [ref=e125]
+            - generic [ref=e127]:
+              - button "放大" [ref=e128] [cursor=pointer]: +
+              - button "缩小" [ref=e129] [cursor=pointer]: "-"
+              - button "重置视图" [ref=e130] [cursor=pointer]: o
+          - generic "威胁等级图例":
+            - generic: 威胁
+            - generic:
+              - generic: 低
+            - generic:
+              - generic: 中
+            - generic:
+              - generic: 高
+        - separator "调整地图和数据看板大小" [ref=e131]
+        - generic [ref=e132]:
+          - generic "7天威胁趋势" [ref=e133]:
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - generic [ref=e136]: Threat Trend
+                - heading "7天威胁频次" [level=2] [ref=e137]
+              - generic [ref=e138]:
+                - generic [ref=e139]: 高
+                - generic [ref=e141]: 中
+                - generic [ref=e143]: 低
+            - img [ref=e149]:
+              - generic [ref=e151]:
+                - generic [ref=e153]: 05-19
+                - generic [ref=e155]: 05-20
+                - generic [ref=e157]: 05-21
+                - generic [ref=e159]: 05-22
+                - generic [ref=e161]: 05-23
+                - generic [ref=e163]: 05-24
+                - generic [ref=e165]: 05-25
+                - generic [ref=e167]: 05-26
+                - generic [ref=e169]: 05-28
+          - generic "来源国家流量柱状图" [ref=e170]:
+            - generic [ref=e172]:
+              - generic [ref=e173]: Traffic Volume
+              - heading "来源国家流量" [level=2] [ref=e174]
+            - generic [ref=e176]:
+              - generic [ref=e177]: 总流量 187
+              - generic [ref=e178]: 按来源国家聚合 / Top 10
+          - generic "威胁统计" [ref=e181]:
+            - generic [ref=e183]:
+              - generic [ref=e184]: Threat Summary
+              - heading "威胁统计" [level=2] [ref=e185]
+            - img "高危、中危、低危威胁占比" [ref=e188]:
+              - generic:
+                - generic: 16%
+                - generic: 高危
+                - generic: 30 次
+              - generic:
+                - generic: 71%
+                - generic: 中危
+                - generic: 132 次
+              - generic:
+                - generic: 13%
+                - generic: 低危
+                - generic: 25 次
+          - generic "赎金经济指标" [ref=e196]:
+            - generic [ref=e197]:
+              - generic [ref=e198]:
+                - img [ref=e199]
+                - generic [ref=e202]: 最高赎金支出
+              - generic [ref=e205]: ￥...
+            - generic [ref=e207]:
+              - generic [ref=e208]:
+                - img [ref=e209]
+                - generic [ref=e211]: 平均赎金支出
+              - generic [ref=e214]: ￥...
+            - generic [ref=e216]:
+              - generic [ref=e217]:
+                - img [ref=e218]
+                - generic [ref=e222]: 中位金额请求
+              - generic [ref=e225]: ￥...
+  - generic [ref=e227]: 05-19
