@@ -46,7 +46,10 @@ function formatPercent(value: number): string {
 }
 
 function formatRansomAmount(value: number): string {
-  return (value / 1000000000).toFixed(2);
+  return new Intl.NumberFormat('zh-CN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 function formatDateTick(value: string): string {
@@ -483,7 +486,6 @@ function renderEconomicKpisPanel(
             <span className="traffic-economic-card__value traffic-economic-card__value--max">
               ￥{formatKpiValue(data?.max, isLoading, error)}
             </span>
-            <span className="traffic-economic-card__unit traffic-economic-card__unit--max">B</span>
           </div>
           <div className="traffic-economic-card__bar traffic-economic-card__bar--max" />
         </div>
@@ -499,7 +501,6 @@ function renderEconomicKpisPanel(
             <span className="traffic-economic-card__value traffic-economic-card__value--avg">
               ￥{formatKpiValue(data?.avg, isLoading, error)}
             </span>
-            <span className="traffic-economic-card__unit traffic-economic-card__unit--avg">B</span>
           </div>
           <div className="traffic-economic-card__bar traffic-economic-card__bar--avg" />
         </div>
@@ -515,7 +516,6 @@ function renderEconomicKpisPanel(
             <span className="traffic-economic-card__value traffic-economic-card__value--median">
               ￥{formatKpiValue(data?.median, isLoading, error)}
             </span>
-            <span className="traffic-economic-card__unit traffic-economic-card__unit--median">B</span>
           </div>
           <div className="traffic-economic-card__bar traffic-economic-card__bar--median" />
         </div>

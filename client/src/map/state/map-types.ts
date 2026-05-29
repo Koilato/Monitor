@@ -1,10 +1,10 @@
-import type { CountryHoverResponse, ThreatMapResponse } from '@shared/types';
+import type { ThreatMapResponse } from '@shared/types';
 
 import type { FlowArcSource } from 'map/lib/arc-data';
 import type { MapCameraState, MapState } from './map-state';
-import type { FlowMode, FlowPlaybackMode } from './map-state';
+import type { FlowPlaybackMode } from './map-state';
 
-export interface HoverCountryState {
+export interface SelectedCountryState {
   code: string;
   name: string;
 }
@@ -21,8 +21,8 @@ export interface PopupAnchor2D extends PopupAnchorBase {
 
 export type PopupAnchor = PopupAnchor2D;
 
-export interface CountryHoverEvent {
-  country: HoverCountryState | null;
+export interface CountrySelectEvent {
+  country: SelectedCountryState | null;
   anchor: PopupAnchor | null;
 }
 
@@ -166,13 +166,10 @@ export interface AttackArcConfigState {
 export interface MapViewProps {
   mapState: MapState;
   themeRevision: number;
-  hoveredCountryCode: string | null;
-  hoverData: CountryHoverResponse | null;
   flowData: FlowArcSource | null;
   threatData: ThreatMapResponse | null;
-  flowMode: FlowMode;
   flowPlaybackMode: FlowPlaybackMode;
-  onCountryHover: (event: CountryHoverEvent) => void;
+  onCountrySelect: (event: CountrySelectEvent) => void;
   onCameraChange: (camera: Partial<MapCameraState>) => void;
   debugSettings: MapDebugSettings;
 }

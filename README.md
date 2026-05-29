@@ -6,7 +6,7 @@
 
 - `client/`：Vite + React + TypeScript 前端界面
 - `server/`：Express + TypeScript + SQLite 后端
-- `server/fixtures/incidents.json`：初始化 seed 数据
+- `server/data/worldmonitor.sqlite`：本地 SQLite 数据库
 - `shared/`：共享响应与查询类型
 
 ## Install
@@ -56,23 +56,17 @@ npm run build:server
 npm run build:client
 ```
 
-## Seed And Import
+## Import And Rebuild
 
-后端会在空 SQLite 数据库启动时自动从 `server/fixtures/incidents.json` 导入示例数据。SQLite 数据库文件会生成在 `server/data/`，属于本地运行时文件，不提交到仓库。
+SQLite 数据库文件生成在 `server/data/`，属于本地运行时文件，不提交到仓库。
 
-你也可以手动执行：
-
-```bash
-npm run seed
-```
-
-导入外部 JSON：
+手动回溯拉取 `api-pro.ransomware.live` 按攻击时间排序的最近 200 条可用受害事件，并重建聚合：
 
 ```bash
-npm run import:incidents -- /absolute/path/incidents.json
+RANSOMWARE_LIVE_API_KEY=your_api_key npm run import:recent-victims
 ```
 
-重建聚合表：
+仅重建聚合表：
 
 ```bash
 npm run rebuild:aggregates

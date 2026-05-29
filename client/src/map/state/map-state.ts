@@ -1,7 +1,6 @@
 import type { DateRange } from '@shared/types';
 
 export type TimePreset = '1d' | '2d' | '7d';
-export type FlowMode = 'hover' | 'allflow';
 export type FlowPlaybackMode = 'fifo' | 'country' | 'time';
 
 export interface TimeFilterState {
@@ -23,7 +22,7 @@ export interface MapState {
   camera: MapCameraState;
   activeLayerIds: string[];
   timeFilter: TimeFilterState;
-  flowMode: FlowMode;
+  showAttackArcs: boolean;
   flowPlaybackMode: FlowPlaybackMode;
 }
 
@@ -76,7 +75,7 @@ export const DEFAULT_MAP_STATE: MapState = {
   },
   activeLayerIds: [...DEFAULT_LAYER_IDS],
   timeFilter: getDefaultTimeFilter(),
-  flowMode: 'hover',
+  showAttackArcs: false,
   flowPlaybackMode: 'fifo',
 };
 
@@ -178,12 +177,20 @@ function normalizeActiveLayerIds(activeLayerIds: unknown): string[] {
   return normalized.length > 0 ? normalized : [...DEFAULT_LAYER_IDS];
 }
 
-function isFlowMode(value: string | null): value is FlowMode {
-  return value === 'hover' || value === 'allflow';
-}
+function normalizeShowAttackArcs(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
 
-function normalizeFlowMode(value: string | null): FlowMode {
-  return isFlowMode(value) ? value : 'hover';
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+
+  if (typeof value === 'string') {
+    return value === '1' || value === 'true';
+  }
+
+  return DEFAULT_MAP_STATE.showAttackArcs;
 }
 
 function isFlowPlaybackMode(value: string | null): value is FlowPlaybackMode {
@@ -202,7 +209,7 @@ export function normalizeMapState(input: Partial<MapState>): MapState {
     camera: normalizeCamera(input.camera ?? DEFAULT_MAP_STATE.camera),
     activeLayerIds,
     timeFilter,
-    flowMode: normalizeFlowMode(input.flowMode ?? DEFAULT_MAP_STATE.flowMode),
+    showAttackArcs: normalizeShowAttackArcs(input.showAttackArcs),
     flowPlaybackMode: normalizeFlowPlaybackMode(
       input.flowPlaybackMode ?? DEFAULT_MAP_STATE.flowPlaybackMode,
     ),
@@ -219,7 +226,7 @@ export function serializeMapStateToSearch(state: MapState): string {
   params.set('pitch', normalized.camera.pitch.toFixed(2));
   params.set('layers', normalized.activeLayerIds.join(','));
   params.set('timeMode', normalized.timeFilter.mode);
-  params.set('flowMode', normalized.flowMode);
+  params.set('showAttackArcs', normalized.showAttackArcs ? '1' : '0');
   params.set('flowPlaybackMode', normalized.flowPlaybackMode);
 
   if (normalized.timeFilter.mode === 'preset' && normalized.timeFilter.preset) {
@@ -252,7 +259,11 @@ export function parseMapStateFromSearch(search: string): MapState {
 
   const timeMode = params.get('timeMode');
   const timePreset = params.get('timePreset');
-  const flowMode = normalizeFlowMode(params.get('flowMode'));
+  const legacyFlowMode = params.get('flowMode');
+  const showAttackArcsParam = params.get('showAttackArcs');
+  const showAttackArcs = showAttackArcsParam === null
+    ? legacyFlowMode === 'allflow'
+    : normalizeShowAttackArcs(showAttackArcsParam);
   const flowPlaybackMode = normalizeFlowPlaybackMode(params.get('flowPlaybackMode'));
   const timeFilter = timeMode === 'preset'
     ? normalizeTimeFilter({
@@ -283,7 +294,7 @@ export function parseMapStateFromSearch(search: string): MapState {
     },
     activeLayerIds,
     timeFilter,
-    flowMode,
+    showAttackArcs,
     flowPlaybackMode,
   });
 }

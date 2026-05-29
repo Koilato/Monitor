@@ -16,8 +16,57 @@ import {
   buildRangeWhere,
   compareFlows,
   compareThreatCountries,
+  formatDateRangeLabel,
+  formatDateTimeLabel,
+  formatRansomAmountLabel,
+  getCountryLabel,
+  getSeverityLabel,
   mapSeverityCounts,
 } from './common.js';
+import { deriveCompatIncident } from './derived-incidents.js';
+
+function getCompatIncidents(repository: StorageRepository): HoverIncident[] {
+  const mappings = new Map(
+    repository.listGroupCountryMappings().map((mapping) => [mapping.groupName, mapping.attackerCountry]),
+  );
+
+  const incidents: Array<HoverIncident | null> = repository.listIncidentRows()
+    .map((row) => {
+      const attackerCountry = mappings.get(row.groupName);
+      if (!attackerCountry) {
+        return null;
+      }
+      const incident = deriveCompatIncident(row, attackerCountry);
+      return {
+        ...incident,
+        occurredAtLabel: formatDateTimeLabel(incident.occurredAt),
+        attackerCountryName: getCountryLabel(incident.attackerCountry),
+        victimCountryName: getCountryLabel(incident.victimCountry),
+        severityLabel: getSeverityLabel(incident.severity),
+        ransomAmountLabel: formatRansomAmountLabel(incident.ransomAmount),
+        summaryRaw: row.description,
+        groupName: row.groupName,
+        linkUrl: incident.sourceAddress,
+        details: {
+          title: incident.title,
+          summary: incident.summary,
+          severity: incident.severity,
+        },
+      };
+    });
+
+  return incidents.filter((incident): incident is HoverIncident => incident !== null);
+}
+
+function withinRange(incident: HoverIncident, startDate: string | null, endDate: string | null): boolean {
+  if (startDate && incident.occurredDate < startDate) {
+    return false;
+  }
+  if (endDate && incident.occurredDate > endDate) {
+    return false;
+  }
+  return true;
+}
 
 export function createMapComputeService(repository: StorageRepository) {
   return {
@@ -107,15 +156,12 @@ export function createMapComputeService(repository: StorageRepository) {
     },
 
     getRansomwareKpis(query: ThreatMapQuery): RansomwareKpiResponse {
-      const range = buildRangeWhere(query.startDate, query.endDate);
-      const rows = repository.all<{ ransom_amount: number }>(
-        `SELECT ransom_amount
-        FROM incidents
-        ${range.sql ? `${range.sql} AND ransom_amount > 0` : 'WHERE ransom_amount > 0'}
-        ORDER BY ransom_amount ASC`,
-        range.params,
-      );
-      const amounts = rows.map((row) => row.ransom_amount);
+      const amounts = getCompatIncidents(repository)
+        .filter((incident) => withinRange(incident, query.startDate, query.endDate))
+        .map((incident) => incident.ransomAmount)
+        .filter((amount) => amount > 0)
+        .sort((left, right) => left - right);
+
       const middleIndex = Math.floor(amounts.length / 2);
       const median = amounts.length === 0
         ? null
@@ -137,48 +183,18 @@ export function createMapComputeService(repository: StorageRepository) {
     },
 
     getCountryHoverDetail(query: CountryHoverQuery): CountryHoverResponse {
+      const incidents = getCompatIncidents(repository)
+        .filter((incident) => incident.victimCountry === query.victimCountry)
+        .filter((incident) => withinRange(incident, query.startDate, query.endDate))
+        .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id));
+
       const params: string[] = [query.victimCountry];
-      const clauses = ['victim_country = ?'];
       if (query.startDate) {
-        clauses.push('occurred_date >= ?');
         params.push(query.startDate);
       }
       if (query.endDate) {
-        clauses.push('occurred_date <= ?');
         params.push(query.endDate);
       }
-      const whereClause = `WHERE ${clauses.join(' AND ')}`;
-
-      const incidentRows = repository.all<{
-        id: string;
-        occurred_at: string;
-        occurred_date: string;
-        attacker_country: string;
-        victim_country: string;
-        severity: EventLevel;
-        ransom_amount: number;
-        title: string;
-        summary: string;
-        source_label: string;
-        source_address: string;
-      }>(
-        `SELECT
-          id,
-          occurred_at,
-          occurred_date,
-          attacker_country,
-          victim_country,
-          severity,
-          ransom_amount,
-          title,
-          summary,
-          source_label,
-          source_address
-        FROM incidents
-        ${whereClause}
-        ORDER BY occurred_at DESC, id DESC`,
-        params,
-      );
 
       const flowRows = repository.all<{
         attacker_country: string;
@@ -213,33 +229,15 @@ export function createMapComputeService(repository: StorageRepository) {
         params,
       );
 
-      const incidents: HoverIncident[] = incidentRows.map((row) => ({
-        id: row.id,
-        uuid: row.id,
-        occurredAt: row.occurred_at,
-        occurredDate: row.occurred_date,
-        date: row.occurred_date,
-        attackerCountry: row.attacker_country,
-        victimCountry: row.victim_country,
-        severity: row.severity,
-        ransomAmount: row.ransom_amount,
-        title: row.title,
-        summary: row.summary,
-        details: {
-          title: row.title,
-          summary: row.summary,
-          severity: row.severity,
-        },
-        sourceLabel: row.source_label,
-        sourceAddress: row.source_address,
-      }));
-
       const flows: HoverFlow[] = flowRows.map((row) => ({
         attackerCountry: row.attacker_country,
+        attackerCountryName: getCountryLabel(row.attacker_country),
         victimCountry: row.victim_country,
+        victimCountryName: getCountryLabel(row.victim_country),
         count: row.incident_count,
         severityCounts: mapSeverityCounts(row),
         flowLevel: row.event_level,
+        flowLevelLabel: getSeverityLabel(row.event_level),
         uuids: incidents
           .filter((incident) => incident.attackerCountry === row.attacker_country)
           .map((incident) => incident.id),
@@ -249,8 +247,10 @@ export function createMapComputeService(repository: StorageRepository) {
 
       return {
         victimCountry: query.victimCountry,
+        victimCountryName: getCountryLabel(query.victimCountry),
         startDate: query.startDate,
         endDate: query.endDate,
+        rangeLabel: formatDateRangeLabel(query.startDate, query.endDate),
         total: incidents.length,
         totalIncidents: incidents.length,
         sourceCount: flows.length,
@@ -307,7 +307,7 @@ export function createMapComputeService(repository: StorageRepository) {
       return {
         startDate: query.startDate,
         endDate: query.endDate,
-        total: flows.length,
+        total: flows.reduce((sum, flow) => sum + flow.count, 0),
         totalFlows: flows.length,
         flows,
         generatedAt: buildGeneratedAt(),

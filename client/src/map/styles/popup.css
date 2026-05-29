@@ -1,5 +1,5 @@
 .map-popup {
-  position: fixed;
+  position: absolute;
   width: 360px;
   max-height: min(560px, 80vh);
   background: var(--bg);
@@ -11,7 +11,29 @@
     0 12px 40px rgba(0, 0, 0, 0.55),
     inset 0 1px 20px rgba(255, 255, 255, 0.02),
     0 0 0 1px rgba(255, 255, 255, 0.03);
-  pointer-events: none;
+  pointer-events: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(159, 179, 190, 0.38) rgba(3, 8, 20, 0.42);
+}
+
+.map-popup::-webkit-scrollbar {
+  width: 8px;
+}
+
+.map-popup::-webkit-scrollbar-track {
+  background: rgba(3, 8, 20, 0.42);
+  border-left: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+.map-popup::-webkit-scrollbar-thumb {
+  background: rgba(159, 179, 190, 0.34);
+  border: 2px solid rgba(3, 8, 20, 0.42);
+  border-radius: 999px;
+}
+
+.map-popup::-webkit-scrollbar-thumb:hover {
+  background: rgba(159, 179, 190, 0.54);
 }
 
 .popup-header {
@@ -27,7 +49,17 @@
 }
 
 .popup-header.hotspot {
-  background: rgba(82, 214, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(82, 214, 255, 0.1), rgba(82, 214, 255, 0.06)),
+    var(--bg);
+}
+
+.popup-header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .popup-title {
@@ -35,10 +67,15 @@
   font-weight: 700;
   color: var(--threat-low);
   letter-spacing: 0.5px;
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.popup-header-subtitle {
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
 }
 
 .popup-badge {
@@ -98,6 +135,10 @@
   text-transform: uppercase;
 }
 
+.section-label--inline {
+  margin-bottom: 6px;
+}
+
 .popup-description {
   font-size: 11px;
   line-height: 1.5;
@@ -141,6 +182,16 @@
   margin-bottom: 10px;
 }
 
+.popup-meta-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.35px;
+}
+
 .section-label {
   font-size: 8px;
   color: var(--text-muted);
@@ -182,6 +233,20 @@
 
 .popup-incident-card {
   padding: 8px;
+  color: inherit;
+  text-decoration: none;
+  display: block;
+}
+
+.popup-incident-card:hover,
+.popup-incident-card:focus {
+  color: inherit;
+  text-decoration: none;
+}
+
+.popup-incident-card:focus-visible {
+  outline: 1px solid rgba(159, 179, 190, 0.34);
+  outline-offset: -1px;
 }
 
 .popup-title-row {
@@ -192,6 +257,24 @@
   margin-bottom: 6px;
   font-size: 11px;
   color: var(--text);
+}
+
+.popup-incident-grid {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 4px 8px;
+  margin-bottom: 8px;
+  font-size: 10px;
+}
+
+.popup-key {
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+}
+
+.popup-value {
+  color: var(--text-secondary);
+  line-height: 1.4;
 }
 
 .popup-incident-meta {

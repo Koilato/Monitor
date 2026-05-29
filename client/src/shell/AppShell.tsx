@@ -54,13 +54,13 @@ export function AppShell() {
     state: mapState,
     setCamera,
     setTimeFilter,
-    setFlowMode,
+    setShowAttackArcs,
     setFlowPlaybackMode,
   } = useMapUrlState();
   const {
-    hoveredCountry,
-    popupAnchor,
-    hoverData,
+    selectedCountry,
+    selectedAnchor,
+    countryData,
     allFlowData,
     allFlowLoading,
     allFlowError,
@@ -78,10 +78,10 @@ export function AppShell() {
     panelCount,
     statusTone,
     statusLabel,
-    handleCountryHover,
+    handleCountrySelect,
   } = useMapDataSync({
     timeFilter: mapState.timeFilter,
-    flowMode: mapState.flowMode,
+    showAttackArcs: mapState.showAttackArcs,
   });
   const threatIntelFeed = useThreatIntelFeed({
     limit: 30,
@@ -108,13 +108,13 @@ export function AppShell() {
           <div className="header-clock">{clock} </div>
           <AppToolbar
             timeFilter={mapState.timeFilter}
-            flowMode={mapState.flowMode}
+            showAttackArcs={mapState.showAttackArcs}
             flowPlaybackMode={mapState.flowPlaybackMode}
             debugModeEnabled={debugModeEnabled}
             statusTone={statusTone}
             statusLabel={statusLabel}
             onTimeFilterChange={setTimeFilter}
-            onFlowModeChange={setFlowMode}
+            onShowAttackArcsChange={setShowAttackArcs}
             onFlowPlaybackModeChange={setFlowPlaybackMode}
             onDebugModeToggle={() => setDebugModeEnabled(!debugModeEnabled)}
           />
@@ -144,7 +144,7 @@ export function AppShell() {
             <div
               className="workspace-pane workspace-pane--blank workspace-pane--left-bottom"
             >
-              <ThreatTickerPanel items={threatIntelFeed.data?.items ?? []} />
+              <ThreatTickerPanel />
             </div>
           </section>
 
@@ -162,14 +162,14 @@ export function AppShell() {
             <div className="workspace-pane workspace-pane--map">
               <MapViewport
                 mapState={mapState}
-                hoveredCountry={hoveredCountry}
-                hoverData={hoverData}
-                flowData={mapState.flowMode === 'allflow' ? allFlowData : hoverData}
+                selectedCountry={selectedCountry}
+                countryData={countryData}
+                flowData={allFlowData}
                 threatData={threatData}
                 loading={loading}
                 error={error}
-                anchor={popupAnchor}
-                onCountryHover={handleCountryHover}
+                anchor={selectedAnchor}
+                onCountrySelect={handleCountrySelect}
                 onCameraChange={setCamera}
                 debugSettings={debugSettings}
               />

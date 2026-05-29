@@ -1,14 +1,14 @@
-import type { FlowMode, FlowPlaybackMode, TimeFilterState, TimePreset } from 'map/state/map-state';
+import type { FlowPlaybackMode, TimeFilterState, TimePreset } from 'map/state/map-state';
 
 interface AppToolbarProps {
   timeFilter: TimeFilterState;
-  flowMode: FlowMode;
+  showAttackArcs: boolean;
   flowPlaybackMode: FlowPlaybackMode;
   debugModeEnabled: boolean;
   statusTone: 'live' | 'warning' | 'error';
   statusLabel: string;
   onTimeFilterChange: (filter: TimeFilterState) => void;
-  onFlowModeChange: (mode: FlowMode) => void;
+  onShowAttackArcsChange: (value: boolean) => void;
   onFlowPlaybackModeChange: (mode: FlowPlaybackMode) => void;
   onDebugModeToggle: () => void;
 }
@@ -29,13 +29,13 @@ const TIME_PRESET_LABELS: Record<TimePreset, string> = {
 export function AppToolbar(props: AppToolbarProps) {
   const {
     timeFilter,
-    flowMode,
+    showAttackArcs,
     flowPlaybackMode,
     debugModeEnabled,
     statusTone,
     statusLabel,
     onTimeFilterChange,
-    onFlowModeChange,
+    onShowAttackArcsChange,
     onFlowPlaybackModeChange,
     onDebugModeToggle,
   } = props;
@@ -63,9 +63,9 @@ export function AppToolbar(props: AppToolbarProps) {
       <div className="map-dimension-toggle" role="group" aria-label="流向播放模式">
         <button
           type="button"
-          className={`map-dim-btn ${flowMode === 'allflow' ? 'active' : ''}`}
-          aria-pressed={flowMode === 'allflow'}
-          onClick={() => onFlowModeChange(flowMode === 'allflow' ? 'hover' : 'allflow')}
+          className={`map-dim-btn ${showAttackArcs ? 'active' : ''}`}
+          aria-pressed={showAttackArcs}
+          onClick={() => onShowAttackArcsChange(!showAttackArcs)}
           title="显示当前日期范围内的全部流向"
         >
           全部流量
@@ -76,6 +76,7 @@ export function AppToolbar(props: AppToolbarProps) {
             type="button"
             className={`map-dim-btn ${flowPlaybackMode === mode.value ? 'active' : ''}`}
             aria-pressed={flowPlaybackMode === mode.value}
+            disabled={!showAttackArcs}
             onClick={() => onFlowPlaybackModeChange(mode.value)}
             title={mode.title}
           >

@@ -13,6 +13,20 @@ export function formatThreatIntelTimestamp(value: string): string {
   }).format(new Date(value)).replace(/\//g, '-')} `;
 }
 
+export function formatThreatIntelDateCode(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const year = String(date.getUTCFullYear());
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
 export function toggleThreatIntelSortOrder(order: ThreatIntelSortOrder): ThreatIntelSortOrder {
   return order === 'desc' ? 'asc' : 'desc';
 }

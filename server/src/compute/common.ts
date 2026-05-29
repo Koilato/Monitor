@@ -52,6 +52,53 @@ export function buildGeneratedAt(): string {
   return new Date().toISOString();
 }
 
+export function getSeverityLabel(value: EventLevel): string {
+  if (value === 'high') {
+    return '高';
+  }
+  if (value === 'medium') {
+    return '中';
+  }
+  return '低';
+}
+
+export function formatDateTimeLabel(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+  }).format(date).replace(/\//g, '-');
+}
+
+export function formatRansomAmountLabel(value: number): string {
+  return `￥${new Intl.NumberFormat('zh-CN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)}`;
+}
+
+export function formatDateRangeLabel(startDate: string | null, endDate: string | null): string {
+  if (startDate && endDate) {
+    return `${startDate} 至 ${endDate}`;
+  }
+  if (startDate) {
+    return `${startDate} 起`;
+  }
+  if (endDate) {
+    return `截至 ${endDate}`;
+  }
+  return '最近样本';
+}
+
 export function buildRangeWhere(startDate: string | null, endDate: string | null, columnName = 'occurred_date'): RangeWhereResult {
   const clauses: string[] = [];
   const params: string[] = [];

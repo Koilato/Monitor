@@ -1,5 +1,4 @@
 import type {
-  EventLevel,
   ThreatIntelQuery,
   ThreatIntelResponse,
 } from '../../../shared/types.js';
@@ -9,86 +8,58 @@ import {
   getCountryLabel,
   SEVERITY_TO_THREAT_INTEL,
 } from './common.js';
+import { deriveCompatIncident } from './derived-incidents.js';
 
 export function createThreatIntelComputeService(repository: StorageRepository) {
   return {
     getThreatIntelFeed(query: ThreatIntelQuery): ThreatIntelResponse {
-      const clauses: string[] = [];
-      const params: string[] = [];
-
-      if (query.startDate) {
-        clauses.push('occurred_date >= ?');
-        params.push(query.startDate);
-      }
-      if (query.endDate) {
-        clauses.push('occurred_date <= ?');
-        params.push(query.endDate);
-      }
-      if (query.severity) {
-        clauses.push('severity = ?');
-        params.push(query.severity);
-      }
-      if (query.victimCountry) {
-        clauses.push('victim_country = ?');
-        params.push(query.victimCountry);
-      }
-      if (query.attackerCountry) {
-        clauses.push('attacker_country = ?');
-        params.push(query.attackerCountry);
-      }
-
-      const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
-      const orderClause = query.sort === 'asc'
-        ? 'ORDER BY occurred_at ASC, id ASC'
-        : 'ORDER BY occurred_at DESC, id DESC';
-      const rows = repository.all<{
-        id: string;
-        occurred_at: string;
-        attacker_country: string;
-        victim_country: string;
-        severity: EventLevel;
-        title: string;
-        source_label: string;
-        source_address: string;
-      }>(
-        `SELECT
-          id,
-          occurred_at,
-          attacker_country,
-          victim_country,
-          severity,
-          title,
-          source_label,
-          source_address
-        FROM incidents
-        ${whereClause}
-        ${orderClause}
-        LIMIT ? OFFSET ?`,
-        [...params, String(query.limit), String(query.offset)],
+      const mappings = new Map(
+        repository.listGroupCountryMappings().map((mapping) => [mapping.groupName, mapping.attackerCountry]),
       );
-      const totalRow = repository.get<{ total: number }>(
-        `SELECT COUNT(*) AS total FROM incidents ${whereClause}`,
-        params,
-      );
+
+      const items = repository.listIncidentRows()
+        .map((row) => {
+          const attackerCountry = mappings.get(row.groupName);
+          if (!attackerCountry) {
+            return null;
+          }
+
+          const incident = deriveCompatIncident(row, attackerCountry);
+          return {
+            id: incident.id,
+            ...SEVERITY_TO_THREAT_INTEL[incident.severity],
+            severity: incident.severity,
+            victim: incident.title,
+            attacker: getCountryLabel(incident.attackerCountry),
+            source: getCountryLabel(incident.attackerCountry),
+            address: getCountryLabel(incident.victimCountry),
+            linkUrl: incident.sourceAddress,
+            attackerCountry: incident.attackerCountry,
+            victimCountry: incident.victimCountry,
+            occurredAt: incident.occurredAt,
+            occurredDate: incident.occurredDate,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null)
+        .filter((item) => !query.startDate || item.occurredDate >= query.startDate)
+        .filter((item) => !query.endDate || item.occurredDate <= query.endDate)
+        .filter((item) => !query.severity || item.severity === query.severity)
+        .filter((item) => !query.victimCountry || item.victimCountry === query.victimCountry)
+        .filter((item) => !query.attackerCountry || item.attackerCountry === query.attackerCountry)
+        .sort((left, right) => query.sort === 'asc'
+          ? left.occurredAt.localeCompare(right.occurredAt) || left.id.localeCompare(right.id)
+          : right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id),
+        );
+
+      const total = items.length;
 
       return {
         sort: query.sort,
-        total: totalRow?.total ?? 0,
+        total,
         limit: query.limit,
         offset: query.offset,
         generatedAt: buildGeneratedAt(),
-        items: rows.map((row) => ({
-          id: row.id,
-          ...SEVERITY_TO_THREAT_INTEL[row.severity],
-          severity: row.severity,
-          victim: row.title,
-          attacker: getCountryLabel(row.attacker_country),
-          source: row.source_address,
-          address: getCountryLabel(row.victim_country),
-          attackerCountry: row.attacker_country,
-          victimCountry: row.victim_country,
-          occurredAt: row.occurred_at,
-        })),
+        items: items.slice(query.offset, query.offset + query.limit).map(({ occurredDate: _occurredDate, ...item }) => item),
       };
     },
   };

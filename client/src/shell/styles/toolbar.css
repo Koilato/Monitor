@@ -46,6 +46,16 @@
   color: #d7fff0;
 }
 
+.map-dim-btn:disabled {
+  color: rgba(148, 163, 184, 0.42);
+  cursor: not-allowed;
+}
+
+.map-dim-btn:disabled:hover {
+  color: rgba(148, 163, 184, 0.42);
+  background: transparent;
+}
+
 .map-filter-field {
   display: flex;
   align-items: center;

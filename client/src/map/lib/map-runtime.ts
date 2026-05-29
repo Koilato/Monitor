@@ -1,9 +1,9 @@
 import type maplibregl from 'maplibre-gl';
 
-import { createHoverAnchor } from 'map/lib/hover-anchor';
+import { createPopupAnchor } from 'map/lib/hover-anchor';
 import { isLayerModuleEnabled, type LayerModule } from 'map/layers/registry';
 import type { MapCameraState } from 'map/state/map-state';
-import type { CountryHoverEvent } from 'map/state/map-types';
+import type { CountrySelectEvent } from 'map/state/map-types';
 
 interface RenderedFeature {
   properties?: Record<string, unknown>;
@@ -32,26 +32,25 @@ export type MapRuntimeTarget = maplibregl.Map & MapHoverTarget & MapCameraTarget
 export type MapVisibilityTarget = Pick<maplibregl.Map, 'getLayer' | 'setLayoutProperty'>;
 
 export interface MapEventBridge {
-  handleMouseMove(map: MapHoverTarget, event: { point: { x: number; y: number } }): void;
-  handleMouseOut(map: MapHoverTarget): void;
+  handleClick(map: MapHoverTarget, event: { point: { x: number; y: number } }): void;
   handleMoveEnd(map: MapCameraTarget): void;
 }
 
 export interface MapEventBridgeDeps {
-  getCountryHoverHandler: () => (event: CountryHoverEvent) => void;
+  getCountrySelectHandler: () => (event: CountrySelectEvent) => void;
   getCameraChangeHandler: () => (camera: Partial<MapCameraState>) => void;
   suppressMoveSyncRef: { current: boolean };
 }
 
-function emitHoverEvent(
-  callback: (event: CountryHoverEvent) => void,
-  country: CountryHoverEvent['country'],
+function emitCountrySelectEvent(
+  callback: (event: CountrySelectEvent) => void,
+  country: CountrySelectEvent['country'],
   clientX: number | null,
   clientY: number | null,
 ) {
   callback({
     country,
-    anchor: clientX !== null && clientY !== null ? createHoverAnchor(clientX, clientY) : null,
+    anchor: clientX !== null && clientY !== null ? createPopupAnchor(clientX, clientY) : null,
   });
 }
 
@@ -92,12 +91,11 @@ export function syncModuleVisibility(
 
 export function createMapEventBridge(deps: MapEventBridgeDeps): MapEventBridge {
   return {
-    handleMouseMove(map, event) {
+    handleClick(map, event) {
       const features = map.queryRenderedFeatures(event.point, {
         layers: ['countries-interactive'],
       });
-      const canvas = map.getCanvas();
-      const canvasRect = canvas.getBoundingClientRect();
+      const canvasRect = map.getCanvas().getBoundingClientRect();
       const clientX = canvasRect.left + event.point.x;
       const clientY = canvasRect.top + event.point.y;
       const feature = features[0];
@@ -105,20 +103,14 @@ export function createMapEventBridge(deps: MapEventBridgeDeps): MapEventBridge {
       const name = feature?.properties?.name as string | undefined;
 
       if (code) {
-        canvas.style.cursor = 'pointer';
-        emitHoverEvent(deps.getCountryHoverHandler(), {
+        emitCountrySelectEvent(deps.getCountrySelectHandler(), {
           code,
           name: name ?? code,
         }, clientX, clientY);
         return;
       }
 
-      canvas.style.cursor = '';
-      emitHoverEvent(deps.getCountryHoverHandler(), null, null, null);
-    },
-    handleMouseOut(map) {
-      map.getCanvas().style.cursor = '';
-      emitHoverEvent(deps.getCountryHoverHandler(), null, null, null);
+      emitCountrySelectEvent(deps.getCountrySelectHandler(), null, null, null);
     },
     handleMoveEnd(map) {
       if (deps.suppressMoveSyncRef.current) {

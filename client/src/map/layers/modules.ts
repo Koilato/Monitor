@@ -64,7 +64,7 @@ const threatLabelsModule: LayerModule = {
 const hoverHighlightModule: LayerModule = {
   id: 'hover-highlight',
   label: '悬停高亮',
-  defaultEnabled: true,
+  defaultEnabled: false,
   showInLayerControls: false,
   styleLayerIds: [...HOVER_HIGHLIGHT_LAYER_IDS],
   registerMapSources: ensureCountrySource,

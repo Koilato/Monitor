@@ -308,7 +308,21 @@
   padding: 6px 12px;
   border-block: 1px solid rgba(159, 179, 190, 0.08);
   background: rgba(10, 15, 18, 0.42);
+  color: inherit;
+  text-decoration: none;
   min-height: 34px;
+}
+
+.ticker-item:visited,
+.ticker-item:hover,
+.ticker-item:focus {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ticker-item:focus-visible {
+  outline: 1px solid rgba(159, 179, 190, 0.34);
+  outline-offset: -1px;
 }
 
 .ticker-item + .ticker-item {

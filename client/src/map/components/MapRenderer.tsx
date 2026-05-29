@@ -21,7 +21,7 @@ export function MapRenderer(props: MapViewProps) {
       <AttackArcCanvas
         mapRef={mapRef}
         mapReady={mapReady}
-        isEnabled={mapState.activeLayerIds.includes('attack-arcs')}
+        isEnabled={mapState.showAttackArcs && mapState.activeLayerIds.includes('attack-arcs')}
         flowData={flowData}
         threatData={threatData}
         playbackMode={flowPlaybackMode}

@@ -1,34 +1,51 @@
 import type { CountryHoverResponse } from '@shared/types';
-import type { HoverCountryState, PopupAnchor } from 'map/state/map-types';
-import { getPopupPosition } from 'map/lib/popup-layout';
+import type { PopupAnchor, SelectedCountryState } from 'map/state/map-types';
+import { getPopupPosition, type PopupViewport } from 'map/lib/popup-layout';
 
 interface IncidentPopupProps {
-  country: HoverCountryState | null;
+  country: SelectedCountryState | null;
   data: CountryHoverResponse | null;
   anchor: PopupAnchor | null;
+  viewport: PopupViewport | null;
   loading: boolean;
   error: string | null;
 }
 
 export function IncidentPopup(props: IncidentPopupProps) {
-  const { country, data, anchor, loading, error } = props;
+  const { country, data, anchor, viewport, loading, error } = props;
 
-  if (!country || !anchor) {
+  if (!country || !anchor || !viewport) {
     return null;
   }
 
-  const position = getPopupPosition(anchor);
+  const position = getPopupPosition(anchor, viewport);
   const flowCount = data?.flows.length ?? 0;
-  const severityLabelMap: Record<'low' | 'medium' | 'high', string> = {
-    low: '低',
-    medium: '中',
-    high: '高',
-  };
+  const displayFlows = data?.flows.slice(0, 5) ?? [];
+  const generatedAtLabel = data?.generatedAt ? new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'UTC',
+  }).format(new Date(data.generatedAt)).replace(/\//g, '-') : '';
 
   return (
-    <aside className="map-popup" style={position}>
+    <aside
+      className="map-popup"
+      style={position}
+      onWheel={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        event.currentTarget.scrollTop += event.deltaY;
+      }}
+    >
       <div className="popup-header hotspot">
-        <span className="popup-title">{country.name} / {country.code}</span>
+        <div className="popup-header-copy">
+          <span className="popup-title">{data?.victimCountryName ?? country.name}</span>
+          <span className="popup-header-subtitle">国家事件面板</span>
+        </div>
         {loading ? <span className="popup-badge medium">查询中</span> : null}
         {!loading && !error ? <span className="popup-badge low">实时</span> : null}
       </div>
@@ -38,7 +55,7 @@ export function IncidentPopup(props: IncidentPopupProps) {
 
         {!error && !loading && data ? (
           <>
-            <div className="popup-subtitle">入站攻击摘要</div>
+            <div className="popup-subtitle">总览</div>
             <div className="popup-stats">
               <div className="popup-stat">
                 <span className="stat-label">事件数</span>
@@ -49,37 +66,62 @@ export function IncidentPopup(props: IncidentPopupProps) {
                 <span className="stat-value">{flowCount}</span>
               </div>
             </div>
+            <div className="popup-meta-strip">
+              <span>国家：{data.victimCountryName ?? country.name}</span>
+              <span>范围：{data.rangeLabel ?? '最近样本'}</span>
+              <span>更新：{generatedAtLabel}</span>
+            </div>
 
             <div className="popup-section">
-              <span className="section-label">流向来源</span>
+              <span className="section-label">来源分布</span>
               <div className="popup-flow-list">
-                {data.flows.map((flow: CountryHoverResponse['flows'][number]) => (
+                {displayFlows.map((flow: CountryHoverResponse['flows'][number]) => (
                   <div className="popup-flow-row" key={`${flow.attackerCountry}-${flow.victimCountry}`}>
-                    <span>{flow.attackerCountry} → {flow.victimCountry}</span>
-                    <span className="popup-flow-count">{flow.count}</span>
+                    <span>{flow.attackerCountryName ?? flow.attackerCountry}</span>
+                    <span className="popup-flow-count">{flow.count} / {flow.flowLevelLabel ?? flow.flowLevel}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="popup-section">
-              <span className="section-label">事件日志</span>
+              <span className="section-label">事件明细</span>
               <div className="popup-incident-list">
                 {data.incidents.map((incident: CountryHoverResponse['incidents'][number]) => (
-                  <article className="popup-incident-card" key={incident.uuid}>
+                  <a
+                    className="popup-incident-card"
+                    key={incident.uuid}
+                    href={incident.linkUrl ?? incident.sourceAddress}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
                     <div className="popup-title-row">
-                      <strong>{incident.details.title}</strong>
+                      <strong>{incident.title}</strong>
                       <span className={`popup-badge ${incident.details.severity}`}>
-                        {severityLabelMap[incident.details.severity]}
+                        {incident.severityLabel ?? incident.details.severity}
                       </span>
                     </div>
-                    <p className="popup-description">{incident.details.summary}</p>
-                    <div className="popup-incident-meta">
-                      <span>{incident.uuid}</span>
-                      <span>{incident.date}</span>
-                      <span>{incident.attackerCountry} → {incident.victimCountry}</span>
+                    <div className="popup-incident-grid">
+                      <span className="popup-key">时间</span>
+                      <span className="popup-value">{incident.occurredAtLabel ?? incident.occurredAt}</span>
+                      <span className="popup-key">攻击方</span>
+                      <span className="popup-value">{incident.attackerCountryName ?? incident.attackerCountry}</span>
+                      <span className="popup-key">组织</span>
+                      <span className="popup-value">{incident.groupName ?? incident.sourceLabel}</span>
+                      {incident.ransomAmount > 0 ? (
+                        <>
+                          <span className="popup-key">金额</span>
+                          <span className="popup-value">{incident.ransomAmountLabel ?? incident.ransomAmount}</span>
+                        </>
+                      ) : null}
                     </div>
-                  </article>
+                    {incident.summaryRaw ? (
+                      <>
+                        <span className="section-label section-label--inline">摘要</span>
+                        <p className="popup-description">{incident.summaryRaw}</p>
+                      </>
+                    ) : null}
+                  </a>
                 ))}
               </div>
             </div>

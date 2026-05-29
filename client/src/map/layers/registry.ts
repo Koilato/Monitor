@@ -1,4 +1,4 @@
-import type { CountryHoverResponse, ThreatMapResponse } from '@shared/types';
+import type { ThreatMapResponse } from '@shared/types';
 import type maplibregl from 'maplibre-gl';
 
 import type { FlowArcSource } from 'map/lib/arc-data';
@@ -13,7 +13,6 @@ export interface LayerRenderContext {
   map: maplibregl.Map;
   activeLayerIds: string[];
   debugSettings: MapDebugSettings;
-  hoverData: CountryHoverResponse | null;
   flowData: FlowArcSource | null;
   threatData: ThreatMapResponse | null;
   hoveredCountryCode?: string | null;

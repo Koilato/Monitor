@@ -37,10 +37,13 @@ export interface ThreatCountryStat {
 
 export interface HoverFlow {
   attackerCountry: CountryCode;
+  attackerCountryName?: string;
   victimCountry: CountryCode;
+  victimCountryName?: string;
   count: number;
   severityCounts: ThreatSeverityCounts;
   flowLevel: EventLevel;
+  flowLevelLabel?: string;
   uuids: string[];
   firstDate: string | null;
   lastDate: string | null;
@@ -50,23 +53,33 @@ export interface HoverIncident {
   id: string;
   uuid: string;
   occurredAt: string;
+  occurredAtLabel?: string;
   occurredDate: string;
   date: string;
   attackerCountry: CountryCode;
+  attackerCountryName?: string;
   victimCountry: CountryCode;
+  victimCountryName?: string;
   severity: EventLevel;
+  severityLabel?: string;
   ransomAmount: number;
+  ransomAmountLabel?: string;
   title: string;
   summary: string;
+  summaryRaw?: string | null;
   details: IncidentDetails;
   sourceLabel: string;
+  groupName?: string;
   sourceAddress: string;
+  linkUrl?: string;
 }
 
 export interface CountryHoverResponse {
   victimCountry: CountryCode;
+  victimCountryName?: string;
   startDate: string | null;
   endDate: string | null;
+  rangeLabel?: string;
   total: number;
   totalIncidents: number;
   sourceCount: number;
@@ -135,6 +148,7 @@ export interface ThreatIntelItem {
   attacker: string;
   source: string;
   address: string;
+  linkUrl: string;
   attackerCountry: CountryCode;
   victimCountry: CountryCode;
   occurredAt: string;

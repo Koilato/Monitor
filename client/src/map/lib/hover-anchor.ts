@@ -1,6 +1,6 @@
 import type { PopupAnchor } from 'map/state/map-types';
 
-export function createHoverAnchor(x: number, y: number): PopupAnchor {
+export function createPopupAnchor(x: number, y: number): PopupAnchor {
   return {
     x,
     y,

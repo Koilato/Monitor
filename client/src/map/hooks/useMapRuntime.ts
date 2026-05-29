@@ -22,11 +22,9 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
   const {
     mapState,
     themeRevision,
-    hoveredCountryCode,
-    hoverData,
     flowData,
     threatData,
-    onCountryHover,
+    onCountrySelect,
     onCameraChange,
     debugSettings,
   } = props;
@@ -36,16 +34,16 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
   const failedModuleIdsRef = useRef<string[]>([]);
   const suppressMoveSyncRef = useRef(false);
   const [styleReady, setStyleReady] = useState(false);
-  const onCountryHoverRef = useRef(onCountryHover);
+  const onCountrySelectRef = useRef(onCountrySelect);
   const onCameraChangeRef = useRef(onCameraChange);
   const eventBridgeRef = useRef<ReturnType<typeof createMapEventBridge> | null>(null);
 
-  onCountryHoverRef.current = onCountryHover;
+  onCountrySelectRef.current = onCountrySelect;
   onCameraChangeRef.current = onCameraChange;
 
   if (!eventBridgeRef.current) {
     eventBridgeRef.current = createMapEventBridge({
-      getCountryHoverHandler: () => onCountryHoverRef.current,
+      getCountrySelectHandler: () => onCountrySelectRef.current,
       getCameraChangeHandler: () => onCameraChangeRef.current,
       suppressMoveSyncRef,
     });
@@ -75,11 +73,8 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
     map.once('load', () => {
       setStyleReady(true);
       map.setProjection({ type: 'mercator' });
-      map.on('mousemove', (event) => {
-        eventBridgeRef.current?.handleMouseMove(map as never, event as never);
-      });
-      map.on('mouseout', () => {
-        eventBridgeRef.current?.handleMouseOut(map as never);
+      map.on('click', (event) => {
+        eventBridgeRef.current?.handleClick(map as never, event as never);
       });
       map.on('moveend', () => {
         eventBridgeRef.current?.handleMoveEnd(map as never);
@@ -139,10 +134,9 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
         map: activeMap,
         activeLayerIds: mapState.activeLayerIds,
         debugSettings,
-        hoverData,
         flowData,
         threatData,
-        hoveredCountryCode,
+        hoveredCountryCode: null,
         modules: LAYER_MODULES,
       });
       if (cancelled) {
@@ -157,10 +151,9 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
         map: activeMap,
         activeLayerIds: mapState.activeLayerIds,
         debugSettings,
-        hoverData,
         flowData,
         threatData,
-        hoveredCountryCode,
+        hoveredCountryCode: null,
         activeModules: activeModulesRef.current,
         failedModuleIds: failedModuleIdsRef.current,
       });
@@ -179,9 +172,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
       cancelled = true;
     };
   }, [
-    hoverData,
     flowData,
-    hoveredCountryCode,
     mapState.activeLayerIds,
     styleReady,
     threatData,

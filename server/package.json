@@ -7,8 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "serve": "node scripts/serve.mjs",
     "build": "tsc -p tsconfig.json",
-    "seed": "tsx src/tasks.ts seed",
-    "import:incidents": "tsx src/tasks.ts import-incidents",
+    "import:recent-victims": "tsx src/tasks.ts import-recent-victims",
     "rebuild:aggregates": "tsx src/tasks.ts rebuild-aggregates"
   },
   "dependencies": {

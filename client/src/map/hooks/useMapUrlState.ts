@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   DEFAULT_MAP_STATE,
   normalizeMapState,
   parseMapStateFromSearch,
   serializeMapStateToSearch,
-  type FlowMode,
   type FlowPlaybackMode,
   type MapCameraState,
   type MapState,
@@ -45,41 +44,51 @@ export function useMapUrlState() {
     window.history.replaceState({}, '', nextUrl);
   }, [state]);
 
+  const setCamera = useCallback((camera: Partial<MapCameraState>) => {
+    setState((current) => normalizeMapState({
+      ...current,
+      camera: {
+        ...current.camera,
+        ...camera,
+      },
+    }));
+  }, []);
+
+  const setTimeFilter = useCallback((timeFilter: TimeFilterState) => {
+    setState((current) => normalizeMapState({
+      ...current,
+      timeFilter,
+    }));
+  }, []);
+
+  const setShowAttackArcs = useCallback((showAttackArcs: boolean) => {
+    setState((current) => normalizeMapState({
+      ...current,
+      showAttackArcs,
+    }));
+  }, []);
+
+  const setFlowPlaybackMode = useCallback((flowPlaybackMode: FlowPlaybackMode) => {
+    setState((current) => normalizeMapState({
+      ...current,
+      flowPlaybackMode,
+    }));
+  }, []);
+
+  const setActiveLayerIds = useCallback((activeLayerIds: string[]) => {
+    setState((current) => normalizeMapState({
+      ...current,
+      activeLayerIds,
+    }));
+  }, []);
+
   return {
     state,
     setState,
-    setCamera(camera: Partial<MapCameraState>) {
-      setState((current) => normalizeMapState({
-        ...current,
-        camera: {
-          ...current.camera,
-          ...camera,
-        },
-      }));
-    },
-    setTimeFilter(timeFilter: TimeFilterState) {
-      setState((current) => normalizeMapState({
-        ...current,
-        timeFilter,
-      }));
-    },
-    setFlowMode(flowMode: FlowMode) {
-      setState((current) => normalizeMapState({
-        ...current,
-        flowMode,
-      }));
-    },
-    setFlowPlaybackMode(flowPlaybackMode: FlowPlaybackMode) {
-      setState((current) => normalizeMapState({
-        ...current,
-        flowPlaybackMode,
-      }));
-    },
-    setActiveLayerIds(activeLayerIds: string[]) {
-      setState((current) => normalizeMapState({
-        ...current,
-        activeLayerIds,
-      }));
-    },
+    setCamera,
+    setTimeFilter,
+    setShowAttackArcs,
+    setFlowPlaybackMode,
+    setActiveLayerIds,
   };
 }

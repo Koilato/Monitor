@@ -3,14 +3,13 @@ import type { CountryHoverResponse, DateRange, RansomwareKpiResponse, ThreatMapR
 import { fetchAllFlows, fetchCountryHover, fetchRansomwareKpis, fetchThreatMap, fetchThreatTrend } from 'shared/api/client';
 import { createRequestTracker } from 'map/lib/request-tracker';
 import { timeFilterToDateRange, type TimeFilterState } from 'map/state/map-state';
-import type { CountryHoverEvent, HoverCountryState, PopupAnchor } from 'map/state/map-types';
-import type { FlowMode } from 'map/state/map-state';
+import type { CountrySelectEvent, PopupAnchor, SelectedCountryState } from 'map/state/map-types';
 
 export interface MapDataSyncState {
   dateRange: DateRange;
-  hoveredCountry: HoverCountryState | null;
-  popupAnchor: PopupAnchor | null;
-  hoverData: CountryHoverResponse | null;
+  selectedCountry: SelectedCountryState | null;
+  selectedAnchor: PopupAnchor | null;
+  countryData: CountryHoverResponse | null;
   allFlowData: Awaited<ReturnType<typeof fetchAllFlows>> | null;
   threatData: ThreatMapResponse | null;
   trendData: ThreatTrendResponse | null;
@@ -28,12 +27,12 @@ export interface MapDataSyncState {
   panelCount: number;
   statusTone: 'error' | 'warning' | 'live';
   statusLabel: string;
-  handleCountryHover: (event: CountryHoverEvent) => void;
+  handleCountrySelect: (event: CountrySelectEvent) => void;
 }
 
 interface UseMapDataSyncInput {
   timeFilter: TimeFilterState;
-  flowMode: FlowMode;
+  showAttackArcs: boolean;
 }
 
 export function serializeDateRange(range: DateRange): string {
@@ -50,9 +49,9 @@ function isAbortError(error: unknown): boolean {
 export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
   const dateRange = timeFilterToDateRange(input.timeFilter);
   const dateRangeKey = serializeDateRange(dateRange);
-  const [hoveredCountry, setHoveredCountry] = useState<HoverCountryState | null>(null);
-  const [popupAnchor, setPopupAnchor] = useState<PopupAnchor | null>(null);
-  const [hoverData, setHoverData] = useState<CountryHoverResponse | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<SelectedCountryState | null>(null);
+  const [selectedAnchor, setSelectedAnchor] = useState<PopupAnchor | null>(null);
+  const [countryData, setCountryData] = useState<CountryHoverResponse | null>(null);
   const [allFlowData, setAllFlowData] = useState<Awaited<ReturnType<typeof fetchAllFlows>> | null>(null);
   const [threatData, setThreatData] = useState<ThreatMapResponse | null>(null);
   const [trendData, setTrendData] = useState<ThreatTrendResponse | null>(null);
@@ -67,7 +66,7 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
   const [trendError, setTrendError] = useState<string | null>(null);
   const [allFlowError, setAllFlowError] = useState<string | null>(null);
   const [ransomwareKpisError, setRansomwareKpisError] = useState<string | null>(null);
-  const hoverRequestTrackerRef = useRef(createRequestTracker());
+  const countryRequestTrackerRef = useRef(createRequestTracker());
   const threatRequestTrackerRef = useRef(createRequestTracker());
   const trendRequestTrackerRef = useRef(createRequestTracker());
   const allFlowRequestTrackerRef = useRef(createRequestTracker());
@@ -76,8 +75,8 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
   const activeRangeRef = useRef(serializeDateRange(dateRange));
   const latestRangeRef = useRef<DateRange>(dateRange);
 
-  const startHoverRequest = useCallback(async (
-    country: HoverCountryState,
+  const startCountryRequest = useCallback(async (
+    country: SelectedCountryState,
     range: DateRange,
     force = false,
   ) => {
@@ -90,25 +89,26 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
 
     activeCountryRef.current = country.code;
     activeRangeRef.current = rangeState;
-    const requestTicket = hoverRequestTrackerRef.current.next();
+    const requestTicket = countryRequestTrackerRef.current.next();
 
+    setCountryData(null);
     setLoading(true);
     setError(null);
 
     try {
       const response = await fetchCountryHover(country.code, range, requestTicket.signal);
-      if (requestTicket.signal.aborted || !hoverRequestTrackerRef.current.isCurrent(requestTicket.id)) {
+      if (requestTicket.signal.aborted || !countryRequestTrackerRef.current.isCurrent(requestTicket.id)) {
         return;
       }
-      setHoverData(response);
+      setCountryData(response);
     } catch (fetchError) {
-      if (isAbortError(fetchError) || requestTicket.signal.aborted || !hoverRequestTrackerRef.current.isCurrent(requestTicket.id)) {
+      if (isAbortError(fetchError) || requestTicket.signal.aborted || !countryRequestTrackerRef.current.isCurrent(requestTicket.id)) {
         return;
       }
-      setHoverData(null);
+      setCountryData(null);
       setError((fetchError as Error).message);
     } finally {
-      if (!requestTicket.signal.aborted && hoverRequestTrackerRef.current.isCurrent(requestTicket.id)) {
+      if (!requestTicket.signal.aborted && countryRequestTrackerRef.current.isCurrent(requestTicket.id)) {
         setLoading(false);
       }
     }
@@ -214,23 +214,32 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
     }
   }, []);
 
-  const handleCountryHover = useCallback((event: CountryHoverEvent) => {
-    setPopupAnchor(event.anchor);
+  const clearSelectedCountry = useCallback(() => {
+    activeCountryRef.current = null;
+    activeRangeRef.current = serializeDateRange(latestRangeRef.current);
+    countryRequestTrackerRef.current.abort();
+    setSelectedCountry(null);
+    setSelectedAnchor(null);
+    setCountryData(null);
+    setLoading(false);
+    setError(null);
+  }, []);
 
+  const handleCountrySelect = useCallback((event: CountrySelectEvent) => {
     if (!event.country) {
-      activeCountryRef.current = null;
-      activeRangeRef.current = serializeDateRange(latestRangeRef.current);
-      hoverRequestTrackerRef.current.abort();
-      setHoveredCountry(null);
-      setHoverData(null);
-      setLoading(false);
-      setError(null);
+      clearSelectedCountry();
       return;
     }
 
-    setHoveredCountry(event.country);
-    void startHoverRequest(event.country, latestRangeRef.current);
-  }, [startHoverRequest]);
+    if (selectedCountry?.code === event.country.code) {
+      clearSelectedCountry();
+      return;
+    }
+
+    setSelectedAnchor(event.anchor);
+    setSelectedCountry(event.country);
+    void startCountryRequest(event.country, latestRangeRef.current);
+  }, [clearSelectedCountry, selectedCountry, startCountryRequest]);
 
   useEffect(() => {
     latestRangeRef.current = dateRange;
@@ -238,29 +247,27 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
     void startAllFlowRequest(dateRange);
     void startTrendRequest(dateRange);
     void startRansomwareKpisRequest(dateRange);
-    if (!hoveredCountry || dateRangeKey === activeRangeRef.current) {
+    if (!selectedCountry || dateRangeKey === activeRangeRef.current) {
       return;
     }
 
-    void startHoverRequest(hoveredCountry, dateRange, true);
-  }, [dateRangeKey, hoveredCountry, input.flowMode, startHoverRequest, startThreatRequest, startAllFlowRequest, startTrendRequest, startRansomwareKpisRequest]);
+    void startCountryRequest(selectedCountry, dateRange, true);
+  }, [dateRangeKey, selectedCountry, startCountryRequest, startThreatRequest, startAllFlowRequest, startTrendRequest, startRansomwareKpisRequest]);
 
   useEffect(() => () => {
-    hoverRequestTrackerRef.current.abort();
+    countryRequestTrackerRef.current.abort();
     threatRequestTrackerRef.current.abort();
     trendRequestTrackerRef.current.abort();
     allFlowRequestTrackerRef.current.abort();
     ransomwareKpisRequestTrackerRef.current.abort();
   }, []);
 
-  const panelCount = input.flowMode === 'allflow'
-    ? allFlowData?.total ?? 0
-    : hoveredCountry
-      ? hoverData?.total ?? 0
-      : 0;
-  const statusTone = error || threatError || trendError || ransomwareKpisError || (input.flowMode === 'allflow' && allFlowError)
+  const panelCount = selectedCountry
+    ? countryData?.total ?? 0
+    : allFlowData?.total ?? 0;
+  const statusTone = error || threatError || trendError || ransomwareKpisError || allFlowError
     ? 'error'
-    : loading || threatLoading || trendLoading || ransomwareKpisLoading || (input.flowMode === 'allflow' && allFlowLoading)
+    : loading || threatLoading || trendLoading || ransomwareKpisLoading || allFlowLoading
       ? 'warning'
       : 'live';
   const statusLabel = error
@@ -271,7 +278,7 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
         ? '趋势错误'
       : ransomwareKpisError
         ? '指标错误'
-      : input.flowMode === 'allflow' && allFlowError
+      : allFlowError
         ? '流量错误'
       : loading
         ? '查询中'
@@ -281,19 +288,19 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
           ? '趋势统计中'
         : ransomwareKpisLoading
           ? '指标统计中'
-          : input.flowMode === 'allflow' && allFlowLoading
+          : allFlowLoading
             ? '正在准备全部流量'
-            : input.flowMode === 'allflow'
+            : selectedCountry
+              ? `追踪 ${selectedCountry.code}`
+              : input.showAttackArcs
               ? `全部流量 ${allFlowData?.total ?? 0}`
-              : hoveredCountry
-            ? `追踪 ${hoveredCountry.code}`
-            : '实时地图信息流';
+              : '实时地图信息流';
 
   return {
     dateRange,
-    hoveredCountry,
-    popupAnchor,
-    hoverData,
+    selectedCountry,
+    selectedAnchor,
+    countryData,
     allFlowData,
     threatData,
     trendData,
@@ -311,6 +318,6 @@ export function useMapDataSync(input: UseMapDataSyncInput): MapDataSyncState {
     panelCount,
     statusTone,
     statusLabel,
-    handleCountryHover,
+    handleCountrySelect,
   };
 }

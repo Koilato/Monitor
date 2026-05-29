@@ -1,34 +1,64 @@
-import type { ThreatIntelItem } from '@shared/types';
-import { formatThreatIntelTimestamp } from 'shell/lib/threat-intel';
-
 type TickerDirection = 'up' | 'down';
 
+interface NewsItem {
+  id: string;
+  title: string;
+  linkUrl: string;
+  source: string;
+}
+
 interface ThreatTickerPanelProps {
-  items: ThreatIntelItem[];
   direction?: TickerDirection;
 }
 
-export function ThreatTickerPanel(props: ThreatTickerPanelProps) {
-  const { items, direction = 'down' } = props;
+const NEWS_ITEMS: NewsItem[] = [
+  {
+    id: 'wechat-1',
+    title: '13万条奔驰英国车主数据被黑客出售，个人隐私与车辆信息或遭泄露',
+    linkUrl: 'https://mp.weixin.qq.com/s/vtx5RH-_PbEmfiWN4vCFCQ',
+    source: '微信公众号',
+  },
+  {
+    id: 'wechat-2',
+    title: '特朗普家族旗下手机品牌数据泄露，近万名预购用户信息被公开',
+    linkUrl: 'https://mp.weixin.qq.com/s/kuRHCTKQkdyaqvOJXhzrEg',
+    source: '微信公众号',
+  },
+  {
+    id: 'wechat-3',
+    title: '多起高危投毒事件连环爆发！AI开发生态正沦为供应链攻击新入口',
+    linkUrl: 'https://mp.weixin.qq.com/s/zojFIDb7Po33_unFWBKkyQ',
+    source: '微信公众号',
+  },
+  {
+    id: 'wechat-4',
+    title: '1小时投毒639个恶意版本！开源供应链攻击再度爆发',
+    linkUrl: 'https://mp.weixin.qq.com/s/luwibRXde9E9Kens00mqTA',
+    source: '微信公众号',
+  },
+  {
+    id: 'wechat-5',
+    title: '时装品牌Zara近20万用户信息遭泄露，9500万条真实订单与售后记录被公开',
+    linkUrl: 'https://mp.weixin.qq.com/s/WBkCiVY04kJi-EnpG8NHdA',
+    source: '微信公众号',
+  },
+  {
+    id: 'wechat-6',
+    title: '勒索攻击从入侵到全线感染最快仅需51秒！单次事件平均损失243万美元',
+    linkUrl: 'https://mp.weixin.qq.com/s/X1qjFFEBzjHD_wxqHOEYeA',
+    source: '微信公众号',
+  },
+];
 
-  const tickerItems = items.map((item) => ({
-    id: item.id,
-    tone: item.tone,
-    label: item.tone === 'critical'
-      ? '严重'
-      : item.tone === 'warning'
-        ? '告警'
-        : '提示',
-    text: `${item.victim} / ${item.attacker} / ${item.source}`,
-    timestamp: item.occurredAt,
-  }));
+export function ThreatTickerPanel(props: ThreatTickerPanelProps) {
+  const { direction = 'down' } = props;
 
   return (
     <section className="ticker-panel">
       <header className="ticker-panel-header">
         <div>
-          <span className="ticker-panel-title">信号滚动栏</span>
-          <span className="ticker-panel-subtitle">纵向事件流</span>
+          <span className="ticker-panel-title">新闻事件板</span>
+          <span className="ticker-panel-subtitle">公众号文章</span>
         </div>
       </header>
 
@@ -40,12 +70,19 @@ export function ThreatTickerPanel(props: ThreatTickerPanelProps) {
               className="ticker-column-segment"
               aria-hidden={copyIndex === 1}
             >
-              {tickerItems.map((item) => (
-                <article key={`${copyIndex}-${item.id}`} className="ticker-item">
-                  <span className={`ticker-item-pill ticker-item-pill--${item.tone}`}>{item.label}</span>
-                  <span className="ticker-item-text">{item.text}</span>
-                  <span className="ticker-item-time">{formatThreatIntelTimestamp(item.timestamp)}</span>
-                </article>
+              {NEWS_ITEMS.map((item) => (
+                <a
+                  key={`${copyIndex}-${item.id}`}
+                  className="ticker-item"
+                  href={item.linkUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  title={item.title}
+                >
+                  <span className="ticker-item-pill ticker-item-pill--warning">NEWS</span>
+                  <span className="ticker-item-text">{item.title}</span>
+                  <span className="ticker-item-time">{item.source}</span>
+                </a>
               ))}
             </div>
           ))}
