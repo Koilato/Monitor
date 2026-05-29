@@ -11,8 +11,8 @@ import {
 } from 'map/lib/arc-data';
 import { resolveAttackArcFrameWindow } from 'map/lib/attack-arc-animation';
 import {
+  type ArcPath,
   resolveArcPath,
-  slicePathByLength,
   slicePathByT,
   type ArcPathPoint,
   type ScreenPoint,
@@ -67,10 +67,20 @@ type CanvasAttackRuntime = BundledScheduledFlowDatum & {
   groupKey: string;
 };
 
+interface CachedAttackPath {
+  key: string;
+  path: ArcPath;
+  start: ScreenPoint;
+  end: ScreenPoint;
+}
+
 interface ActiveCountryThreat {
   level: Exclude<ThreatVisualLevel, 'none'>;
   alpha: number;
 }
+
+const ATTACK_ARC_FRAME_INTERVAL_MS = 1000 / 20;
+const COUNTRY_THREAT_UPDATE_INTERVAL_MS = 100;
 
 const VISUAL_LEVEL_PRIORITY: Record<Exclude<ThreatVisualLevel, 'none'>, number> = {
   low: 1,
@@ -157,31 +167,195 @@ function drawArcPath(
   context.stroke();
 }
 
-function drawArc(
+function findLengthIndex(lengths: number[], targetLength: number): number {
+  let low = 0;
+  let high = lengths.length - 1;
+
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if ((lengths[middle] ?? 0) < targetLength) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+
+  return low;
+}
+
+function interpolatePathPoint(left: ArcPathPoint, right: ArcPathPoint, ratio: number): ArcPathPoint {
+  return {
+    x: left.x + ((right.x - left.x) * ratio),
+    y: left.y + ((right.y - left.y) * ratio),
+    t: left.t + ((right.t - left.t) * ratio),
+  };
+}
+
+function pointAtPathLength(path: ArcPath, targetLength: number): ArcPathPoint {
+  const first = path.points[0] ?? { x: 0, y: 0, t: 0 };
+  const last = path.points[path.points.length - 1] ?? first;
+
+  if (targetLength <= 0 || path.totalLength <= 0) {
+    return first;
+  }
+
+  if (targetLength >= path.totalLength) {
+    return last;
+  }
+
+  const index = findLengthIndex(path.lengths, targetLength);
+  if (index <= 0) {
+    return first;
+  }
+
+  const previousLength = path.lengths[index - 1] ?? 0;
+  const nextLength = path.lengths[index] ?? previousLength;
+  const previousPoint = path.points[index - 1] ?? first;
+  const nextPoint = path.points[index] ?? previousPoint;
+  const segmentLength = nextLength - previousLength;
+  const ratio = segmentLength <= 0 ? 0 : (targetLength - previousLength) / segmentLength;
+  return interpolatePathPoint(previousPoint, nextPoint, ratio);
+}
+
+function drawArcPathByLength(
   context: CanvasRenderingContext2D,
-  attack: CanvasAttackRuntime,
-  startT: number,
-  endT: number,
+  path: ArcPath,
+  startRatio: number,
+  endRatio: number,
   alpha: number,
-  start: ScreenPoint,
-  end: ScreenPoint,
   lineWidth: number,
   lineColor: string,
 ) {
-  const path = resolveArcPath(start, end, attack.bundleOffset, attack);
-  const points = attack.lengthBasedProgress
-    ? slicePathByLength(path, startT, endT)
-    : slicePathByT(path, startT, endT);
+  const clampedStart = clamp(startRatio, 0, 1);
+  const clampedEnd = clamp(endRatio, 0, 1);
+
+  if (clampedEnd <= clampedStart || path.points.length < 2) {
+    return;
+  }
+
+  const startLength = path.totalLength * clampedStart;
+  const endLength = path.totalLength * clampedEnd;
+  const startPoint = pointAtPathLength(path, startLength);
+  const endPoint = pointAtPathLength(path, endLength);
+
+  context.strokeStyle = `rgba(${hexToRgbString(lineColor)},${Math.max(0, Math.min(alpha, 1))})`;
+  context.lineWidth = lineWidth;
+  context.lineCap = 'round';
+  context.lineJoin = 'round';
+  context.beginPath();
+  context.moveTo(startPoint.x, startPoint.y);
+
+  for (let index = findLengthIndex(path.lengths, startLength); index < path.points.length; index += 1) {
+    const length = path.lengths[index] ?? 0;
+    const point = path.points[index];
+    if (!point || length <= startLength) {
+      continue;
+    }
+    if (length >= endLength) {
+      break;
+    }
+    context.lineTo(point.x, point.y);
+  }
+
+  context.lineTo(endPoint.x, endPoint.y);
+  context.stroke();
+}
+
+function drawArc(
+  context: CanvasRenderingContext2D,
+  attack: CanvasAttackRuntime,
+  path: ArcPath,
+  startT: number,
+  endT: number,
+  alpha: number,
+  lineWidth: number,
+  lineColor: string,
+) {
   const widthBoost = Math.min(0.8, Math.max(0, attack.count - 1) * 0.08);
   const bundleAlpha = Math.max(0, 1 - (attack.bundleIndex * attack.bundleAlphaStep));
+  const resolvedAlpha = alpha * bundleAlpha;
+  const resolvedLineWidth = lineWidth + widthBoost;
+
+  if (attack.lengthBasedProgress) {
+    drawArcPathByLength(
+      context,
+      path,
+      startT,
+      endT,
+      resolvedAlpha,
+      resolvedLineWidth,
+      lineColor,
+    );
+    return;
+  }
 
   drawArcPath(
     context,
-    points,
-    alpha * bundleAlpha,
-    lineWidth + widthBoost,
+    slicePathByT(path, startT, endT),
+    resolvedAlpha,
+    resolvedLineWidth,
     lineColor,
   );
+}
+
+function createScreenPointKey(point: ScreenPoint): string {
+  return `${Math.round(point.x * 10) / 10},${Math.round(point.y * 10) / 10}`;
+}
+
+function createAttackPathCacheKey(attack: CanvasAttackRuntime, start: ScreenPoint, end: ScreenPoint): string {
+  return [
+    createScreenPointKey(start),
+    createScreenPointKey(end),
+    attack.bundleOffset,
+    attack.curveType,
+    attack.pathSamplingCount,
+    attack.minArcHeightPx,
+    attack.maxArcHeightPx,
+    attack.arcHeightRatio,
+    attack.controlInsetRatio,
+    attack.curvatureRatio,
+    attack.bundleSpreadRatio,
+    attack.bundleMode,
+    attack.bundleHeightStepPx,
+  ].join('|');
+}
+
+function getCachedAttackPath(
+  cache: Map<string, CachedAttackPath>,
+  attack: CanvasAttackRuntime,
+  map: maplibregl.Map,
+): CachedAttackPath {
+  const sourcePoint = map.project(attack.source);
+  const targetPoint = map.project(attack.target);
+  const start = { x: sourcePoint.x, y: sourcePoint.y };
+  const end = { x: targetPoint.x, y: targetPoint.y };
+  const key = createAttackPathCacheKey(attack, start, end);
+  const cached = cache.get(attack.id);
+
+  if (cached?.key === key) {
+    return cached;
+  }
+
+  const nextCachedPath = {
+    key,
+    path: resolveArcPath(start, end, attack.bundleOffset, attack),
+    start,
+    end,
+  };
+  cache.set(attack.id, nextCachedPath);
+  return nextCachedPath;
+}
+
+function getActiveGroupsByLength(attacks: CanvasAttackRuntime[]): Map<BundledCanvasArcDatum['lengthPreset'], Set<string>> {
+  const groups = new Map<BundledCanvasArcDatum['lengthPreset'], Set<string>>();
+
+  for (const attack of attacks) {
+    const presetGroups = groups.get(attack.lengthPreset) ?? new Set<string>();
+    presetGroups.add(attack.groupKey);
+    groups.set(attack.lengthPreset, presetGroups);
+  }
+
+  return groups;
 }
 
 function drawTargetRings(
@@ -238,17 +412,6 @@ function resolvePhaseStage(phase: 'flight' | 'hold' | 'fade'): AttackArcStagePre
   }
 
   return 'stage3';
-}
-
-function countActiveGroupsByLength(
-  attacks: CanvasAttackRuntime[],
-  lengthPreset: BundledCanvasArcDatum['lengthPreset'],
-): number {
-  return new Set(
-    attacks
-      .filter((attack) => attack.lengthPreset === lengthPreset)
-      .map((attack) => attack.groupKey),
-  ).size;
 }
 
 function buildActiveCountryExpression(
@@ -487,26 +650,37 @@ export function AttackArcCanvas({
       groupKey: `${datum.flowKey}-${datum.startAt}`,
     }));
     const activeAttacks: CanvasAttackRuntime[] = [];
+    const pathCache = new Map<string, CachedAttackPath>();
     let frameId = 0;
-    let lastCountrySignature = '';
+    let timeoutId = 0;
+    let lastAppliedCountrySignature = '';
+    let lastCountryStateAppliedAt = 0;
+    let pendingNeedsSort = false;
 
     const render = (frameNow: number) => {
-      if (!canvasRef.current || !mapRef.current) {
+      const activeCanvas = canvasRef.current;
+      const activeMap = mapRef.current;
+
+      if (!activeCanvas || !activeMap) {
         return;
       }
 
-      const activeContext = canvasRef.current.getContext('2d');
+      const activeContext = activeCanvas.getContext('2d');
       if (!activeContext) {
         return;
       }
 
-      const { width, height } = syncCanvasSize(canvasRef.current, activeContext);
+      const { width, height } = syncCanvasSize(activeCanvas, activeContext);
       activeContext.clearRect(0, 0, width, height);
 
+      const activeGroupsByLength = getActiveGroupsByLength(activeAttacks);
       while (true) {
         const nextIndex = pending.findIndex((attack) => (
           attack.startAt <= frameNow
-          && countActiveGroupsByLength(activeAttacks, attack.lengthPreset) < attack.maxConcurrentStarts
+          && (
+            (activeGroupsByLength.get(attack.lengthPreset)?.size ?? 0) < attack.maxConcurrentStarts
+            || activeGroupsByLength.get(attack.lengthPreset)?.has(attack.groupKey)
+          )
         ));
         if (nextIndex < 0) {
           break;
@@ -521,6 +695,9 @@ export function AttackArcCanvas({
           ...scheduledAttack,
           startAt: frameNow,
         });
+        const presetGroups = activeGroupsByLength.get(scheduledAttack.lengthPreset) ?? new Set<string>();
+        presetGroups.add(scheduledAttack.groupKey);
+        activeGroupsByLength.set(scheduledAttack.lengthPreset, presetGroups);
       }
 
       const nextActiveAttacks: CanvasAttackRuntime[] = [];
@@ -540,6 +717,7 @@ export function AttackArcCanvas({
             ...attack,
             startAt: frameNow + attack.replayDelayMs,
           });
+          pendingNeedsSort = true;
           continue;
         }
 
@@ -555,20 +733,16 @@ export function AttackArcCanvas({
           attack.visualStyle,
         );
         mergeActiveCountryThreat(nextCountryThreats, attack, resolveCountryStageAlpha(frameWindow));
-        const sourcePoint = mapRef.current.project(attack.source);
-        const targetPoint = mapRef.current.project(attack.target);
-        const start = { x: sourcePoint.x, y: sourcePoint.y };
-        const end = { x: targetPoint.x, y: targetPoint.y };
+        const cachedPath = getCachedAttackPath(pathCache, attack, activeMap);
 
         activeContext.save();
         drawArc(
           activeContext,
           attack,
+          cachedPath.path,
           frameWindow.startT,
           frameWindow.endT,
           frameWindow.alpha * stageSettings.lineAlpha,
-          start,
-          end,
           stageSettings.lineWidth,
           stageSettings.lineColor,
         );
@@ -580,7 +754,7 @@ export function AttackArcCanvas({
           renderedRingGroups.add(attack.groupKey);
           drawTargetRings(
             activeContext,
-            end,
+            cachedPath.end,
             frameWindow.alpha * stageSettings.ringAlpha,
             frameWindow.alpha * stageSettings.dotAlpha,
             stageSettings.ringColor,
@@ -600,20 +774,29 @@ export function AttackArcCanvas({
       activeAttacks.push(...nextActiveAttacks);
 
       const nextCountrySignature = serializeCountryThreats(nextCountryThreats);
-      if (nextCountrySignature !== lastCountrySignature) {
-        applyDynamicThreatCountryState(mapRef.current, nextCountryThreats, debugSettings);
-        lastCountrySignature = nextCountrySignature;
+      if (
+        nextCountrySignature !== lastAppliedCountrySignature
+        && frameNow - lastCountryStateAppliedAt >= COUNTRY_THREAT_UPDATE_INTERVAL_MS
+      ) {
+        applyDynamicThreatCountryState(activeMap, nextCountryThreats, debugSettings);
+        lastAppliedCountrySignature = nextCountrySignature;
+        lastCountryStateAppliedAt = frameNow;
       }
 
-      pending.sort((left, right) => {
-        if (left.startAt !== right.startAt) {
-          return left.startAt - right.startAt;
-        }
-        return left.sourceIndex - right.sourceIndex;
-      });
+      if (pendingNeedsSort) {
+        pending.sort((left, right) => {
+          if (left.startAt !== right.startAt) {
+            return left.startAt - right.startAt;
+          }
+          return left.sourceIndex - right.sourceIndex;
+        });
+        pendingNeedsSort = false;
+      }
 
       if (activeAttacks.length > 0 || pending.length > 0) {
-        frameId = window.requestAnimationFrame(render);
+        timeoutId = window.setTimeout(() => {
+          frameId = window.requestAnimationFrame(render);
+        }, ATTACK_ARC_FRAME_INTERVAL_MS);
       } else {
         activeContext.clearRect(0, 0, width, height);
       }
@@ -623,6 +806,7 @@ export function AttackArcCanvas({
 
     return () => {
       window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timeoutId);
       clearCanvas(canvas);
       restoreThreatCountryState(map, threatData, debugSettings);
     };

@@ -174,23 +174,24 @@ export function buildInternalCountryBordersGeoJson(
 }
 
 export async function ensureCountrySource(context: LayerRenderContext) {
-  const hasCountrySource = Boolean(context.map.getSource(COUNTRY_SOURCE_ID));
-  const hasInternalBorderSource = Boolean(context.map.getSource(COUNTRY_INTERNAL_BORDER_SOURCE_ID));
-  if (hasCountrySource && hasInternalBorderSource) {
+  if (
+    context.map.getSource(COUNTRY_SOURCE_ID)
+    && context.map.getSource(COUNTRY_INTERNAL_BORDER_SOURCE_ID)
+  ) {
     return;
   }
 
   const geojson = await getCountriesGeoJson();
   const filteredGeoJson = filterCountriesGeoJson(geojson);
 
-  if (!hasCountrySource) {
+  if (!context.map.getSource(COUNTRY_SOURCE_ID)) {
     context.map.addSource(COUNTRY_SOURCE_ID, {
       type: 'geojson',
       data: filteredGeoJson,
     });
   }
 
-  if (!hasInternalBorderSource) {
+  if (!context.map.getSource(COUNTRY_INTERNAL_BORDER_SOURCE_ID)) {
     context.map.addSource(COUNTRY_INTERNAL_BORDER_SOURCE_ID, {
       type: 'geojson',
       data: buildInternalCountryBordersGeoJson(filteredGeoJson),
