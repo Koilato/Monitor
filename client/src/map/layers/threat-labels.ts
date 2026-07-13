@@ -5,6 +5,7 @@ import type { GeoJSONSource } from 'maplibre-gl';
 import { getCountryLabelAnchor, getCountryName } from 'map/lib/country-geometry';
 import { getChineseCountryName } from 'map/lib/country-names-zh';
 import type { LayerRenderContext } from 'map/layers/registry';
+import { normalizeWorldPosition } from 'map/lib/world-overview';
 import {
   getThreatVisualToken,
   resolveThreatVisualLevel,
@@ -76,7 +77,7 @@ export async function buildThreatLabelFeatures(
       },
       geometry: {
         type: 'Point' as const,
-        coordinates: [anchor.lon, anchor.lat] as [number, number],
+        coordinates: normalizeWorldPosition([anchor.lon, anchor.lat]),
       },
     };
   }));

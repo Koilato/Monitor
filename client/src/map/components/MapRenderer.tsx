@@ -2,8 +2,6 @@ import { AttackArcCanvas } from 'map/components/AttackArcCanvas';
 import { useMapRuntime } from 'map/hooks/useMapRuntime';
 import { DEFAULT_MAP_STATE } from 'map/state/map-state';
 import type { MapViewProps } from 'map/state/map-types';
-import { getCountriesGeoJson } from 'map/lib/country-geometry';
-import { calculateWorldOverviewBounds } from 'map/lib/world-overview';
 
 export function MapRenderer(props: MapViewProps) {
   const {
@@ -15,7 +13,12 @@ export function MapRenderer(props: MapViewProps) {
     debugSettings,
     themeRevision,
   } = props;
-  const { containerRef, mapRef, mapReady } = useMapRuntime(props);
+  const {
+    containerRef,
+    mapRef,
+    mapReady,
+    fitWorldOverview,
+  } = useMapRuntime(props);
 
   return (
     <div className="map-wrapper">
@@ -53,17 +56,7 @@ export function MapRenderer(props: MapViewProps) {
             className="map-btn"
             aria-label="重置视图"
             onClick={async () => {
-              const map = mapRef.current;
-              if (!map) return;
-              try {
-                const bounds = calculateWorldOverviewBounds(await getCountriesGeoJson());
-                if (bounds) {
-                  map.fitBounds(bounds, { duration: 250 });
-                  return;
-                }
-              } catch (error) {
-                console.error('Failed to reset world overview', error);
-              }
+              if (await fitWorldOverview(250)) return;
               onCameraChange(DEFAULT_MAP_STATE.camera);
             }}
           >

@@ -3,6 +3,7 @@ import type { HoverFlow } from '@shared/types';
 import { getCountryCentroid } from 'map/lib/country-geometry';
 import { resolveThreatVisualLevel, type ThreatVisualLevel } from 'map/layers/tokens';
 import type { EventLevel } from '@shared/types';
+import { normalizeWorldPosition } from 'map/lib/world-overview';
 import type {
   ArcLengthPreset,
   AttackArcStagePreset,
@@ -197,8 +198,8 @@ async function resolveBundledArcFlows(
       return null;
     }
 
-    const sourcePosition: [number, number] = [source.lon, source.lat];
-    const targetPosition: [number, number] = [target.lon, target.lat];
+    const sourcePosition = normalizeWorldPosition([source.lon, source.lat]);
+    const targetPosition = normalizeWorldPosition([target.lon, target.lat]);
     const distance = resolveFlowDistance(sourcePosition, targetPosition);
     const lengthPreset = resolveArcLengthPreset(distance, arcSettings.lengthThresholds);
     const geometryPreset: AttackArcLengthPresetSettings = arcSettings.presets[lengthPreset];

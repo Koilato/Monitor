@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import type maplibregl from 'maplibre-gl';
+import { normalizeWorldPosition } from 'map/lib/world-overview';
 import type { ThreatMapResponse } from '@shared/types';
 
 import {
@@ -577,7 +578,7 @@ function getCachedCountryPath(
         continue;
       }
 
-      const firstPoint = map.project(first);
+      const firstPoint = map.project(normalizeWorldPosition(first));
       path.moveTo(firstPoint.x, firstPoint.y);
 
       for (let index = 1; index < ring.length; index += 1) {
@@ -585,7 +586,7 @@ function getCachedCountryPath(
         if (!coordinate) {
           continue;
         }
-        const point = map.project(coordinate);
+        const point = map.project(normalizeWorldPosition(coordinate));
         path.lineTo(point.x, point.y);
       }
 

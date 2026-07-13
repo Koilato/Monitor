@@ -13,6 +13,7 @@
     "dev:client": "npm --workspace client run dev",
     "build:server": "npm --workspace server run build",
     "build:client": "npm --workspace client run build",
+    "test:world-overview": "node --experimental-strip-types --test tests/world-overview.test.mjs",
     "build": "npm run build:server && npm run build:client",
     "import:recent-victims": "npm --workspace server run import:recent-victims",
     "rebuild:aggregates": "npm --workspace server run rebuild:aggregates"

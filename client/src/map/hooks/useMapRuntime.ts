@@ -1,12 +1,17 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import maplibregl from 'maplibre-gl';
 
 import { createMapEventBridge, isCameraSynced, syncModuleVisibility } from 'map/lib/map-runtime';
-import { setCountryCenterOverrides } from 'map/lib/country-geometry';
+import { getCountriesGeoJson, setCountryCenterOverrides } from 'map/lib/country-geometry';
 import { LAYER_MODULES } from 'map/layers/modules';
 import { getBasemapStyleUrl } from 'map/lib/map-style';
-import { getCountriesGeoJson } from 'map/lib/country-geometry';
-import { calculateWorldOverviewBounds } from 'map/lib/world-overview';
+import {
+  calculateWorldOverviewBounds,
+  normalizeWorldLongitude,
+  WORLD_CENTER_LONGITUDE,
+  WORLD_OVERVIEW_PADDING,
+  type WorldOverviewBounds,
+} from 'map/lib/world-overview';
 import {
   initializeLayerModules,
   synchronizeLayerModules,
@@ -18,7 +23,10 @@ interface UseMapRuntimeResult {
   containerRef: RefObject<HTMLDivElement | null>;
   mapRef: RefObject<maplibregl.Map | null>;
   mapReady: boolean;
+  fitWorldOverview: (duration?: number) => Promise<boolean>;
 }
+
+const MAX_MAP_LATITUDE = 85;
 
 export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
   const {
@@ -41,9 +49,20 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
   const onCameraChangeRef = useRef(onCameraChange);
   const eventBridgeRef = useRef<ReturnType<typeof createMapEventBridge> | null>(null);
   const didFitWorldRef = useRef(false);
+  const keepWorldFittedRef = useRef(fitWorldOnLoad);
+  const fittingWorldRef = useRef(false);
+  const worldBoundsRef = useRef<WorldOverviewBounds | null>(null);
+  const zoomLimitsRef = useRef({
+    min: debugSettings.minZoom,
+    max: debugSettings.maxZoom,
+  });
 
   onCountrySelectRef.current = onCountrySelect;
   onCameraChangeRef.current = onCameraChange;
+  zoomLimitsRef.current = {
+    min: debugSettings.minZoom,
+    max: debugSettings.maxZoom,
+  };
 
   if (!eventBridgeRef.current) {
     eventBridgeRef.current = createMapEventBridge({
@@ -52,6 +71,33 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
       suppressMoveSyncRef,
     });
   }
+
+  const fitWorldOverview = useCallback(async (duration = 0): Promise<boolean> => {
+    const map = mapRef.current;
+    if (!map) {
+      return false;
+    }
+
+    try {
+      const bounds = worldBoundsRef.current
+        ?? calculateWorldOverviewBounds(await getCountriesGeoJson());
+      if (!bounds) {
+        return false;
+      }
+
+      worldBoundsRef.current = bounds;
+      keepWorldFittedRef.current = true;
+      fittingWorldRef.current = true;
+      map.fitBounds(bounds, {
+        duration,
+        padding: WORLD_OVERVIEW_PADDING,
+      });
+      return true;
+    } catch (error) {
+      console.error('Failed to fit world overview', error);
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -68,32 +114,51 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
       minZoom: debugSettings.minZoom,
       maxZoom: debugSettings.maxZoom,
       renderWorldCopies: false,
+      transformConstrain: (center, zoom) => ({
+        center: new maplibregl.LngLat(
+          normalizeWorldLongitude(center.lng),
+          Math.max(-MAX_MAP_LATITUDE, Math.min(MAX_MAP_LATITUDE, center.lat)),
+        ),
+        zoom: Math.max(
+          zoomLimitsRef.current.min,
+          Math.min(zoomLimitsRef.current.max, zoom),
+        ),
+      }),
       attributionControl: false,
       localIdeographFontFamily: 'sans-serif',
     });
 
     mapRef.current = map;
 
+    if (fitWorldOnLoad) {
+      map.setCenter([WORLD_CENTER_LONGITUDE, mapState.camera.lat]);
+    }
+
     map.once('load', async () => {
       setStyleReady(true);
       map.setProjection({ type: 'mercator' });
+      map.on('movestart', (event) => {
+        const fromResize = Boolean((event as unknown as { 0?: unknown })[0]);
+        if (!fromResize && !fittingWorldRef.current && !suppressMoveSyncRef.current) {
+          keepWorldFittedRef.current = false;
+        }
+      });
       map.on('click', (event) => {
         eventBridgeRef.current?.handleClick(map as never, event as never);
       });
       map.on('moveend', () => {
+        fittingWorldRef.current = false;
         eventBridgeRef.current?.handleMoveEnd(map as never);
+      });
+      map.on('resize', () => {
+        if (keepWorldFittedRef.current && worldBoundsRef.current) {
+          void fitWorldOverview();
+        }
       });
 
       if (fitWorldOnLoad && !didFitWorldRef.current) {
         didFitWorldRef.current = true;
-        try {
-          const bounds = calculateWorldOverviewBounds(await getCountriesGeoJson());
-          if (bounds) {
-            map.fitBounds(bounds, { duration: 0 });
-          }
-        } catch (error) {
-          console.error('Failed to fit initial world overview', error);
-        }
+        await fitWorldOverview();
       }
     });
 
@@ -200,5 +265,6 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
     containerRef,
     mapRef,
     mapReady: styleReady,
+    fitWorldOverview,
   };
 }

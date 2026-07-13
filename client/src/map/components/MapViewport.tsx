@@ -1,4 +1,4 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useLayoutEffect, useRef, useState } from 'react';
 import type { CountryHoverResponse, ThreatMapResponse } from '@shared/types';
 import type { CountrySelectEvent, MapDebugSettings, PopupAnchor, SelectedCountryState } from 'map/state/map-types';
 import type { FlowArcSource } from 'map/lib/arc-data';
@@ -8,8 +8,6 @@ import { MapRenderer } from 'map/components/MapRenderer';
 import type { PopupViewport } from 'map/lib/popup-layout';
 import { THREAT_LEGEND } from 'map/layers/tokens';
 import { useThemeRevision } from 'shared/styles/theme';
-import { getCountriesGeoJson } from 'map/lib/country-geometry';
-import { calculateWorldOverviewBounds, getWorldOverviewAspectRatio } from 'map/lib/world-overview';
 
 interface MapViewportProps {
   mapState: MapState;
@@ -44,16 +42,6 @@ export const MapViewport = memo(function MapViewport(props: MapViewportProps) {
   const themeRevision = useThemeRevision();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [popupViewport, setPopupViewport] = useState<PopupViewport | null>(null);
-  const [worldAspectRatio, setWorldAspectRatio] = useState<number | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    getCountriesGeoJson().then((geojson) => {
-      const bounds = calculateWorldOverviewBounds(geojson);
-      if (!cancelled && bounds) setWorldAspectRatio(getWorldOverviewAspectRatio(bounds));
-    }).catch((error) => console.error('Failed to calculate world overview size', error));
-    return () => { cancelled = true; };
-  }, []);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -97,18 +85,9 @@ export const MapViewport = memo(function MapViewport(props: MapViewportProps) {
     };
   }, []);
 
-  const mapStageStyle = worldAspectRatio && popupViewport
-    ? popupViewport.width / popupViewport.height > worldAspectRatio
-      ? { width: popupViewport.height * worldAspectRatio, height: popupViewport.height }
-      : { width: popupViewport.width, height: popupViewport.width / worldAspectRatio }
-    : undefined;
-
   return (
     <div className="map-container" ref={containerRef}>
-      <div
-        className="map-stage"
-        style={mapStageStyle}
-      >
+      <div className="map-stage">
         <MapRenderer
           mapState={mapState}
           fitWorldOnLoad={fitWorldOnLoad}

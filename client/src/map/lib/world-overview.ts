@@ -2,9 +2,14 @@ import type { FeatureCollection, Geometry, Position } from 'geojson';
 
 export type WorldOverviewBounds = [[number, number], [number, number]];
 
+export const WORLD_SEAM_LONGITUDE = -169;
+// Keep the rendered range infinitesimally below 360°. MapLibre wraps both
+// endpoints of an exact 360° maxBounds range to the same x coordinate.
+export const WORLD_EAST_LONGITUDE = WORLD_SEAM_LONGITUDE + 360 - 1e-7;
+export const WORLD_CENTER_LONGITUDE = WORLD_SEAM_LONGITUDE + 180;
+export const WORLD_OVERVIEW_PADDING = 24;
+
 const HIDDEN_COUNTRY_CODES = new Set(['AQ']);
-const MAX_MERCATOR_LATITUDE = 85.051129;
-const VERTICAL_OVERVIEW_PADDING_RATIO = 0.92;
 
 function visitPositions(geometry: Geometry, visit: (position: Position) => void): void {
   if (geometry.type === 'GeometryCollection') {
@@ -27,9 +32,7 @@ function visitPositions(geometry: Geometry, visit: (position: Position) => void)
 export function calculateWorldOverviewBounds(
   geojson: FeatureCollection<Geometry>,
 ): WorldOverviewBounds | null {
-  let minLon = Infinity;
   let minLat = Infinity;
-  let maxLon = -Infinity;
   let maxLat = -Infinity;
 
   for (const feature of geojson.features) {
@@ -42,27 +45,21 @@ export function calculateWorldOverviewBounds(
       const lon = Number(position[0]);
       const lat = Number(position[1]);
       if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
-      minLon = Math.min(minLon, lon);
       minLat = Math.min(minLat, lat);
-      maxLon = Math.max(maxLon, lon);
       maxLat = Math.max(maxLat, lat);
     });
   }
 
-  return Number.isFinite(minLon) ? [[minLon, minLat], [maxLon, maxLat]] : null;
+  return Number.isFinite(minLat)
+    ? [[WORLD_SEAM_LONGITUDE, minLat], [WORLD_EAST_LONGITUDE, maxLat]]
+    : null;
 }
 
-function mercatorY(latitude: number): number {
-  const lat = Math.max(-MAX_MERCATOR_LATITUDE, Math.min(MAX_MERCATOR_LATITUDE, latitude));
-  const radians = lat * Math.PI / 180;
-  return (1 - Math.log(Math.tan(radians) + 1 / Math.cos(radians)) / Math.PI) / 2;
+export function normalizeWorldLongitude(longitude: number): number {
+  if (!Number.isFinite(longitude)) return longitude;
+  return ((((longitude - WORLD_SEAM_LONGITUDE) % 360) + 360) % 360) + WORLD_SEAM_LONGITUDE;
 }
 
-export function getWorldOverviewAspectRatio(bounds: WorldOverviewBounds): number {
-  const [[west, south], [east, north]] = bounds;
-  const projectedWidth = Math.max((east - west) / 360, 0.01);
-  const projectedHeight = Math.max(Math.abs(mercatorY(south) - mercatorY(north)), 0.01);
-  // A slightly taller stage leaves vertical breathing room without asking
-  // MapLibre to zoom beyond the single-world horizontal constraint.
-  return projectedWidth / projectedHeight * VERTICAL_OVERVIEW_PADDING_RATIO;
+export function normalizeWorldPosition(position: [number, number]): [number, number] {
+  return [normalizeWorldLongitude(position[0]), position[1]];
 }
