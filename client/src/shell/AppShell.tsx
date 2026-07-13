@@ -27,8 +27,21 @@ function formatUtcClock(date: Date): string {
     .replace(/\//g, '-');
 }
 
-export function AppShell() {
+function HeaderClock() {
   const [clock, setClock] = useState(() => formatUtcClock(new Date()));
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setClock(formatUtcClock(new Date()));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return <div className="header-clock">{clock} </div>;
+}
+
+export function AppShell() {
   const {
     debugModeEnabled,
     setDebugModeEnabled,
@@ -89,14 +102,6 @@ export function AppShell() {
     initialSortOrder: 'desc',
   });
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setClock(formatUtcClock(new Date()));
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, []);
-
   return (
     <div id="app" className="app-shell" ref={appShellRef}>
       <main className="main-content">
@@ -105,7 +110,7 @@ export function AppShell() {
             <span className="panel-title">全球信号地图</span>
             <span className="panel-count">{panelCount}</span>
           </div>
-          <div className="header-clock">{clock} </div>
+          <HeaderClock />
           <AppToolbar
             timeFilter={mapState.timeFilter}
             showAttackArcs={mapState.showAttackArcs}

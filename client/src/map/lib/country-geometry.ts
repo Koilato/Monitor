@@ -10,6 +10,12 @@ interface IndexedCountryGeometry {
   feature: Feature<Geometry>;
 }
 
+export interface CountryRenderGeometry {
+  code: string;
+  bbox: [number, number, number, number];
+  polygons: [number, number][][][];
+}
+
 interface CountryHit {
   code: string;
   name: string;
@@ -550,4 +556,18 @@ export async function getCountryName(code: string): Promise<string | null> {
 export async function getCountryFeatures(): Promise<Feature<Geometry>[]> {
   await ensureLoaded();
   return countryList.map((country) => country.feature);
+}
+
+export async function getCountryRenderGeometry(code: string): Promise<CountryRenderGeometry | null> {
+  await ensureLoaded();
+  const country = countriesByCode.get(code.toUpperCase());
+  if (!country) {
+    return null;
+  }
+
+  return {
+    code: country.code,
+    bbox: country.bbox,
+    polygons: country.polygons,
+  };
 }

@@ -11,6 +11,7 @@ const MIN_PRIORITY_ASIA_VICTIM_COUNT = 500;
 const RECENT_MONTH_LOOKBACK = 36;
 const ASIA_COUNTRY_YEAR_LOOKBACK = 5;
 const ATTACKER_COUNTRY_POOL = ['US', 'CA', 'GB', 'DE', 'FR', 'NL', 'IT', 'ES', 'SE', 'PL', 'BE', 'DK', 'NO'] as const;
+const MANDATORY_VICTIM_COUNTRIES = ['CN'] as const;
 const PRIORITY_ASIA_VICTIM_COUNTRIES = [
   'CN',
   'JP',
@@ -202,11 +203,23 @@ async function fetchVictimRows(path: string, ingestedAt: string): Promise<Incide
 
 function selectVictimRows(rows: IncidentUpstreamRow[], limit: number): IncidentUpstreamRow[] {
   const sortedRows = [...rows].sort(compareVictimsByOccurredAt);
+  const mandatoryCountries = new Set<string>(MANDATORY_VICTIM_COUNTRIES);
   const priorityCountries = new Set<string>(PRIORITY_ASIA_VICTIM_COUNTRIES);
+  const mandatoryRows = sortedRows.filter((row) => mandatoryCountries.has(row.victimCountry));
   const priorityRows = sortedRows.filter((row) => priorityCountries.has(row.victimCountry));
   const selected = new Map<string, IncidentUpstreamRow>();
 
-  for (const row of priorityRows.slice(0, Math.min(MIN_PRIORITY_ASIA_VICTIM_COUNT, limit))) {
+  for (const row of mandatoryRows) {
+    if (selected.size >= limit) {
+      break;
+    }
+    selected.set(row.id, row);
+  }
+
+  for (const row of priorityRows) {
+    if (selected.size >= Math.min(MIN_PRIORITY_ASIA_VICTIM_COUNT, limit)) {
+      break;
+    }
     selected.set(row.id, row);
   }
 
@@ -248,6 +261,16 @@ export async function fetchRecentVictimRows(limit = TARGET_VICTIM_COUNT): Promis
       for (const row of rows) {
         deduped.set(row.id, row);
       }
+    }
+  }
+
+  for (const country of MANDATORY_VICTIM_COUNTRIES) {
+    const rows = await fetchVictimRows(buildVictimsPath({
+      country,
+      date: RECENT_VICTIMS_ORDER,
+    }), ingestedAt);
+    for (const row of rows) {
+      deduped.set(row.id, row);
     }
   }
 

@@ -33,6 +33,19 @@ export interface ArcPathSettings {
   bundleHeightStepPx: number;
 }
 
+export type ResolvedArcCurve = {
+  curveType: 'quadratic';
+  start: ScreenPoint;
+  control: ScreenPoint;
+  end: ScreenPoint;
+} | {
+  curveType: 'cubic';
+  start: ScreenPoint;
+  controlA: ScreenPoint;
+  controlB: ScreenPoint;
+  end: ScreenPoint;
+};
+
 export function quadraticBezierPoint(
   t: number,
   start: ScreenPoint,
@@ -159,12 +172,12 @@ function resolveArcHeight(
   return baseHeight + (bundleOffset * baseHeight * 0.3);
 }
 
-export function resolveArcPath(
+export function resolveArcCurve(
   start: ScreenPoint,
   end: ScreenPoint,
   bundleOffset: number,
   settings: ArcPathSettings,
-): ArcPath {
+): ResolvedArcCurve {
   const baseDx = end.x - start.x;
   const baseDy = end.y - start.y;
   const baseDistance = Math.hypot(baseDx, baseDy) || 1;
@@ -203,10 +216,35 @@ export function resolveArcPath(
       x: resolvedEnd.x - (dx * inset) + (normal.x * height),
       y: resolvedEnd.y - (dy * inset) + (normal.y * height),
     };
-    return sampleCubicPath(resolvedStart, controlA, controlB, resolvedEnd, settings.pathSamplingCount);
+    return {
+      curveType: 'cubic',
+      start: resolvedStart,
+      controlA,
+      controlB,
+      end: resolvedEnd,
+    };
   }
 
-  return sampleQuadraticPath(resolvedStart, apex, resolvedEnd, settings.pathSamplingCount);
+  return {
+    curveType: 'quadratic',
+    start: resolvedStart,
+    control: apex,
+    end: resolvedEnd,
+  };
+}
+
+export function resolveArcPath(
+  start: ScreenPoint,
+  end: ScreenPoint,
+  bundleOffset: number,
+  settings: ArcPathSettings,
+): ArcPath {
+  const curve = resolveArcCurve(start, end, bundleOffset, settings);
+  if (curve.curveType === 'cubic') {
+    return sampleCubicPath(curve.start, curve.controlA, curve.controlB, curve.end, settings.pathSamplingCount);
+  }
+
+  return sampleQuadraticPath(curve.start, curve.control, curve.end, settings.pathSamplingCount);
 }
 
 function interpolatePathPoint(left: ArcPathPoint, right: ArcPathPoint, ratio: number): ArcPathPoint {

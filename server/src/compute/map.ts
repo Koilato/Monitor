@@ -11,52 +11,17 @@ import type {
   ThreatTrendResponse,
 } from '../../../shared/types.js';
 import type { StorageRepository } from '../storage/repository.js';
+import type { CompatIncidentStore } from './compat-incidents.js';
 import {
   buildGeneratedAt,
   buildRangeWhere,
   compareFlows,
   compareThreatCountries,
   formatDateRangeLabel,
-  formatDateTimeLabel,
-  formatRansomAmountLabel,
   getCountryLabel,
   getSeverityLabel,
   mapSeverityCounts,
 } from './common.js';
-import { deriveCompatIncident } from './derived-incidents.js';
-
-function getCompatIncidents(repository: StorageRepository): HoverIncident[] {
-  const mappings = new Map(
-    repository.listGroupCountryMappings().map((mapping) => [mapping.groupName, mapping.attackerCountry]),
-  );
-
-  const incidents: Array<HoverIncident | null> = repository.listIncidentRows()
-    .map((row) => {
-      const attackerCountry = mappings.get(row.groupName);
-      if (!attackerCountry) {
-        return null;
-      }
-      const incident = deriveCompatIncident(row, attackerCountry);
-      return {
-        ...incident,
-        occurredAtLabel: formatDateTimeLabel(incident.occurredAt),
-        attackerCountryName: getCountryLabel(incident.attackerCountry),
-        victimCountryName: getCountryLabel(incident.victimCountry),
-        severityLabel: getSeverityLabel(incident.severity),
-        ransomAmountLabel: formatRansomAmountLabel(incident.ransomAmount),
-        summaryRaw: row.description,
-        groupName: row.groupName,
-        linkUrl: incident.sourceAddress,
-        details: {
-          title: incident.title,
-          summary: incident.summary,
-          severity: incident.severity,
-        },
-      };
-    });
-
-  return incidents.filter((incident): incident is HoverIncident => incident !== null);
-}
 
 function withinRange(incident: HoverIncident, startDate: string | null, endDate: string | null): boolean {
   if (startDate && incident.occurredDate < startDate) {
@@ -68,7 +33,7 @@ function withinRange(incident: HoverIncident, startDate: string | null, endDate:
   return true;
 }
 
-export function createMapComputeService(repository: StorageRepository) {
+export function createMapComputeService(repository: StorageRepository, compatIncidentStore: CompatIncidentStore) {
   return {
     getThreatMapSummary(query: ThreatMapQuery): ThreatMapResponse {
       const range = buildRangeWhere(query.startDate, query.endDate);
@@ -156,7 +121,7 @@ export function createMapComputeService(repository: StorageRepository) {
     },
 
     getRansomwareKpis(query: ThreatMapQuery): RansomwareKpiResponse {
-      const amounts = getCompatIncidents(repository)
+      const amounts = compatIncidentStore.getIncidents()
         .filter((incident) => withinRange(incident, query.startDate, query.endDate))
         .map((incident) => incident.ransomAmount)
         .filter((amount) => amount > 0)
@@ -183,7 +148,7 @@ export function createMapComputeService(repository: StorageRepository) {
     },
 
     getCountryHoverDetail(query: CountryHoverQuery): CountryHoverResponse {
-      const incidents = getCompatIncidents(repository)
+      const incidents = compatIncidentStore.getIncidents()
         .filter((incident) => incident.victimCountry === query.victimCountry)
         .filter((incident) => withinRange(incident, query.startDate, query.endDate))
         .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id));

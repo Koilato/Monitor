@@ -63,6 +63,7 @@ export interface IngestBatchRecord {
 }
 
 export function createRepository(db: DatabaseSync) {
+  let localDataVersion = 0;
   const getSourceByCode = db.prepare('SELECT id, code FROM incident_sources WHERE code = ?');
   const insertSource = db.prepare('INSERT INTO incident_sources (code, label, created_at) VALUES (?, ?, ?)');
   const insertBatch = db.prepare(`
@@ -133,6 +134,11 @@ export function createRepository(db: DatabaseSync) {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const countIncidents = db.prepare('SELECT COUNT(*) AS total FROM incidents');
+  const getExternalDataVersion = db.prepare('PRAGMA data_version');
+
+  const bumpDataVersion = () => {
+    localDataVersion += 1;
+  };
 
   return {
     getOrCreateSourceId(code: string, label = code): number {
@@ -186,6 +192,7 @@ export function createRepository(db: DatabaseSync) {
           record.rawJson,
         );
       }
+      bumpDataVersion();
       return { inserted: records.length > 0 };
     },
 
@@ -198,6 +205,7 @@ export function createRepository(db: DatabaseSync) {
           record.assignedAt,
         );
       }
+      bumpDataVersion();
     },
 
     replaceCountryDailyStats(records: CountryDailyStatsRow[]): void {
@@ -213,6 +221,7 @@ export function createRepository(db: DatabaseSync) {
           record.eventLevel,
         );
       }
+      bumpDataVersion();
     },
 
     replaceCountryFlowDailyStats(records: CountryFlowDailyStatsRow[]): void {
@@ -231,6 +240,7 @@ export function createRepository(db: DatabaseSync) {
           record.lastDate,
         );
       }
+      bumpDataVersion();
     },
 
     listIncidentRows(): IncidentUpstreamRow[] {
@@ -295,6 +305,11 @@ export function createRepository(db: DatabaseSync) {
 
     countIncidents(): number {
       return Number((countIncidents.get() as { total: number }).total);
+    },
+
+    getDataVersion(): string {
+      const row = getExternalDataVersion.get() as Record<string, unknown>;
+      return `${localDataVersion}:${String(Object.values(row)[0] ?? 0)}`;
     },
 
     all<T>(sql: string, params: SQLiteValue[] = []): T[] {

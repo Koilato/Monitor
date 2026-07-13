@@ -1,11 +1,14 @@
 import type { StorageRepository } from '../storage/repository.js';
+import { createCompatIncidentStore } from './compat-incidents.js';
 import { createMapComputeService } from './map.js';
 import { createThreatIntelComputeService } from './threat-intel.js';
 
 export function createComputeService(repository: StorageRepository) {
+  const compatIncidentStore = createCompatIncidentStore(repository);
+
   return {
-    ...createMapComputeService(repository),
-    ...createThreatIntelComputeService(repository),
+    ...createMapComputeService(repository, compatIncidentStore),
+    ...createThreatIntelComputeService(compatIncidentStore),
   };
 }
 

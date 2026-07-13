@@ -287,12 +287,10 @@
   flex-direction: column;
   width: 100%;
   transform: translateY(0);
-  animation: ticker-vertical-up 26s linear infinite;
 }
 
 .ticker-column--down {
-  transform: translateY(-50%);
-  animation-name: ticker-vertical-down;
+  transform: translateY(0);
 }
 
 .ticker-column-segment {
@@ -375,33 +373,6 @@
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-@keyframes ticker-vertical-up {
-  from {
-    transform: translateY(0);
-  }
-
-  to {
-    transform: translateY(-50%);
-  }
-}
-
-@keyframes ticker-vertical-down {
-  from {
-    transform: translateY(-50%);
-  }
-
-  to {
-    transform: translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ticker-column {
-    animation-duration: 0.01ms;
-    animation-iteration-count: 1;
-  }
 }
 
 .intel-empty {

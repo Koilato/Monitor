@@ -147,6 +147,10 @@ function resolveYAxisWidth(maxValue: number, fontSize: number): number {
   return Math.max(26, Math.ceil(digits * fontSize * 0.72 + 14));
 }
 
+function resolveCountryLabel(item: TrafficStatItem): string {
+  return item.countryName ?? item.countryCode;
+}
+
 function polarToCartesian(cx: number, cy: number, radius: number, angleDeg: number): SvgPoint {
   const angleRad = ((angleDeg - 90) * Math.PI) / 180;
 
@@ -354,6 +358,7 @@ function renderTrafficVolumePanel(
   const axisFontSize = resolveTickFontSize(settings.uiScale, settings.countryLabelScale);
   const yAxisFontSize = resolveTickFontSize(settings.uiScale);
   const yAxisWidth = resolveYAxisWidth(items[0]?.volume ?? 0, yAxisFontSize);
+  const countryLabelByCode = new Map(items.map((item) => [item.countryCode, resolveCountryLabel(item)]));
 
   return (
     <div className="traffic-stats-panel traffic-stats-panel--bars" aria-label="来源国家流量柱状图">
@@ -388,6 +393,7 @@ function renderTrafficVolumePanel(
                   />
                   <XAxis
                     dataKey="countryCode"
+                    tickFormatter={(value) => countryLabelByCode.get(String(value)) ?? String(value)}
                     axisLine={false}
                     tickLine={false}
                     tickMargin={6}

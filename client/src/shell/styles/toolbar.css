@@ -189,7 +189,6 @@
   border-radius: 50%;
   background: currentColor;
   box-shadow: 0 0 6px currentColor;
-  animation: status-pulse 2.4s ease-in-out infinite;
 }
 
 .map-brand-status.live {
@@ -202,19 +201,6 @@
 
 .map-brand-status.error {
   color: var(--red);
-}
-
-@keyframes status-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.35;
-    transform: scale(0.7);
-  }
 }
 
 @media (max-width: 960px) {
