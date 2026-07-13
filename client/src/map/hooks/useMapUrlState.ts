@@ -18,8 +18,16 @@ function getInitialState(): MapState {
   return parseMapStateFromSearch(window.location.search);
 }
 
+function hasExplicitCamera(search: string): boolean {
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+  return ['lat', 'lon', 'zoom', 'bearing', 'pitch'].some((key) => params.has(key));
+}
+
 export function useMapUrlState() {
   const [state, setState] = useState<MapState>(getInitialState);
+  const [fitWorldOnLoad] = useState(() => (
+    typeof window === 'undefined' || !hasExplicitCamera(window.location.search)
+  ));
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -84,6 +92,7 @@ export function useMapUrlState() {
 
   return {
     state,
+    fitWorldOnLoad,
     setState,
     setCamera,
     setTimeFilter,

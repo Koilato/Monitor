@@ -168,4 +168,5 @@ export interface MapViewProps {
   onCountrySelect: (event: CountrySelectEvent) => void;
   onCameraChange: (camera: Partial<MapCameraState>) => void;
   debugSettings: MapDebugSettings;
+  fitWorldOnLoad: boolean;
 }

@@ -5,6 +5,8 @@ import { createMapEventBridge, isCameraSynced, syncModuleVisibility } from 'map/
 import { setCountryCenterOverrides } from 'map/lib/country-geometry';
 import { LAYER_MODULES } from 'map/layers/modules';
 import { getBasemapStyleUrl } from 'map/lib/map-style';
+import { getCountriesGeoJson } from 'map/lib/country-geometry';
+import { calculateWorldOverviewBounds } from 'map/lib/world-overview';
 import {
   initializeLayerModules,
   synchronizeLayerModules,
@@ -27,6 +29,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
     onCountrySelect,
     onCameraChange,
     debugSettings,
+    fitWorldOnLoad,
   } = props;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -37,6 +40,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
   const onCountrySelectRef = useRef(onCountrySelect);
   const onCameraChangeRef = useRef(onCameraChange);
   const eventBridgeRef = useRef<ReturnType<typeof createMapEventBridge> | null>(null);
+  const didFitWorldRef = useRef(false);
 
   onCountrySelectRef.current = onCountrySelect;
   onCameraChangeRef.current = onCameraChange;
@@ -70,7 +74,7 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
 
     mapRef.current = map;
 
-    map.once('load', () => {
+    map.once('load', async () => {
       setStyleReady(true);
       map.setProjection({ type: 'mercator' });
       map.on('click', (event) => {
@@ -79,6 +83,18 @@ export function useMapRuntime(props: MapViewProps): UseMapRuntimeResult {
       map.on('moveend', () => {
         eventBridgeRef.current?.handleMoveEnd(map as never);
       });
+
+      if (fitWorldOnLoad && !didFitWorldRef.current) {
+        didFitWorldRef.current = true;
+        try {
+          const bounds = calculateWorldOverviewBounds(await getCountriesGeoJson());
+          if (bounds) {
+            map.fitBounds(bounds, { duration: 0 });
+          }
+        } catch (error) {
+          console.error('Failed to fit initial world overview', error);
+        }
+      }
     });
 
     return () => {

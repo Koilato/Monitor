@@ -65,6 +65,7 @@ export function AppShell() {
   } = useWorkspaceLayout(debugSettings.latestSectionHeight, updateLatestSectionHeight);
   const {
     state: mapState,
+    fitWorldOnLoad,
     setCamera,
     setTimeFilter,
     setShowAttackArcs,
@@ -167,6 +168,7 @@ export function AppShell() {
             <div className="workspace-pane workspace-pane--map">
               <MapViewport
                 mapState={mapState}
+                fitWorldOnLoad={fitWorldOnLoad}
                 selectedCountry={selectedCountry}
                 countryData={countryData}
                 flowData={allFlowData}
