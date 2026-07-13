@@ -1,13 +1,6 @@
 import type { ThreatMapResponse } from '@shared/types';
 import type { ExpressionSpecification } from 'maplibre-gl';
 
-import {
-  COUNTRY_DOT_PATTERN_BASE_IMAGE_ID,
-  COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID,
-  resolveThreatPatternImageId,
-  syncCountryDotPatternImages,
-  THREAT_PATTERN_LAYER_ID,
-} from 'map/layers/patterns';
 import type { LayerRenderContext } from 'map/layers/registry';
 import {
   COUNTRIES_BASE_LAYER_IDS,
@@ -75,32 +68,6 @@ function buildThreatExpression(
   return expression as unknown as ExpressionSpecification;
 }
 
-export function buildThreatPatternExpression(
-  threatData: ThreatMapResponse | null,
-  threatColorsEnabled = true,
-): ExpressionSpecification | string {
-  const countries = threatData?.countries ?? [];
-  if (countries.length === 0) {
-    return COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID;
-  }
-
-  const expression: Array<string | number | boolean | null | Array<string | number | boolean | null>> = [
-    'match',
-    ['get', 'ISO3166-1-Alpha-2'],
-  ];
-
-  for (const country of countries) {
-    const visualLevel = resolveThreatVisualLevel(country.eventLevel);
-    expression.push(
-      country.country,
-      resolveThreatPatternImageId(visualLevel, threatColorsEnabled),
-    );
-  }
-
-  expression.push(COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID);
-  return expression as unknown as ExpressionSpecification;
-}
-
 export function buildThreatOutlineColorExpression(
   threatData: ThreatMapResponse | null,
   threatColorsEnabled = true,
@@ -128,8 +95,6 @@ export function buildThreatGlowColorExpression(
 }
 
 export function applyThreatFillState(context: LayerRenderContext) {
-  syncCountryDotPatternImages(context.map, context.debugSettings);
-
   if (context.map.getLayer(THREAT_FILL_LAYER_ID)) {
     context.map.setPaintProperty(
       THREAT_FILL_LAYER_ID,
@@ -146,42 +111,15 @@ export function applyThreatFillState(context: LayerRenderContext) {
       context.debugSettings.threatFillOpacity,
     );
   }
-
-  if (context.map.getLayer(THREAT_PATTERN_LAYER_ID)) {
-    context.map.setLayoutProperty(
-      THREAT_PATTERN_LAYER_ID,
-      'visibility',
-      context.debugSettings.countryDotPatternEnabled ? 'visible' : 'none',
-    );
-    context.map.setPaintProperty(
-      THREAT_PATTERN_LAYER_ID,
-      'fill-pattern',
-      buildThreatPatternExpression(
-        context.threatData,
-        context.debugSettings.threatColorsEnabled,
-      ),
-    );
-  }
 }
 
 export function applyCountriesBaseState(context: LayerRenderContext) {
-  syncCountryDotPatternImages(context.map, context.debugSettings);
-
   const baseFillLayerId = COUNTRIES_BASE_LAYER_IDS[0];
-  const basePatternLayerId = COUNTRIES_BASE_LAYER_IDS[1];
-  const baseOutlineLayerId = COUNTRIES_BASE_LAYER_IDS[2];
-  const baseGlowLayerId = COUNTRIES_BASE_LAYER_IDS[3];
+  const baseOutlineLayerId = COUNTRIES_BASE_LAYER_IDS[1];
+  const baseGlowLayerId = COUNTRIES_BASE_LAYER_IDS[2];
   if (context.map.getLayer(baseFillLayerId)) {
     context.map.setPaintProperty(baseFillLayerId, 'fill-color', context.debugSettings.baseCountryFillColor);
     context.map.setPaintProperty(baseFillLayerId, 'fill-opacity', context.debugSettings.baseCountryFillOpacity);
-  }
-  if (context.map.getLayer(basePatternLayerId)) {
-    context.map.setLayoutProperty(
-      basePatternLayerId,
-      'visibility',
-      context.debugSettings.countryDotPatternEnabled ? 'visible' : 'none',
-    );
-    context.map.setPaintProperty(basePatternLayerId, 'fill-pattern', COUNTRY_DOT_PATTERN_BASE_IMAGE_ID);
   }
   if (context.map.getLayer(baseOutlineLayerId)) {
     context.map.setPaintProperty(baseOutlineLayerId, 'line-color', context.debugSettings.baseCountryOutlineColor);

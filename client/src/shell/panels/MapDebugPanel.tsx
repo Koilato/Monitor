@@ -603,36 +603,6 @@ export function MapDebugPanel(props: MapDebugPanelProps) {
 
           <section className="map-debug-section">
             <h3>底图样式</h3>
-            <div className="map-debug-subsection">
-              <h4>底图点阵</h4>
-              <CheckboxField
-                label="点阵显示"
-                checked={settings.countryDotPatternEnabled}
-                onChange={(value) => onMapSettingsChange({ countryDotPatternEnabled: value })}
-              />
-              <ColorField
-                label="点阵颜色"
-                value={settings.countryDotPatternColor}
-                onChange={(value) => onMapSettingsChange({ countryDotPatternColor: value })}
-              />
-              <NumberField
-                label="点阵密度"
-                value={settings.countryDotPatternDensity}
-                min={8}
-                max={24}
-                step={1}
-                onChange={(value) => onMapSettingsChange({ countryDotPatternDensity: value })}
-              />
-              <NumberField
-                label="点阵深浅"
-                value={settings.countryDotPatternOpacity}
-                min={0}
-                max={1}
-                step={0.05}
-                onChange={(value) => onMapSettingsChange({ countryDotPatternOpacity: value })}
-              />
-              <p>作用于底图与威胁填充，悬停高亮不使用点阵。</p>
-            </div>
             <ColorField
               label="底图填充颜色"
               value={settings.baseCountryFillColor}

@@ -30,14 +30,12 @@ import {
   buildThreatColorExpression,
   buildThreatGlowColorExpression,
   buildThreatOutlineColorExpression,
-  buildThreatPatternExpression,
 } from 'map/layers/effects';
 import {
   THREAT_FILL_LAYER_ID,
   THREAT_GLOW_LAYER_ID,
   THREAT_OUTLINE_LAYER_ID,
 } from 'map/layers/maplibre';
-import { COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID, THREAT_PATTERN_LAYER_ID } from 'map/layers/patterns';
 import { getThreatVisualToken, type ThreatVisualLevel } from 'map/layers/tokens';
 import {
   deckColorToRgbaString,
@@ -535,9 +533,6 @@ function clearAnimatedThreatCountryState(map: maplibregl.Map) {
   if (map.getLayer(THREAT_FILL_LAYER_ID)) {
     map.setPaintProperty(THREAT_FILL_LAYER_ID, 'fill-color', 'rgba(0,0,0,0)');
   }
-  if (map.getLayer(THREAT_PATTERN_LAYER_ID)) {
-    map.setPaintProperty(THREAT_PATTERN_LAYER_ID, 'fill-pattern', COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID);
-  }
   if (map.getLayer(THREAT_OUTLINE_LAYER_ID)) {
     map.setPaintProperty(THREAT_OUTLINE_LAYER_ID, 'line-color', 'rgba(0,0,0,0)');
   }
@@ -688,16 +683,6 @@ function restoreThreatCountryState(
         threatData,
         debugSettings.threatColorsEnabled,
         debugSettings.baseCountryFillColor,
-      ),
-    );
-  }
-  if (map.getLayer(THREAT_PATTERN_LAYER_ID)) {
-    map.setPaintProperty(
-      THREAT_PATTERN_LAYER_ID,
-      'fill-pattern',
-      buildThreatPatternExpression(
-        threatData,
-        debugSettings.threatColorsEnabled,
       ),
     );
   }

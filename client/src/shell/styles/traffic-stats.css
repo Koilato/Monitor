@@ -6,10 +6,10 @@
   background: var(--bg-secondary);
   display: grid;
   grid-template-columns:
-    minmax(var(--traffic-trend-width, 500px), 1.08fr)
-    minmax(var(--traffic-bars-width, 800px), 1.74fr)
-    minmax(var(--traffic-summary-width, 236px), 0.82fr)
-    minmax(var(--traffic-economic-width, 260px), 0.86fr);
+    minmax(0, 1.08fr)
+    minmax(0, 1.74fr)
+    minmax(0, 0.82fr)
+    minmax(0, 0.86fr);
   gap: 1px;
   overflow: hidden;
   position: relative;

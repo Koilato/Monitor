@@ -1,10 +1,4 @@
 import { getCountriesGeoJson } from 'map/lib/country-geometry';
-import {
-  BASE_COUNTRY_PATTERN_LAYER_ID,
-  COUNTRY_DOT_PATTERN_BASE_IMAGE_ID,
-  COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID,
-  THREAT_PATTERN_LAYER_ID,
-} from 'map/layers/patterns';
 import type { LayerRenderContext } from 'map/layers/registry';
 import type { FeatureCollection, Geometry, Position } from 'geojson';
 import {
@@ -35,13 +29,11 @@ export const COUNTRY_SOURCE_ID = 'countries';
 export const COUNTRY_INTERNAL_BORDER_SOURCE_ID = 'countries-internal-borders';
 export const COUNTRIES_BASE_LAYER_IDS = [
   'countries-base-fill',
-  BASE_COUNTRY_PATTERN_LAYER_ID,
   'countries-base-line',
   'countries-base-glow',
   'countries-interactive',
 ] as const;
 export const THREAT_FILL_LAYER_ID = 'countries-threat-fill';
-export const THREAT_PATTERN_LAYER_IDS = [THREAT_FILL_LAYER_ID, THREAT_PATTERN_LAYER_ID] as const;
 export const THREAT_OUTLINE_LAYER_ID = 'countries-threat-line';
 export const THREAT_GLOW_LAYER_ID = 'countries-threat-glow';
 export const HOVER_HIGHLIGHT_LAYER_IDS = [
@@ -227,19 +219,6 @@ export function registerCountriesBaseLayers(context: LayerRenderContext) {
 
   addLayerIfMissing(context, {
     id: COUNTRIES_BASE_LAYER_IDS[1],
-    type: 'fill',
-    source: COUNTRY_SOURCE_ID,
-    paint: {
-      'fill-pattern': COUNTRY_DOT_PATTERN_BASE_IMAGE_ID,
-      'fill-opacity': 1,
-    },
-    layout: {
-      visibility: 'none',
-    },
-  });
-
-  addLayerIfMissing(context, {
-    id: COUNTRIES_BASE_LAYER_IDS[2],
     type: 'line',
     source: COUNTRY_INTERNAL_BORDER_SOURCE_ID,
     paint: {
@@ -250,7 +229,7 @@ export function registerCountriesBaseLayers(context: LayerRenderContext) {
   });
 
   addLayerIfMissing(context, {
-    id: COUNTRIES_BASE_LAYER_IDS[3],
+    id: COUNTRIES_BASE_LAYER_IDS[2],
     type: 'line',
     source: COUNTRY_INTERNAL_BORDER_SOURCE_ID,
     paint: {
@@ -261,7 +240,7 @@ export function registerCountriesBaseLayers(context: LayerRenderContext) {
   });
 
   addLayerIfMissing(context, {
-    id: COUNTRIES_BASE_LAYER_IDS[4],
+    id: COUNTRIES_BASE_LAYER_IDS[3],
     type: 'fill',
     source: COUNTRY_SOURCE_ID,
     paint: {
@@ -279,21 +258,6 @@ export function registerThreatFillLayer(context: LayerRenderContext) {
     paint: {
       'fill-color': 'rgba(0,0,0,0)',
       'fill-opacity': THREAT_FILL_OPACITY,
-    },
-  });
-}
-
-export function registerThreatPatternLayer(context: LayerRenderContext) {
-  addLayerIfMissing(context, {
-    id: THREAT_PATTERN_LAYER_ID,
-    type: 'fill',
-    source: COUNTRY_SOURCE_ID,
-    paint: {
-      'fill-pattern': COUNTRY_DOT_PATTERN_TRANSPARENT_IMAGE_ID,
-      'fill-opacity': 1,
-    },
-    layout: {
-      visibility: 'none',
     },
   });
 }
@@ -327,7 +291,6 @@ export function registerThreatGlowLayer(context: LayerRenderContext) {
 
 export function registerThreatHighlightLayers(context: LayerRenderContext) {
   registerThreatFillLayer(context);
-  registerThreatPatternLayer(context);
   registerThreatOutlineLayer(context);
   registerThreatGlowLayer(context);
 }

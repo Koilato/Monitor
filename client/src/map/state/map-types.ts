@@ -31,10 +31,6 @@ export interface MapDebugSettings {
   trafficStats: TrafficStatsDebugSettings;
   minZoom: number;
   maxZoom: number;
-  countryDotPatternEnabled: boolean;
-  countryDotPatternColor: string;
-  countryDotPatternDensity: number;
-  countryDotPatternOpacity: number;
   baseCountryFillColor: string;
   baseCountryFillOpacity: number;
   baseCountryOutlineColor: string;

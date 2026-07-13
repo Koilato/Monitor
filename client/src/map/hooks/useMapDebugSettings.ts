@@ -123,8 +123,6 @@ const MIN_RING_DOT_RADIUS = 0;
 const MAX_RING_DOT_RADIUS = 16;
 const MIN_ALPHA = 0;
 const MAX_ALPHA = 1;
-const MIN_COUNTRY_DOT_PATTERN_DENSITY = 8;
-const MAX_COUNTRY_DOT_PATTERN_DENSITY = 24;
 const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 const INVALID_ATTACK_ARC_CONFIG_MESSAGE = 'AttackArc Debug 配置不完整，未应用已存样式。';
 
@@ -315,10 +313,6 @@ const DEFAULT_MAP_DEBUG_SETTINGS: MapDebugSettings = {
   },
   minZoom: -2,
   maxZoom: 6,
-  countryDotPatternEnabled: true,
-  countryDotPatternColor: '#7a7a7a',
-  countryDotPatternDensity: 16,
-  countryDotPatternOpacity: 0.36,
   baseCountryFillColor: '#000000',
   baseCountryFillOpacity: 0.65,
   baseCountryOutlineColor: COUNTRY_BASE_LINE_COLOR,
@@ -746,24 +740,6 @@ export function coerceMapDebugSettings(value: unknown): MapDebugSettings {
     trafficStats: coerceTrafficStatsSettings(record.trafficStats),
     minZoom,
     maxZoom,
-    countryDotPatternEnabled: coerceBoolean(
-      record.countryDotPatternEnabled,
-      DEFAULT_MAP_DEBUG_SETTINGS.countryDotPatternEnabled,
-    ),
-    countryDotPatternColor: coerceHexColor(
-      record.countryDotPatternColor,
-      DEFAULT_MAP_DEBUG_SETTINGS.countryDotPatternColor,
-    ),
-    countryDotPatternDensity: isFiniteNumber(record.countryDotPatternDensity)
-      ? Math.round(clampNumber(
-        record.countryDotPatternDensity,
-        MIN_COUNTRY_DOT_PATTERN_DENSITY,
-        MAX_COUNTRY_DOT_PATTERN_DENSITY,
-      ))
-      : DEFAULT_MAP_DEBUG_SETTINGS.countryDotPatternDensity,
-    countryDotPatternOpacity: isFiniteNumber(record.countryDotPatternOpacity)
-      ? clampNumber(record.countryDotPatternOpacity, MIN_ALPHA, MAX_ALPHA)
-      : DEFAULT_MAP_DEBUG_SETTINGS.countryDotPatternOpacity,
     baseCountryFillColor: coerceHexColor(
       record.baseCountryFillColor,
       DEFAULT_MAP_DEBUG_SETTINGS.baseCountryFillColor,
